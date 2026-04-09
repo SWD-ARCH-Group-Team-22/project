@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - "src/analysis/md/**/*.md"
-      - "src/pandoc/**/*.yaml"
+      - "doc/analysis/md/**/*.md"
+      - "doc/pandoc/**/*.yaml"
       - ".github/workflows/build-pdf.yml"
   workflow_dispatch:
 
@@ -42,12 +42,12 @@ jobs:
       - name: Convert deliverables Markdown files to PDF
         run: |
           # Evita che il loop fallisca se la cartella è momentaneamente vuota
-          shopt -s nullglob
-          for file in src/analysis/md/*.md; do
+          shopt -s nullglob globstar
+          for file in doc/analysis/md/*.md; do
             name=$(basename "$file" .md)
             echo "Converting $file to doc/deliverables/${name}.pdf..."
             pandoc "$file" \
-              --defaults=src/pandoc/pandoc-defaults.yaml \
+              --defaults=doc/pandoc/pandoc-defaults.yaml \
               -o "doc/deliverables/${name}.pdf"
           done
 
