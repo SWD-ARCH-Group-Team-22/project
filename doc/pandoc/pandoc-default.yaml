@@ -1,0 +1,13 @@
+# doc/pandoc/pandoc-defaults.yaml
+
+pdf-engine: pdflatex
+
+toc: true
+toc-depth: 2
+
+variables:
+  geometry: 
+    - margin=2.5cm
+  fontsize: 11pt
+  papersize: a4
+  links-as-notes: true # Trasforma i link cliccabili in note a piè di pagina (ottimo per la stampa)
