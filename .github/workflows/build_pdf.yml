@@ -1,0 +1,60 @@
+name: Build PDFs from Markdown
+
+on:
+  push:
+    paths:
+      - "doc/analysis/md"
+      - ".github/workflows/build-pdf.yml"
+  workflow_dispatch:
+
+jobs:
+  build-pdf:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Pandoc and LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            pandoc \
+            texlive-latex-base \
+            texlive-fonts-recommended \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            librsvg2-bin
+
+      - name: Create output directories
+        run: |
+          mkdir -p doc/deliverables
+          mkdir -p res
+
+      - name: Convert deliverables Markdown files to PDF
+        run: |
+          for file in src/analysis/*.md; do
+            name=$(basename "$file" .md);
+            pandoc "$file"\
+              --defaults=src/pandoc/pandoc-defaults.yaml\
+              -o "doc/deliverables/${name}.pdf"; done
+
+          
+      - name: Commit generated PDFs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add doc/deliverables/*.pdf res/*.pdf || true
+          git diff --cached --quiet || git commit -m "Update generated PDFs"
+          git push
+
+      - name: Upload PDFs
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-pdfs
+          path: |
+            doc/deliverables/*.pdf
