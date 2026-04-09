@@ -1,4 +1,4 @@
 # Trial
 
 Example of md file to try the pipeline
-trial1
+trial2
