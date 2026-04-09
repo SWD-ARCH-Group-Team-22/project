@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
+      # Fa partire la action se modifichi un .md in questa cartella (o sottocartelle)
       - "doc/analysis/md/**/*.md"
-      - "doc/pandoc/**/*.yaml"
       - ".github/workflows/build-pdf.yml"
   workflow_dispatch:
 
@@ -25,7 +25,6 @@ jobs:
       - name: Install Pandoc and LaTeX
         run: |
           sudo apt-get update
-          # Aggiunto --no-install-recommends per velocizzare leggermente l'installazione
           sudo apt-get install -y --no-install-recommends \
             pandoc \
             texlive-latex-base \
@@ -41,14 +40,16 @@ jobs:
 
       - name: Convert deliverables Markdown files to PDF
         run: |
-          # Evita che il loop fallisca se la cartella è momentaneamente vuota
+          # Abilita la ricerca sicura anche nelle sottocartelle
           shopt -s nullglob globstar
-          for file in doc/analysis/md/*.md; do
+          
+          # Cerca tutti i file .md (anche nelle sottocartelle grazie ai **)
+          for file in doc/analysis/md/**/*.md; do
             name=$(basename "$file" .md)
             echo "Converting $file to doc/deliverables/${name}.pdf..."
-            pandoc "$file" \
-              --defaults=doc/pandoc/pandoc-defaults.yaml \
-              -o "doc/deliverables/${name}.pdf"
+            
+            # COMANDO RIPRISTINATO: Questo è quello che crea materialmente il PDF nudo e crudo
+            pandoc "$file" -o "doc/deliverables/${name}.pdf"
           done
 
       - name: Commit generated PDFs
@@ -56,13 +57,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Aggiungi i file. Se non ci sono file PDF, ignora l'errore
           git add doc/deliverables/*.pdf || true
-          
-          # Fai il commit solo se ci sono effettive differenze, altrimenti procedi senza errori
           git diff --cached --quiet || git commit -m "chore: update generated PDFs"
-          
-          # Pusha le modifiche sul branch corrente
           git push
 
       - name: Upload PDFs
