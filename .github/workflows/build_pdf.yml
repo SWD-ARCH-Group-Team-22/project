@@ -2,8 +2,11 @@ name: Build PDFs from Markdown
 
 on:
   push:
+    branches:
+      - main
     paths:
-      - "doc/analysis/md"
+      - "src/analysis/**/*.md"
+      - "src/pandoc/**/*.yaml"
       - ".github/workflows/build-pdf.yml"
   workflow_dispatch:
 
@@ -22,7 +25,8 @@ jobs:
       - name: Install Pandoc and LaTeX
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
+          # Aggiunto --no-install-recommends per velocizzare leggermente l'installazione
+          sudo apt-get install -y --no-install-recommends \
             pandoc \
             texlive-latex-base \
             texlive-fonts-recommended \
@@ -37,24 +41,33 @@ jobs:
 
       - name: Convert deliverables Markdown files to PDF
         run: |
+          # Evita che il loop fallisca se la cartella è momentaneamente vuota
+          shopt -s nullglob
           for file in src/analysis/*.md; do
-            name=$(basename "$file" .md);
-            pandoc "$file"\
-              --defaults=src/pandoc/pandoc-defaults.yaml\
-              -o "doc/deliverables/${name}.pdf"; done
+            name=$(basename "$file" .md)
+            echo "Converting $file to doc/deliverables/${name}.pdf..."
+            pandoc "$file" \
+              --defaults=src/pandoc/pandoc-defaults.yaml \
+              -o "doc/deliverables/${name}.pdf"
+          done
 
-          
       - name: Commit generated PDFs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Aggiungi i file. Se non ci sono file PDF, ignora l'errore
           git add doc/deliverables/*.pdf res/*.pdf || true
-          git diff --cached --quiet || git commit -m "Update generated PDFs"
+          
+          # Fai il commit solo se ci sono effettive differenze, altrimenti procedi senza errori
+          git diff --cached --quiet || git commit -m "chore: update generated PDFs"
+          
+          # Pusha le modifiche sul branch corrente
           git push
 
       - name: Upload PDFs
         uses: actions/upload-artifact@v4
         with:
           name: generated-pdfs
-          path: |
-            doc/deliverables/*.pdf
+          path: doc/deliverables/*.pdf
+          if-no-files-found: warn
