@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "src/analysis/**/*.md"
+      - "src/analysis/md/**/*.md"
       - "src/pandoc/**/*.yaml"
       - ".github/workflows/build-pdf.yml"
   workflow_dispatch:
@@ -43,7 +43,7 @@ jobs:
         run: |
           # Evita che il loop fallisca se la cartella è momentaneamente vuota
           shopt -s nullglob
-          for file in src/analysis/*.md; do
+          for file in src/analysis/md/*.md; do
             name=$(basename "$file" .md)
             echo "Converting $file to doc/deliverables/${name}.pdf..."
             pandoc "$file" \
@@ -57,7 +57,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
           # Aggiungi i file. Se non ci sono file PDF, ignora l'errore
-          git add doc/deliverables/*.pdf res/*.pdf || true
+          git add doc/deliverables/*.pdf || true
           
           # Fai il commit solo se ci sono effettive differenze, altrimenti procedi senza errori
           git diff --cached --quiet || git commit -m "chore: update generated PDFs"
