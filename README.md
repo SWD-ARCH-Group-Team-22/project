@@ -13,12 +13,18 @@ A strict structure has been defined to make everyone's life easier; please compl
 - `doc/analysis/md`: here put all analysis notes in Markdown. If you put the .md files here, an automatic pipeline will convert them in .pdf and .svg
 - `img`: in the respective subdirectory, you could find all file that have been subsequentely automatically converted
 
-## Automatic journal update
-The repository is provided with some githooks to enhance automatization of processes.  
-Since it may be easy to forget journal compilation, developers are given:
-- A post-commit hook: this script automatically updates the journal with information about the commit, date, and username. A TODO placeholder is placed in the description field.  
-- A pre-push hook that avoid pushing to remote repository if the TODO placeholders haven't been replaced with a proper descripiton. 
+## Automatic journal update and commit messages requirements
+Keeping track of our work can be difficult. To help everyone, a small commit-msg hook was developed to fill journals automatically. All you have to do is writing a long, self-explaining commit messages, that complies with Git standards; it should start with either one of the following 
+- feat:      (New feature)"
+- fix:       (Bug fix)"
+- hotfix:    (Urgent production fix)"
+- chore:     (Routine tasks, dependencies)"
+- docs:      (Documentation changes)"
+- refactor:  (Code rewrite, no new features/fixes)"
+- test:      (Adding/updating tests)"
+- ci/build:  (Pipeline or build system changes)"
+- style:     (Formatting, white-space)"
+- perf:      (Performance improvements)"
 
-These hooks are included in the repository. However, Github security measures require the developer to independently activate them. You can do iy by running:
-`chmod +x .githooks/post-commit`
-`chmod +x .githooks/pre-push`
+To enable the hook, you must run locally the following script once:  
+`chmod +x .githooks/commit-msg`
