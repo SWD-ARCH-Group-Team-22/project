@@ -1,0 +1,24 @@
+#!/bin/bash
+
+COMMIT_HASH=$(git rev-parse --short HEAD)
+AUTHOR_NAME=$(git config user.name)
+FILE_NAME=$(echo "$AUTHOR_NAME" | tr -d ' ') 
+TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+
+JOURNAL_FILE="journals/${FILE_NAME}_journal.md"
+
+mkdir -p journals
+
+if [ ! -f "$JOURNAL_FILE" ]; then
+  echo "| User Name | Commit ID | Description | Timestamp |" > "$JOURNAL_FILE"
+  echo "|-----------|-----------|-------------|-----------|" >> "$JOURNAL_FILE"
+fi
+
+if ! grep -q "$COMMIT_HASH" "$JOURNAL_FILE"; then
+  echo "| $AUTHOR_NAME | $COMMIT_HASH | TODO: Add your commit details here | $TIMESTAMP |" >> "$JOURNAL_FILE"
+  
+  echo ""
+  echo "POST-COMMIT: Journal updated for $AUTHOR_NAME."
+  echo "ACTION REQUIRED: Open $JOURNAL_FILE, replace 'TODO', and amend your commit before pushing!"
+  echo ""
+fi
