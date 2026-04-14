@@ -2,15 +2,47 @@
 
 COMMIT_MSG_FILE=$1
 
-
 if grep -q "Journal-Entry-ID:" "$COMMIT_MSG_FILE"; then
   exit 0
 fi
 
 COMMIT_SUBJECT=$(grep -v "^#" "$COMMIT_MSG_FILE" | sed '/^$/d' | head -n 1)
+ACTUAL_LENGTH=${#COMMIT_SUBJECT}
+MIN_LENGTH=15
+
+if [ "$ACTUAL_LENGTH" -lt "$MIN_LENGTH" ]; then
+  echo ""
+  echo "COMMIT REJECTED: Your message is too short ($ACTUAL_LENGTH chars)."
+  echo "Please use at least $MIN_LENGTH characters to properly describe your work."
+  echo "Your rejected message: '$COMMIT_SUBJECT'"
+  echo ""
+  exit 1
+fi
+
+# Define the regex in a variable first to avoid Bash syntax parsing errors
+VALID_PATTERN="^(feat|fix|hotfix|chore|docs|refactor|test|ci|build|style|perf)(\([^)]+\))?: "
+
+# Evaluate the variable unquoted on the right side of the =~ operator
+if ! [[ "$COMMIT_SUBJECT" =~ $VALID_PATTERN ]]; then
+  echo ""
+  echo "COMMIT REJECTED: Invalid commit format."
+  echo "Your message must start with a standard prefix:"
+  echo "  - feat:      (New feature)"
+  echo "  - fix:       (Bug fix)"
+  echo "  - hotfix:    (Urgent production fix)"
+  echo "  - chore:     (Routine tasks, dependencies)"
+  echo "  - docs:      (Documentation changes)"
+  echo "  - refactor:  (Code rewrite, no new features/fixes)"
+  echo "  - test:      (Adding/updating tests)"
+  echo "  - ci/build:  (Pipeline or build system changes)"
+  echo "  - style:     (Formatting, white-space)"
+  echo "  - perf:      (Performance improvements)"
+  echo "(Note: You can also use scopes, e.g., 'feat(database): ')"
+  echo ""
+  exit 1
+fi
 
 TICKET_ID=$(openssl rand -hex 4)
-
 AUTHOR_NAME=$(git config user.name)
 FILE_NAME=$(echo "$AUTHOR_NAME" | tr -d ' ')
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
@@ -29,5 +61,5 @@ echo "" >> "$COMMIT_MSG_FILE"
 echo "Journal-Entry-ID: $TICKET_ID" >> "$COMMIT_MSG_FILE"
 
 echo ""
-echo "Journal auto-filled with Description [$TICKET_ID]!"
+echo "Commit message accepted: Format is valid. Journal auto-filled with Entry [$TICKET_ID]!"
 echo ""
