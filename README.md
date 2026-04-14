@@ -19,6 +19,6 @@ Since it may be easy to forget journal compilation, developers are given:
 - A post-commit hook: this script automatically updates the journal with information about the commit, date, and username. A TODO placeholder is placed in the description field.  
 - A pre-push hook that avoid pushing to remote repository if the TODO placeholders haven't been replaced with a proper descripiton. 
 
-These hooks are downloaded when the repository is cloned. However, Github security measures require the developer to independently activate them. You can do iy by running:
+These hooks are included in the repository. However, Github security measures require the developer to independently activate them. You can do iy by running:
 `chmod +x .githooks/post-commit`
 `chmod +x .githooks/pre-push`
