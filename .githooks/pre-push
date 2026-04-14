@@ -1,0 +1,15 @@
+#!/bin/bash
+
+AUTHOR_NAME=$(git config user.name | tr -d ' ')
+JOURNAL_FILE="journals/${AUTHOR_NAME}_journal.md"
+
+if grep -q "TODO" "$JOURNAL_FILE"; then
+  echo "PUSH REJECTED: You have incomplete entries in $JOURNAL_FILE!"
+  echo "Please complete your journal, then run the following commands to save it:"
+  echo "  git add $JOURNAL_FILE"
+  echo "  git commit --amend --no-edit"
+  echo "  git push"
+  exit 1
+fi
+
+exit 0
