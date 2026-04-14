@@ -1,0 +1,33 @@
+#!/bin/bash
+
+COMMIT_MSG_FILE=$1
+
+
+if grep -q "Journal-Entry-ID:" "$COMMIT_MSG_FILE"; then
+  exit 0
+fi
+
+COMMIT_SUBJECT=$(grep -v "^#" "$COMMIT_MSG_FILE" | sed '/^$/d' | head -n 1)
+
+TICKET_ID=$(openssl rand -hex 4)
+
+AUTHOR_NAME=$(git config user.name)
+FILE_NAME=$(echo "$AUTHOR_NAME" | tr -d ' ')
+TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+JOURNAL_FILE="journals/${FILE_NAME}_journal.md"
+
+mkdir -p journals
+
+if [ ! -f "$JOURNAL_FILE" ]; then
+  echo "| User Name | Entry ID | Description | Timestamp |" > "$JOURNAL_FILE"
+  echo "|-----------|----------|-------------|-----------|" >> "$JOURNAL_FILE"
+fi
+
+echo "| $AUTHOR_NAME | $TICKET_ID | $COMMIT_SUBJECT | $TIMESTAMP |" >> "$JOURNAL_FILE"
+
+echo "" >> "$COMMIT_MSG_FILE"
+echo "Journal-Entry-ID: $TICKET_ID" >> "$COMMIT_MSG_FILE"
+
+echo ""
+echo "Journal auto-filled with Description [$TICKET_ID]!"
+echo ""
