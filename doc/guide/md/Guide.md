@@ -1,5 +1,5 @@
 ﻿
-# How to Build and Run Freeplane 
+# How to Build and Run Freeplane
 
 This guide walks you through the process of cloning the repository, compiling the code with Gradle, launching the application, and generating a distribution package.
 
