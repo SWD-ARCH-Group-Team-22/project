@@ -1,4 +1,4 @@
-name: Diagrams Conversion 
+name: Diagrams Conversion (PUML & C4 with LikeC4)
 
 on:
   push:
@@ -37,42 +37,41 @@ jobs:
         run: |
           wget https://github.com/plantuml/plantuml/releases/download/v1.2024.3/plantuml-1.2024.3.jar -O plantuml.jar
 
-      - name: Generate PlantUML Diagrams (SVG → PDF)
+      - name: Generate PlantUML Diagrams (SVG & PDF)
         run: |
           mkdir -p doc/deliverables/puml
+          # Genera gli SVG
           java -jar plantuml.jar -tsvg "doc/charts/puml/**/*.puml" -o "doc/deliverables/puml" || true
+          
+          # Converte SVG in PDF (mantenendo l'originale SVG)
+          shopt -s globstar
+          shopt -s nullglob
+          for f in doc/deliverables/puml/**/*.svg; do
+            echo "Converting $f to PDF..."
+            rsvg-convert -f pdf -o "${f%.svg}.pdf" "$f"
+          done
 
       - name: Install Playwright Browsers (obbligatorio per LikeC4)
         run: |
           npx --yes --package likec4 playwright install chromium --with-deps
 
-      - name: Export C4 Diagrams with LikeC4 (PNG)
+      - name: Export C4 Diagrams with LikeC4 (SVG & PDF)
         run: |
           mkdir -p doc/deliverables/C4
-          npx --yes likec4@latest export png doc/charts/C4 -o doc/deliverables/C4 --theme light
-
-      - name: Convert Diagrams to PDF and Cleanup PNG/SVG
-        run: |
+          # Esporta direttamente in SVG invece che PNG
+          npx --yes likec4@latest export svg doc/charts/C4 -o doc/deliverables/C4
+          
+          # Converte i file SVG generati in PDF
           shopt -s globstar
           shopt -s nullglob
-          
-          # SVG (PlantUML) → PDF + Rimozione SVG
-          for f in doc/deliverables/puml/**/*.svg; do
+          for f in doc/deliverables/C4/**/*.svg; do
             echo "Converting $f to PDF..."
             rsvg-convert -f pdf -o "${f%.svg}.pdf" "$f"
-            rm "$f"  # Rimuove il file SVG originale
-          done
-          
-          # PNG (LikeC4) → PDF + Rimozione PNG
-          for f in doc/deliverables/C4/**/*.png; do
-            echo "Converting $f to PDF..."
-            convert "$f" "${f%.png}.pdf"
-            rm "$f"  # Rimuove il file PNG originale
           done
 
       - name: Commit and Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "docs: automatic export of diagrams to PDF (cleanup intermediate PNG/SVG)"
-          # Ora includiamo solo i PDF nel pattern dei file da committare
-          file_pattern: 'doc/deliverables/**/*.pdf'
+          commit_message: "docs: automatic export of diagrams (SVG & PDF)"
+          # Include sia i file SVG che i PDF, ma nessun PNG
+          file_pattern: 'doc/deliverables/**/*.pdf doc/deliverables/**/*.svg'
