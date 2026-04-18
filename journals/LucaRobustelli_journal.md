@@ -9,3 +9,4 @@
 | Luca Robustelli | c1093eb7 | fix: try to fix c4toPdf converter | 2026-04-18 15:14:50 |
 | Luca Robustelli | 34c74078 | fix: try to fix c4toPdf converter | 2026-04-18 15:17:39 |
 | Luca Robustelli | f7ec47b0 | fix: try to fix c4toPdf converter | 2026-04-18 15:20:07 |
+| Luca Robustelli | 4b574b85 | fix: try to fix c4toPdf converter | 2026-04-18 15:25:40 |
