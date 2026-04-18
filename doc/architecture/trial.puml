@@ -1,0 +1,23 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+' Definisce il titolo del diagramma
+title System Context Diagram - Internet Banking System
+
+' Definizione degli attori e dei sistemi
+Person(customer, "Cliente", "Un cliente della banca che ha dei conti correnti.")
+
+System(banking_system, "Internet Banking System", "Permette ai clienti di visualizzare i saldi e fare bonifici.")
+
+System_Ext(mail_system, "Sistema E-mail", "Il sistema aziendale per l'invio delle mail.")
+System_Ext(mainframe, "Mainframe Bancario", "Il sistema centrale che memorizza conti e transazioni.")
+
+' Definizione delle relazioni (Frecce)
+Rel(customer, banking_system, "Utilizza", "HTTPS")
+Rel(banking_system, mail_system, "Invia email tramite", "SMTP")
+Rel(mail_system, customer, "Invia email a")
+Rel(banking_system, mainframe, "Legge e scrive dati su", "TCP/IP")
+
+' Imposta il layout (opzionale, aiuta a disporre meglio gli elementi)
+SHOW_LEGEND()
+@enduml

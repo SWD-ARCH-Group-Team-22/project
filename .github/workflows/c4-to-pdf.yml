@@ -1,0 +1,50 @@
+name: C4 Model to PDF Converter
+
+on:
+  push:
+    paths:
+      - 'doc/architecture/**' # Triggers only when C4 files in this directory are modified
+
+jobs:
+  convert-and-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to push the generated PDFs back to the repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download PlantUML JAR
+        run: |
+          wget https://github.com/plantuml/plantuml/releases/download/v1.2024.3/plantuml-1.2024.3.jar -O plantuml.jar
+
+      - name: Generate PDFs
+        run: |
+          # Create the target directory if it doesn't exist
+          mkdir -p doc/deliverables/C4GraphPDF
+          
+          # Generate PDFs. The output (-o) path is relative to the source files' location
+          java -jar plantuml.jar -tpdf "doc/architecture/**" -o "../deliverables/C4GraphPDF"
+
+      - name: Commit and Push
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Stage the generated PDF files
+          git add doc/deliverables/C4GraphPDF/*.pdf
+          
+          # Commit and push only if there are actual changes to avoid errors
+          if git diff --staged --quiet; then
+            echo "No changes detected in PDFs. Skipping commit."
+          else
+            git commit -m "docs: auto-generate C4 diagrams in C4GraphPDF"
+            git push
+          fi
