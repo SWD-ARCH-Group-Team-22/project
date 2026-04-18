@@ -71,4 +71,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "docs: automatic export of diagrams (PDF & SVG via PlantUML + PNG/PDF via LikeC4)"
-          file_pattern: 'doc/deliverables/**/*.pdf doc/deliverables/**/*.svg doc/deliverables/**/*.png'
+          file_pattern: 'doc/deliverables/**/*.pdf doc/deliverables/**/*.svg doc/deliverables/**/*.png' 
