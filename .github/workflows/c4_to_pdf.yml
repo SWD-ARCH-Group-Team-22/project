@@ -3,7 +3,7 @@ name: C4 Model to PDF
 on:
   push:
     paths:
-      - 'doc/c4/**' # Monitora solo i sorgenti C4
+      - 'doc/c4/**'
 
 jobs:
   convert_c4:
@@ -21,19 +21,30 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          # graphviz serve per il comando 'dot'
+          # librsvg2-bin serve per convertire SVG in PDF in modo pulito
+          sudo apt-get install -y graphviz librsvg2-bin
+
       - name: Download PlantUML
         run: |
           wget https://github.com/plantuml/plantuml/releases/download/v1.2024.3/plantuml-1.2024.3.jar -O plantuml.jar
 
-      - name: Generate PDFs in specific folder
+      - name: Generate PDFs
         run: |
-          # Crea la cartella specifica c4Pdf se non esiste
           mkdir -p doc/deliverables/c4Pdf
           
-          # Esegue la conversione. 
-          # Nota: il percorso di output '-o' è relativo alla posizione dei sorgenti.
-          # Da 'doc/c4/', saliamo di un livello e entriamo in 'deliverables/c4Pdf'
-          java -jar plantuml.jar -tpdf "doc/c4/**" -o "../deliverables/c4Pdf"
+          # 1. Generiamo i file in formato SVG (molto più stabile del PDF diretto in Java)
+          java -jar plantuml.jar -tsvg "doc/c4/**" -o "../deliverables/c4Pdf"
+          
+          # 2. Convertiamo ogni SVG in PDF usando rsvg-convert
+          # Questo risolve il problema delle classi Java mancanti
+          for f in doc/deliverables/c4Pdf/*.svg; do
+            rsvg-convert -f pdf -o "${f%.svg}.pdf" "$f"
+            rm "$f" # Rimuoviamo l'SVG temporaneo
+          done
 
       - name: Commit and Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
