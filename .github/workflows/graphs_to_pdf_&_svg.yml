@@ -1,0 +1,73 @@
+name: Diagrams Conversion 
+
+on:
+  push:
+    paths:
+      - 'doc/charts/puml/**'
+      - 'doc/charts/C4/**'
+  workflow_dispatch:
+
+jobs:
+  convert_diagrams:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java (per PlantUML)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Node.js (per LikeC4)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz librsvg2-bin imagemagick
+
+      - name: Download PlantUML
+        run: |
+          wget https://github.com/plantuml/plantuml/releases/download/v1.2024.3/plantuml-1.2024.3.jar -O plantuml.jar
+
+      - name: Generate PlantUML Diagrams (SVG → PDF)
+        run: |
+          mkdir -p doc/deliverables/puml
+          java -jar plantuml.jar -tsvg "doc/charts/puml/**/*.puml" -o "../../deliverables/puml" || true
+
+      - name: Export C4 Diagrams with LikeC4 (PNG)
+        run: |
+          mkdir -p doc/deliverables/C4
+          # Esegue la CLI LikeC4 sui tuoi file .c4 creati in VSCode
+          npx likec4@latest export png doc/charts/C4 -o doc/deliverables/C4
+
+      - name: Convert Diagrams to PDF (SVG → PDF + PNG → PDF)
+        run: |
+          shopt -s globstar
+          shopt -s nullglob
+          
+          # SVG (da PlantUML) → PDF
+          for f in doc/deliverables/puml/**/*.svg; do
+            echo "Converting $f to PDF..."
+            rsvg-convert -f pdf -o "${f%.svg}.pdf" "$f"
+          done
+          
+          # PNG (da LikeC4) → PDF
+          for f in doc/deliverables/C4/**/*.png; do
+            echo "Converting $f to PDF..."
+            convert "$f" "${f%.png}.pdf"
+            rm "$f"
+          done
+
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: automatic export of diagrams (PDF & SVG via PlantUML + PNG/PDF via LikeC4)"
+          file_pattern: 'doc/deliverables/**/*.pdf doc/deliverables/**/*.svg doc/deliverables/**/*.png'
