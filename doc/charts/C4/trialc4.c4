@@ -6,22 +6,46 @@ specification {
     }
   }
   element system
+  element container
 }
 
 model {
   user = actor 'User' {
     description 'A user of my software system'
   }
-  softwareSystem = system 'Software System' {
-    description 'My software system'
-  }
 
-  user -> softwareSystem 'uses'
+  softwareSystem = system 'Software System' {
+    description 'A web-based platform for managing user data and services'
+
+    webApp = container 'Web Application' {
+      description 'Frontend application accessed via browser'
+      technology 'React'
+    }
+
+    api = container 'Backend API' {
+      description 'Handles business logic and requests'
+      technology 'Node.js / Spring Boot'
+    }
+
+    database = container 'Database' {
+      description 'Stores application data'
+      technology 'PostgreSQL'
+    }
+
+    user -> webApp 'uses via browser'
+    webApp -> api 'API calls (REST/JSON)'
+    api -> database 'reads/writes data'
+  }
 }
 
 views {
   view index {
-    title 'Landscape'
+    title 'System Landscape'
     include *
   }
-}   
+
+  view containers {
+    title 'Container View'
+    include softwareSystem.*
+  }
+}
