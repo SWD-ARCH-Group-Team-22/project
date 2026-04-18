@@ -40,10 +40,9 @@ jobs:
       - name: Generate PlantUML Diagrams (SVG → PDF)
         run: |
           mkdir -p doc/deliverables/puml
-          java -jar plantuml.jar -tsvg "doc/charts/puml/**/*.puml" -o "../../deliverables/puml" || true
+          java -jar plantuml.jar -tsvg "doc/charts/puml/**/*.puml" -o "doc/deliverables/puml" || true
 
-      # === NUOVO STEP OBBLIGATORIO PER LikeC4 ===
-      - name: Install Playwright Browsers (richiesto da LikeC4)
+      - name: Install Playwright Browsers (obbligatorio per LikeC4)
         run: npx playwright install --with-deps chromium
 
       - name: Export C4 Diagrams with LikeC4 (PNG)
@@ -56,13 +55,13 @@ jobs:
           shopt -s globstar
           shopt -s nullglob
           
-          # SVG (da PlantUML) → PDF
+          # SVG (PlantUML) → PDF
           for f in doc/deliverables/puml/**/*.svg; do
             echo "Converting $f to PDF..."
             rsvg-convert -f pdf -o "${f%.svg}.pdf" "$f"
           done
           
-          # PNG (da LikeC4) → PDF
+          # PNG (LikeC4) → PDF
           for f in doc/deliverables/C4/**/*.png; do
             echo "Converting $f to PDF..."
             convert "$f" "${f%.png}.pdf"
