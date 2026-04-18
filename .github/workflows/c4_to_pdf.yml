@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'doc/c4/**'
+  workflow_dispatch:
 
 jobs:
   convert_c4:
@@ -22,10 +23,9 @@ jobs:
           java-version: '17'
 
       - name: Install System Dependencies
+        # Questo step risolve l'errore "Cannot run program dot" e la mancanza di librerie PDF
         run: |
           sudo apt-get update
-          # graphviz serve per il comando 'dot'
-          # librsvg2-bin serve per convertire SVG in PDF in modo pulito
           sudo apt-get install -y graphviz librsvg2-bin
 
       - name: Download PlantUML
@@ -36,18 +36,19 @@ jobs:
         run: |
           mkdir -p doc/deliverables/c4Pdf
           
-          # 1. Generiamo i file in formato SVG (molto più stabile del PDF diretto in Java)
-          java -jar plantuml.jar -tsvg "doc/c4/**" -o "../deliverables/c4Pdf"
+          # 1. Generiamo SVG invece di PDF per evitare errori di librerie Java mancanti
+          java -jar plantuml.jar -tsvg "doc/c4/**.puml" -o "../deliverables/c4Pdf"
           
-          # 2. Convertiamo ogni SVG in PDF usando rsvg-convert
-          # Questo risolve il problema delle classi Java mancanti
+          # 2. Convertiamo gli SVG in PDF usando rsvg-convert (molto più affidabile)
+          shopt -s nullglob
           for f in doc/deliverables/c4Pdf/*.svg; do
+            echo "Converting $f to PDF..."
             rsvg-convert -f pdf -o "${f%.svg}.pdf" "$f"
-            rm "$f" # Rimuoviamo l'SVG temporaneo
+            rm "$f"
           done
 
       - name: Commit and Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "docs: update C4 diagrams in deliverables/c4Pdf"
+          commit_message: "docs: update C4 diagrams to PDF"
           file_pattern: 'doc/deliverables/c4Pdf/*.pdf'
