@@ -41,14 +41,13 @@ Whenever you push changes to the `doc/charts/puml/**` or `doc/charts/C4/**` dire
 3. **Print-Ready Conversion (PDF):** It utilizes `librsvg` to losslessly convert every generated SVG into a high-quality PDF, perfect for inclusion in our LaTeX/Markdown final reports.
 4. **Cleanup & Auto-Commit:** It completely removes all intermediate and temporary files (preventing repository bloat) and automatically commits the `.svg` and `.pdf` files back into the corresponding `doc/deliverables/` directories.
 
-### ⚠️ Crucial Developer Workflow Step: `git pull`
+### Crucial Developer Workflow Step: `git pull`
 Because the GitHub Action creates the final SVGs and PDFs directly on the GitHub server *after* your push, your local machine will not immediately have these new files. 
 
 **Always run `git pull` after the GitHub Action finishes executing successfully.** If you skip this step, your local repository will fall out of sync with the remote, and subsequent pushes will likely result in merge conflicts.
 
----
 
-## Modeling Architecture with LikeC4
+### Modeling Architecture with LikeC4
 
 For our C4 Model diagrams, we strictly utilize **LikeC4**, a domain-specific language designed to describe software architecture at various levels of abstraction. Instead of manually drawing boxes and lines, LikeC4 allows us to define the *model* of Freeplane's architecture as code and automatically generate multiple views.
 
@@ -56,7 +55,7 @@ To learn how to use LikeC4, write the syntax, define models, and generate views,
 
 🔗 **[LikeC4 Official Tutorial](https://likec4.dev/tutorial/)**
 
-### Recommended Local Setup
+#### Recommended Local Setup
 While the GitHub Action handles the final rendering, working blindly is inefficient. To get real-time syntax highlighting, error checking, and live diagram previews locally:
 1. Install **Visual Studio Code**.
 2. Install the official **LikeC4 extension** from the VS Code marketplace.
