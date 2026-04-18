@@ -14,33 +14,43 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Scarica tutta la cronologia per evitare errori di push
 
-      # Utilizza un container pre-configurato con Graphviz e tutte le librerie PDF
       - name: Generate PDFs from PlantUML
         uses: yuzutech/plantuml-action@v1.5.2
         with:
           path: doc/architecture
           format: pdf
 
-      - name: Move PDFs to target folder
+      - name: Debug and Move Files
         run: |
-          # Create the target directory
+          echo "Checking if PDFs were generated in doc/architecture..."
+          ls -R doc/architecture
+          
+          # Crea la cartella (assicurati che il percorso 'doc/deliverables' esista già o crealo)
           mkdir -p doc/deliverables/C4GraphPDF
           
-          # The action creates PDFs in the same folder as the source files. 
-          # We move them to our deliverables folder.
-          mv doc/architecture/*.pdf doc/deliverables/C4GraphPDF/
+          # Sposta i file se esistono, altrimenti non bloccare il job
+          cp doc/architecture/*.pdf doc/deliverables/C4GraphPDF/ || echo "No PDF files found!"
+          
+          # Aggiunge un file segnaposto per forzare Git a vedere la cartella
+          touch doc/deliverables/C4GraphPDF/.gitkeep
 
       - name: Commit and Push
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          git add doc/deliverables/C4GraphPDF/*.pdf
+          # Aggiungiamo tutto il contenuto della cartella deliverables
+          git add doc/deliverables/C4GraphPDF/
+          
+          # Debug: controlliamo cosa sta per essere inviato
+          git status
           
           if git diff --staged --quiet; then
-            echo "No changes detected in PDFs. Skipping commit."
+            echo "Nothing to commit!"
           else
-            git commit -m "ci(docs): auto-generate C4 pdfs using plantuml-action"
-            git push
+            git commit -m "ci(docs): sync C4 diagrams to C4GraphPDF"
+            git push origin HEAD:${{ github.ref }}
           fi
