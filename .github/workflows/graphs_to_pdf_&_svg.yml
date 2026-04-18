@@ -1,4 +1,4 @@
-name: Diagrams Conversion 
+name: Diagrams Conversion (PUML & C4 with LikeC4)
 
 on:
   push:
@@ -23,10 +23,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Node.js (per LikeC4)
+      - name: Setup Node.js (LikeC4 richiede Node 22+)
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install System Dependencies
         run: |
@@ -42,11 +42,14 @@ jobs:
           mkdir -p doc/deliverables/puml
           java -jar plantuml.jar -tsvg "doc/charts/puml/**/*.puml" -o "../../deliverables/puml" || true
 
+      # === NUOVO STEP OBBLIGATORIO PER LikeC4 ===
+      - name: Install Playwright Browsers (richiesto da LikeC4)
+        run: npx playwright install --with-deps chromium
+
       - name: Export C4 Diagrams with LikeC4 (PNG)
         run: |
           mkdir -p doc/deliverables/C4
-          # Esegue la CLI LikeC4 sui tuoi file .c4 creati in VSCode
-          npx likec4@latest export png doc/charts/C4 -o doc/deliverables/C4
+          npx likec4@latest export png doc/charts/C4 -o doc/deliverables/C4 --theme light
 
       - name: Convert Diagrams to PDF (SVG → PDF + PNG → PDF)
         run: |
@@ -63,7 +66,6 @@ jobs:
           for f in doc/deliverables/C4/**/*.png; do
             echo "Converting $f to PDF..."
             convert "$f" "${f%.png}.pdf"
-            rm "$f"
           done
 
       - name: Commit and Push changes
