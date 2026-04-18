@@ -1,0 +1,42 @@
+name: C4 Model to PDF
+
+on:
+  push:
+    paths:
+      - 'doc/c4/**' # Monitora solo i sorgenti C4
+
+jobs:
+  convert_c4:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download PlantUML
+        run: |
+          wget https://github.com/plantuml/plantuml/releases/download/v1.2024.3/plantuml-1.2024.3.jar -O plantuml.jar
+
+      - name: Generate PDFs in specific folder
+        run: |
+          # Crea la cartella specifica c4Pdf se non esiste
+          mkdir -p doc/deliverables/c4Pdf
+          
+          # Esegue la conversione. 
+          # Nota: il percorso di output '-o' è relativo alla posizione dei sorgenti.
+          # Da 'doc/c4/', saliamo di un livello e entriamo in 'deliverables/c4Pdf'
+          java -jar plantuml.jar -tpdf "doc/c4/**" -o "../deliverables/c4Pdf"
+
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: update C4 diagrams in deliverables/c4Pdf"
+          file_pattern: 'doc/deliverables/c4Pdf/*.pdf'

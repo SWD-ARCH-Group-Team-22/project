@@ -1,0 +1,12 @@
+@startuml
+' Usiamo la libreria integrata invece dell'URL esterno
+!include <C4/C4_Context>
+
+title Sistema di Prova
+
+Person(user, "Utente", "Un utente del sistema")
+System(system, "Software System", "Il sistema che stiamo progettando")
+
+Rel(user, system, "Utilizza", "HTTPS")
+
+@enduml
