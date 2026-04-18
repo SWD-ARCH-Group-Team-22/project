@@ -1,4 +1,4 @@
-name: Diagrams Conversion (PUML & C4 with LikeC4)
+name: Diagrams Conversion 
 
 on:
   push:
@@ -43,32 +43,36 @@ jobs:
           java -jar plantuml.jar -tsvg "doc/charts/puml/**/*.puml" -o "doc/deliverables/puml" || true
 
       - name: Install Playwright Browsers (obbligatorio per LikeC4)
-        run: npx playwright install --with-deps chromium
+        run: |
+          npx --yes --package likec4 playwright install chromium --with-deps
 
       - name: Export C4 Diagrams with LikeC4 (PNG)
         run: |
           mkdir -p doc/deliverables/C4
-          npx likec4@latest export png doc/charts/C4 -o doc/deliverables/C4 --theme light
+          npx --yes likec4@latest export png doc/charts/C4 -o doc/deliverables/C4 --theme light
 
-      - name: Convert Diagrams to PDF (SVG → PDF + PNG → PDF)
+      - name: Convert Diagrams to PDF and Cleanup PNG/SVG
         run: |
           shopt -s globstar
           shopt -s nullglob
           
-          # SVG (PlantUML) → PDF
+          # SVG (PlantUML) → PDF + Rimozione SVG
           for f in doc/deliverables/puml/**/*.svg; do
             echo "Converting $f to PDF..."
             rsvg-convert -f pdf -o "${f%.svg}.pdf" "$f"
+            rm "$f"  # Rimuove il file SVG originale
           done
           
-          # PNG (LikeC4) → PDF
+          # PNG (LikeC4) → PDF + Rimozione PNG
           for f in doc/deliverables/C4/**/*.png; do
             echo "Converting $f to PDF..."
             convert "$f" "${f%.png}.pdf"
+            rm "$f"  # Rimuove il file PNG originale
           done
 
       - name: Commit and Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "docs: automatic export of diagrams (PDF & SVG via PlantUML + PNG/PDF via LikeC4)"
-          file_pattern: 'doc/deliverables/**/*.pdf doc/deliverables/**/*.svg doc/deliverables/**/*.png' 
+          commit_message: "docs: automatic export of diagrams to PDF (cleanup intermediate PNG/SVG)"
+          # Ora includiamo solo i PDF nel pattern dei file da committare
+          file_pattern: 'doc/deliverables/**/*.pdf'
