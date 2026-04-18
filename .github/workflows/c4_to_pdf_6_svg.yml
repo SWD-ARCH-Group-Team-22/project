@@ -1,0 +1,62 @@
+name: Diagrams Conversion (PUML & C4)
+
+on:
+  push:
+    paths:
+      - 'doc/charts/puml/**'
+      - 'doc/charts/C4/**'
+  workflow_dispatch:
+
+jobs:
+  convert_diagrams:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz librsvg2-bin
+
+      - name: Download PlantUML
+        run: |
+          wget https://github.com/plantuml/plantuml/releases/download/v1.2024.3/plantuml-1.2024.3.jar -O plantuml.jar
+
+      - name: Generate Diagrams
+        run: |
+          # Creazione cartelle di output
+          mkdir -p doc/deliverables/puml
+          mkdir -p doc/deliverables/C4
+          
+          # 1. Generazione SVG per PlantUML standard
+          # Cerchiamo file .puml o .puml nelle sottocartelle di doc/charts/puml/
+          java -jar plantuml.jar -tsvg "doc/charts/puml/**.puml" -o "../../deliverables/puml" || true
+          
+          # 2. Generazione SVG per C4 Model
+          # Cerchiamo file .puml o .c4 nelle sottocartelle di doc/charts/C4/
+          java -jar plantuml.jar -tsvg "doc/charts/C4/**.puml" "doc/charts/C4/**.c4" -o "../../deliverables/C4" || true
+          
+          # 3. Conversione massiva SVG -> PDF
+          # Usiamo rsvg-convert per creare i PDF mantenendo anche gli SVG originali
+          shopt -s globstar
+          shopt -s nullglob
+          for f in doc/deliverables/**/*.svg; do
+            echo "Converting $f to PDF..."
+            rsvg-convert -f pdf -o "${f%.svg}.pdf" "$f"
+          done
+
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: automatic export of diagrams (PDF & SVG)"
+          file_pattern: 'doc/deliverables/**/*.pdf doc/deliverables/**/*.svg'
