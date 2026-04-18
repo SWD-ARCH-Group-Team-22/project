@@ -9,48 +9,40 @@ jobs:
   convert-and-commit:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # Fondamentale per permettere al bot di fare il push
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Scarica tutta la cronologia per evitare errori di push
 
+      # Usiamo un'azione specifica che ha già Graphviz e le librerie PDF incluse
       - name: Generate PDFs from PlantUML
-        uses: yuzutech/plantuml-action@v1.5.2
+        uses: yuzutech/plantuml-action@v1.2.4
         with:
           path: doc/architecture
           format: pdf
 
-      - name: Debug and Move Files
+      - name: Organize and Clean Up
         run: |
-          echo "Checking if PDFs were generated in doc/architecture..."
-          ls -R doc/architecture
-          
-          # Crea la cartella (assicurati che il percorso 'doc/deliverables' esista già o crealo)
+          # Crea la cartella di destinazione
           mkdir -p doc/deliverables/C4GraphPDF
           
-          # Sposta i file se esistono, altrimenti non bloccare il job
-          cp doc/architecture/*.pdf doc/deliverables/C4GraphPDF/ || echo "No PDF files found!"
-          
-          # Aggiunge un file segnaposto per forzare Git a vedere la cartella
-          touch doc/deliverables/C4GraphPDF/.gitkeep
+          # Sposta i PDF generati (l'action li crea nella stessa cartella dei sorgenti)
+          # Usiamo 'cp' e poi cancelliamo per sicurezza, o 'mv' diretto
+          mv doc/architecture/*.pdf doc/deliverables/C4GraphPDF/ || echo "Nessun PDF trovato"
 
-      - name: Commit and Push
+      - name: Commit and Push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # Aggiungiamo tutto il contenuto della cartella deliverables
-          git add doc/deliverables/C4GraphPDF/
+          # Aggiungiamo i file alla staging area
+          git add doc/deliverables/C4GraphPDF/*.pdf
           
-          # Debug: controlliamo cosa sta per essere inviato
-          git status
-          
+          # Commit solo se ci sono cambiamenti effettivi
           if git diff --staged --quiet; then
-            echo "Nothing to commit!"
+            echo "Nessuna modifica rilevata nei PDF."
           else
-            git commit -m "ci(docs): sync C4 diagrams to C4GraphPDF"
-            git push origin HEAD:${{ github.ref }}
+            git commit -m "docs: auto-generate C4 diagrams to PDF"
+            git push
           fi
