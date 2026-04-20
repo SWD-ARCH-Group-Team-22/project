@@ -1,0 +1,77 @@
+name: Diagrams Conversion 
+
+on:
+  push:
+    paths:
+      - 'doc/charts/puml/**'
+      - 'doc/charts/C4/**'
+  workflow_dispatch:
+
+jobs:
+  convert_diagrams:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java (per PlantUML)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          # Non serve più imagemagick perché lavoriamo solo con vettori
+          sudo apt-get install -y graphviz librsvg2-bin
+
+      - name: Download PlantUML
+        run: |
+          wget https://github.com/plantuml/plantuml/releases/download/v1.2024.3/plantuml-1.2024.3.jar -O plantuml.jar
+
+      - name: Export LikeC4 to PlantUML format
+        run: |
+          mkdir -p doc/deliverables/C4
+          # Traduce i file LikeC4 in file .puml all'interno della cartella dei deliverables
+          npx --yes likec4@latest codegen plantuml doc/charts/C4 -o doc/deliverables/C4
+
+      - name: Generate SVG via PlantUML
+        run: |
+          mkdir -p doc/deliverables/puml
+          
+          # 1. Genera SVG dai diagrammi PlantUML tradizionali
+          java -jar plantuml.jar -tsvg "doc/charts/puml/**/*.puml" -o "doc/deliverables/puml" || true
+          
+          # 2. Genera SVG dai file generati prima da LikeC4 (li salva nella stessa cartella)
+          java -jar plantuml.jar -tsvg "doc/deliverables/C4/**/*.puml" || true
+
+      - name: Convert SVGs to PDF and Cleanup intermediate files
+        run: |
+          shopt -s globstar
+          shopt -s nullglob
+          
+          # Converte tutti gli SVG (sia tradizionali che C4) in PDF
+          for f in doc/deliverables/**/*.svg; do
+            echo "Converting $f to PDF..."
+            rsvg-convert -f pdf -o "${f%.svg}.pdf" "$f"
+          done
+          
+          # Rimuove i file .puml temporanei generati da LikeC4 per tenere pulito il repository
+          for f in doc/deliverables/C4/**/*.puml; do
+            rm "$f"
+          done
+
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: automatic export of diagrams (SVG & PDF via PlantUML)"
+          file_pattern: 'doc/deliverables/**/*.pdf doc/deliverables/**/*.svg'
