@@ -15,7 +15,7 @@ model {
   }
 
   softwareSystem = system 'Software System' {
-    description 'A web-based platform for managing user data and services'
+    description 'A web-based platform for managing user data and services, needs a Browser to be used'
 
     webApp = container 'Web Application' {
       description 'Frontend application accessed via browser'
@@ -24,7 +24,7 @@ model {
 
     api = container 'Backend API' {
       description 'Handles business logic and requests'
-      technology 'Node.js / Spring Boot'
+      technology 'Node.js / Spring Boot / FastAPI'
     }
 
     database = container 'Database' {
