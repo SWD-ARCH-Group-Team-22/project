@@ -1,0 +1,130 @@
+FREEPLANE — MODULO: freeplane_plugin_latex
+==========================================
+
+Cos'è e a cosa serve
+----------------------
+Il plugin freeplane_plugin_latex integra il rendering di espressioni matematiche e
+notazione formale direttamente nelle mappe mentali di Freeplane. Un utente può inserire
+codice LaTeX in un nodo (ad esempio "\frac{a}{b}" per una frazione, o "\sum_{i=0}^{n}"
+per una sommatoria) e il plugin si occupa di convertirlo in un'immagine grafica
+visualizzata direttamente nella mappa.
+
+Questo rende Freeplane uno strumento utilizzabile anche in ambito scientifico,
+matematico e accademico, dove la notazione formale è parte integrante del contenuto.
+Il plugin ha una storia molto lunga — i primi commit risalgono al 2009 — e ha subito
+evoluzioni profonde sia nella tecnologia di rendering che nell'esperienza d'uso.
+
+
+Come funziona in dettaglio
+---------------------------
+
+--- Il rendering: da HotEqn a JLaTeXMath ---
+
+Nelle versioni più antiche (2009-2011) il rendering era affidato a una libreria chiamata
+HotEqn. Il commit 88554c50 del 2009 aggiunge il supporto allo zoom per la visualizzazione
+LaTeX, segnale che già in questa fase il plugin era integrato nella vista della mappa
+e doveva adattarsi ai livelli di zoom dell'utente.
+
+La svolta avviene nel 2012 con il commit f14b8867 ("add JLaTeXMath 1.0.1 prerelease"):
+viene adottata la libreria JLaTeXMath, che offre un rendering notevolmente superiore
+basato su TeX puro — compresi i font matematici corretti — e aggiunge il supporto
+all'interruzione automatica delle righe nelle formule lunghe. Contestualmente,
+il commit b27f7335 modifica la classe TeXText per non racchiudere più automaticamente
+il testo in un ambiente array, che avrebbe impedito il corretto funzionamento
+dell'a-capo automatico.
+
+Nel 2017, il commit 820920af consolida questa dipendenza aggiungendo esplicitamente
+i font jlatex-math alla configurazione gradle, garantendo che i font matematici
+vengano sempre inclusi nei pacchetti distribuiti.
+
+--- L'editor: nascita e maturazione ---
+
+All'inizio (2011) l'editor LaTeX era molto semplice. Il commit 018d9fac risolve
+un bug critico per cui non era possibile aggiungere o modificare formule in una
+certa revisione del programma. Il commit 13674ed9, sempre del 2011, introduce un
+comportamento importante: se l'utente svuota completamente il contenuto nell'editor
+LaTeX, il plugin rimuove automaticamente l'estensione LaTeX dal nodo, evitando di
+lasciare nodi "vuoti" con una struttura interna inconsistente.
+
+Nel 2014, il commit 4ff1f94f aggiunge un'opzione nelle preferenze per disabilitare
+l'editor con evidenziazione sintattica LaTeX — utile su sistemi lenti o per chi
+preferisce un editor più semplice.
+
+Nel 2020, il commit a6f20816 introduce un cambiamento importante all'esperienza d'uso:
+l'editor LaTeX passa da modale a non modale. In precedenza, aprire l'editor bloccava
+l'intera finestra di Freeplane finché non veniva chiuso; con questa modifica l'editor
+può restare aperto mentre si naviga nella mappa.
+
+Nel 2021, il commit fc5bf434 porta questa flessibilità ancora più avanti: gli editor
+LaTeX, Markdown e Formula vengono abilitati anche per i pannelli "details" e "notes"
+dei nodi, non solo per il testo principale. Questo significa che l'utente può usare
+LaTeX nelle note a piè di nodo, estendendo notevolmente le possibilità di annotazione.
+
+--- Temi scuri e colori ---
+
+Il commit da8243fc del 2019 aggiunge il supporto alla modalità scura (dark mode) anche
+per il rendering LaTeX. Si tratta di un problema non banale: le immagini LaTeX vengono
+renderizzate come bitmap, e un'immagine con testo nero su sfondo bianco è visivamente
+stonata in un tema scuro. Il plugin deve quindi adattare i colori di rendering al tema
+corrente dell'applicazione.
+
+Nel 2021, il commit b1cec127 affina questo supporto correggendo i colori di sfondo
+dell'editor LaTeX su macOS con il tema VAqua (il tema nativo macOS per applicazioni
+Java/Swing). Lo stesso anno, il commit 7bb3b7d5 e il successivo aaac8d35 correggono
+problemi specifici nella classe LatexRenderer che emergevano in combinazione con
+la nuova libreria jsyntaxpane introdotta all'inizio del 2021.
+
+Nel 2025, il commit c9e842a5 porta un fix più strutturato per il rendering LaTeX:
+corregge la larghezza di visualizzazione, i font e i colori, introducendo un accesso
+centralizzato agli stili delle note tramite NoteStyleAccessor — evidentemente una
+refactoring che uniforma il modo in cui il plugin legge le impostazioni visive.
+
+--- Funzionalità speciali ---
+
+Nel 2013, il commit 59bad5cd aggiunge un'opzione nelle preferenze per definire macro
+LaTeX globali, condivise tra tutti i nodi della mappa. Questo è molto utile in ambito
+accademico: si può definire una volta \newcommand{\R}{\mathbb{R}} e usarla in qualsiasi
+nodo senza ripeterla ogni volta.
+
+Nel 2014, il commit fa8385f0 introduce il formato "Unparsed LaTeX", identificato dal
+prefisso \unparsedlatex nel testo del nodo. Questo formato speciale permette di
+includere contenuto LaTeX che non deve essere pre-elaborato da Freeplane prima del
+rendering — utile per contenuti complessi che il parser interno non riesce a gestire
+correttamente.
+
+Nel 2025, il commit ddf41d1f migliora il supporto agli "input method events",
+ovvero i metodi di input per lingue come il cinese, il giapponese o il coreano
+(IME). Si tratta di un dettaglio importante per l'accessibilità internazionale:
+chi usa una tastiera con composizione di caratteri complessa può ora farlo anche
+nell'editor LaTeX.
+
+--- Cloni e undo ---
+
+Il commit 3d725cc6 del 2014 risolve un bug nella creazione dei viewer LaTeX per i nodi
+clonati. Freeplane supporta la clonazione dei nodi (un nodo che appare in più punti
+della mappa condividendo il contenuto): il plugin doveva gestire correttamente il caso
+in cui lo stesso contenuto LaTeX fosse visualizzato in istanze multiple.
+
+Il commit 4b28962f del 2012 corregge invece il comportamento di undo/redo quando si
+aggiunge o rimuove un'equazione LaTeX — un'operazione che doveva essere correttamente
+tracciata nella history delle modifiche per poter essere annullata e ripetuta.
+
+--- Il fix più recente ---
+
+Il commit più recente in assoluto del dataset (b27609a2, aprile 2026) risolve un
+NullPointerException (NPE) segnalato nell'issue #2867 nella classe LatexRenderer.
+Un NPE è un errore Java che si verifica quando si tenta di usare un riferimento a
+oggetto che è null; in questo caso il renderer si trovava in uno stato in cui un
+componente necessario non era ancora stato inizializzato, causando un crash.
+
+
+Riepilogo
+----------
+freeplane_plugin_latex è uno dei plugin storicamente più ricchi e complessi del
+progetto. La sua evoluzione racconta la storia di un'integrazione progressiva tra
+un software di mind mapping generalista e le esigenze specifiche degli utenti
+scientifici e accademici: dalla prima implementazione basilare del 2009, al renderer
+di qualità professionale basato su JLaTeXMath, fino all'editor non modale, ai temi
+scuri, alle macro globali e al supporto agli input method per lingue asiatiche.
+Ogni commit riflette il tentativo di rendere Freeplane un ambiente di lavoro
+completo anche per chi ha bisogno di notazione matematica formale.

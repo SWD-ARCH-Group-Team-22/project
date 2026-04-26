@@ -1,0 +1,96 @@
+FREEPLANE — MODULO: freeplane_debughelper
+==========================================
+
+Cos'è e a cosa serve
+----------------------
+Il modulo freeplane_debughelper è uno strumento di supporto pensato esclusivamente per gli
+sviluppatori di Freeplane e dei suoi plugin. Non aggiunge funzionalità visibili all'utente
+finale: il suo scopo è rendere più agevole il lavoro in fase di sviluppo e debug, fornendo
+configurazioni di avvio per gli IDE (Eclipse, IntelliJ, NetBeans), strumenti di ispezione
+dello stato interno dell'applicazione e impostazioni di logging avanzato.
+
+In pratica, questo modulo si occupa di tre cose principali:
+
+1. Configurazioni di lancio per gli ambienti di sviluppo
+2. Permessi e politiche di sicurezza per il runtime Java
+3. Funzionalità di utilità per il debug (logging, ispezione visiva)
+
+
+Come funziona in dettaglio
+---------------------------
+
+--- Configurazioni di avvio (launcher) ---
+
+La parte più consistente della storia di questo modulo riguarda il mantenimento dei file
+di configurazione che permettono agli sviluppatori di avviare Freeplane direttamente
+dall'interno del proprio IDE, senza dover creare un pacchetto distribuibile ogni volta.
+Esistono varianti per Eclipse (.launch), IntelliJ/IDEA (.xml) e NetBeans.
+
+Nel tempo, questi file hanno richiesto numerose correzioni per stare al passo con i
+cambiamenti dell'ecosistema Java e degli IDE stessi. Ad esempio, nel 2018 si è reso
+necessario correggere i percorsi delle directory per le risorse esterne in Eclipse
+(commit 330ba9a0, "Fix external resource dir in eclipse launcher"), e successivamente
+nel 2021 la configurazione è stata aggiornata e testata per IntelliJ CE 2021.1
+(commit 8447fc1c, "fix idea run configurations").
+
+Nel gennaio 2020, a tutte le configurazioni di lancio è stata aggiunta la proprietà
+-Dsun.awt.disablegrab=true (commit 7a4e9e30), un parametro JVM che disabilita
+il "mouse grab" dell'AWT — comportamento che può interferire con il debugger impedendogli
+di intercettare certi eventi del mouse.
+
+--- Logging avanzato ---
+
+Nel 2023 è stato aggiunto il supporto esplicito per le proprietà di logging nelle
+configurazioni di lancio (commit 63bd0533, "Add logging properties to launch
+configurations"). Questo permette agli sviluppatori di controllare finemente il livello
+di verbosità dei log di Freeplane mentre lo eseguono in modalità debug, senza dover
+modificare file separati.
+
+--- Permessi di sicurezza ---
+
+Java — specialmente nelle versioni con Security Manager attivo — richiede che le
+applicazioni dichiarino esplicitamente i permessi di cui necessitano. Questo modulo
+gestisce il file freeplane.policy che contiene tali dichiarazioni. Nel 2019, ad esempio,
+è stato aggiunto il supporto per il nuovo percorso di java-atk-wrapper su Linux
+(commit 6759ef7e), mentre nel 2022 è stato aggiunto il permesso
+AWTPermission "watchMousePointer" (commit c725f317), necessario per consentire
+all'applicazione di monitorare la posizione del cursore — funzionalità utile per
+certi strumenti di debug visivo.
+
+--- Supporto a Java 17 e modernizzazione ---
+
+Nel 2022, con il commit 4b16c43d, il modulo è stato aggiornato per supportare
+Java 17, che impone restrizioni più severe sull'accesso a classi interne del JDK
+tramite reflection. In parallelo, nel 2021 erano già stati aggiunti gli "exports"
+verso API non pubbliche usate dal tema Darcula (commit ee7f685c), e corrette le
+modalità di accesso riflesso all'API macOS per il fullscreen (commit e850d1de).
+Queste modifiche sono tipiche del passaggio alle versioni recenti di Java, dove il
+sistema di moduli (JPMS) rende necessario dichiarare esplicitamente gli accessi
+cross-modulo.
+
+--- Funzionalità recenti (2025) ---
+
+Nel 2025 il modulo ha ricevuto alcune correzioni legate a funzionalità di interfaccia
+più avanzate. Il commit d18cef3d ha risolto multipli bug nel componente ausiliario
+AuxillaryEditorSplitPane e nei meccanismi di avvio. Il commit aefa5f32 ha introdotto
+una nuova opzione ("UI elements follow selected map", abilitata di default) che fa
+seguire all'interfaccia utente la mappa selezionata — funzionalità integrata nelle
+configurazioni di debug per poter essere testata facilmente dagli sviluppatori.
+
+Il commit più recente e tecnicamente interessante è c3338a39 (settembre 2025): corregge
+un bug nell'outline mode per cui i nodi di primo livello apparivano indentati come se
+fossero figli di nodi più profondi. Il problema stava nel fatto che la classe BlockPanel
+usava il campo FlatNode.depth per calcolare l'indentazione orizzontale, mentre il valore
+corretto si ottiene risalendo la catena dei nodi genitori. Il fix sostituisce quella
+lettura con il calcolo esplicito della profondità reale, e rimuove i print diagnostici
+temporanei su stdout che erano stati aggiunti durante l'investigazione.
+
+
+Riepilogo
+----------
+freeplane_debughelper è un modulo di infrastruttura per sviluppatori. Non tocca le
+funzionalità dell'applicazione finale, ma garantisce che chi lavora sul codice di
+Freeplane possa avviarlo, ispezionarlo e debuggarlo in modo affidabile da qualsiasi
+IDE, su qualsiasi sistema operativo, con la versione di Java corrente. La sua storia
+di commit riflette fedelmente l'evoluzione dell'ecosistema Java (da Java 8 a Java 17+)
+e degli strumenti di sviluppo nel corso di quasi quindici anni.

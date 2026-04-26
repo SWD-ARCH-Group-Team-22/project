@@ -983,15 +983,127 @@ def render_text(pm):
     return "\n".join(lines)
 
 # ─────────────────────────────────────────────────────────────
+# PER-PLUGIN DETAIL FILES
+# ─────────────────────────────────────────────────────────────
+NOTABLE_CATS = {"feature", "fix", "api_change"}
+
+def render_plugin_detail_md(pk, cs):
+    """Genera un file Markdown per un singolo plugin con tutti i commit
+    di tipo feature, fix e api_change, raggruppati per anno."""
+    from datetime import datetime as dt
+
+    label = PLUGIN_LABELS.get(pk, pk)
+    desc  = PLUGIN_DESCRIPTIONS.get(pk, "")
+
+    # filtra solo i commit rilevanti
+    notable = [c for c in cs if classify_commit(c) in NOTABLE_CATS]
+    notable_sorted = sorted(notable, key=lambda c: c["date"] or dt.min, reverse=True)
+
+    lines = []
+    lines.append(f"# {label} — Commit rilevanti")
+    lines.append(f"\n**Modulo:** `{pk}`  ")
+    lines.append(f"**Commit rilevanti (feature / fix / api_change):** {len(notable_sorted)} "
+                 f"su {len(cs)} totali\n")
+
+    if desc:
+        lines.append(f"> {desc}\n")
+
+    lines.append(f"_Generato il {dt.now().strftime('%Y-%m-%d %H:%M')}_\n")
+    lines.append("---\n")
+
+    if not notable_sorted:
+        lines.append("_Nessun commit di tipo feature, fix o api_change trovato per questo plugin._\n")
+        return "\n".join(lines)
+
+    # indice rapido per anno
+    by_year = {}
+    for c in notable_sorted:
+        y = c["date"].year if c["date"] else 0
+        by_year.setdefault(y, []).append(c)
+
+    lines.append("## Indice per anno\n")
+    for y in sorted(by_year, reverse=True):
+        lines.append(f"- [{y}](#{y}) — {len(by_year[y])} commit")
+    lines.append("")
+    lines.append("---\n")
+
+    # sezioni per anno
+    for y in sorted(by_year, reverse=True):
+        year_commits = sorted(by_year[y], key=lambda c: c["date"] or dt.min, reverse=True)
+        lines.append(f"## {y}\n")
+        lines.append("| Data | Tipo | Descrizione | File principali | Hash |")
+        lines.append("|------|------|-------------|-----------------|------|")
+        for c in year_commits:
+            d    = c["date"].strftime("%Y-%m-%d") if c["date"] else "?"
+            cat  = classify_commit(c)
+            subj = c["subject"][:90].replace("|", "\\|")
+            # mostra al massimo 2 file, abbreviando il path
+            files = c.get("files", [])
+            files_short = [f.split("/")[-1] for f in files[:2]]
+            files_str   = ", ".join(f"`{f}`" for f in files_short)
+            if len(files) > 2:
+                files_str += f" +{len(files)-2}"
+            h   = c["hash"][:8]
+            url = f"https://github.com/freeplane/freeplane/commit/{c['hash']}"
+            lines.append(f"| {d} | `{cat}` | {subj} | {files_str} | [{h}]({url}) |")
+
+        # body dei commit (se non vuoto) come dettaglio collassabile
+        with_body = [c for c in year_commits if c.get("body","").strip()]
+        if with_body:
+            lines.append("")
+            lines.append("### Dettagli commit con note\n")
+            for c in with_body:
+                d    = c["date"].strftime("%Y-%m-%d") if c["date"] else "?"
+                h    = c["hash"][:8]
+                url  = f"https://github.com/freeplane/freeplane/commit/{c['hash']}"
+                body = c["body"].strip().replace("\n", "\n> ")
+                lines.append(f"**[{h}]({url})** ({d}) — {c['subject']}\n")
+                lines.append(f"> {body}\n")
+
+        lines.append("")
+        lines.append("---\n")
+
+    # legenda in fondo
+    lines.append("## Legenda\n")
+    lines.append("| Tipo | Significato |")
+    lines.append("|------|-------------|")
+    lines.append("| `feature` | Nuova funzionalità aggiunta |")
+    lines.append("| `fix` | Correzione di bug o regressione |")
+    lines.append("| `api_change` | Modifica alle interfacce pubbliche |")
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+def write_plugin_detail_files(pm, out_dir: Path):
+    """Scrive un file .md per ogni plugin nella cartella out_dir/plugins/."""
+    plugins_dir = out_dir / "plugins"
+    plugins_dir.mkdir(parents=True, exist_ok=True)
+    written = []
+    for pk, cs in sorted(pm.items(), key=lambda x: -len(x[1])):
+        content  = render_plugin_detail_md(pk, cs)
+        filename = f"{pk}.md"
+        dest     = plugins_dir / filename
+        dest.write_text(content, encoding="utf-8")
+        label    = PLUGIN_LABELS.get(pk, pk)
+        notable  = sum(1 for c in cs if classify_commit(c) in NOTABLE_CATS)
+        written.append((label, pk, notable, dest))
+        print(f"      {label:30s}: {notable} commit rilevanti → {dest.name}", file=sys.stderr)
+    return plugins_dir, written
+
+
+# ─────────────────────────────────────────────────────────────
 # MAIN
 # ─────────────────────────────────────────────────────────────
 def main():
     p = argparse.ArgumentParser(description="Freeplane Plugin Timeline")
-    p.add_argument("--repo",   required=True)
-    p.add_argument("--output", default="freeplane_plugin_timeline.html")
-    p.add_argument("--format", choices=["html","json","text","markdown"], default="html")
-    p.add_argument("--since",  default=None)
-    p.add_argument("--until",  default=None)
+    p.add_argument("--repo",         required=True)
+    p.add_argument("--output",       default="freeplane_plugin_timeline.html")
+    p.add_argument("--format",       choices=["html","json","text","markdown"], default="html")
+    p.add_argument("--since",        default=None)
+    p.add_argument("--until",        default=None)
+    p.add_argument("--no-per-plugin", action="store_true",
+                   help="Non generare i file per-plugin (generati di default)")
     args = p.parse_args()
 
     repo = str(Path(args.repo).resolve())
@@ -1000,16 +1112,16 @@ def main():
         print(f"[ERRORE] '{repo}' non e' una repo Git valida.\ngit: {chk.stderr.strip()}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"[1/3] Lettura commit da {repo}...", file=sys.stderr)
+    print(f"[1/4] Lettura commit da {repo}...", file=sys.stderr)
     commits = get_all_commits(repo, args.since, args.until)
     print(f"      {len(commits)} commit totali", file=sys.stderr)
 
-    print("[2/3] Raggruppamento per plugin...", file=sys.stderr)
+    print("[2/4] Raggruppamento per plugin...", file=sys.stderr)
     pm = build_plugin_map(commits)
     for pk, lst in sorted(pm.items(), key=lambda x: -len(x[1])):
         print(f"      {PLUGIN_LABELS.get(pk,pk):30s}: {len(lst)}", file=sys.stderr)
 
-    print("[3/3] Scrittura output...", file=sys.stderr)
+    print("[3/4] Scrittura report principale...", file=sys.stderr)
     content = render_html(pm, repo, args.since, args.until) if args.format=="html" \
          else render_json(pm) if args.format=="json" \
          else render_markdown(pm) if args.format=="markdown" \
@@ -1017,7 +1129,16 @@ def main():
 
     out = Path(args.output)
     out.write_text(content, encoding="utf-8")
-    print(f"\n  Salvato: {out.resolve()}", file=sys.stderr)
+    print(f"      Salvato: {out.resolve()}", file=sys.stderr)
+
+    if not args.no_per_plugin:
+        print("[4/4] Scrittura file per-plugin...", file=sys.stderr)
+        plugins_dir, written = write_plugin_detail_files(pm, out.parent)
+        print(f"\n  Report principale : {out.resolve()}", file=sys.stderr)
+        print(f"  File per-plugin   : {plugins_dir.resolve()}/", file=sys.stderr)
+        print(f"  Plugin scritti    : {len(written)}", file=sys.stderr)
+    else:
+        print(f"\n  Salvato: {out.resolve()}", file=sys.stderr)
 
 if __name__ == "__main__":
     main()
