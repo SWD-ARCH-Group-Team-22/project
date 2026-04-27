@@ -1,0 +1,123 @@
+FREEPLANE — MODULO: freeplane_plugin_formula
+=============================================
+
+Cos'è e a cosa serve
+----------------------
+Il plugin freeplane_plugin_formula aggiunge le formule ai nodi di Freeplane: testo
+che inizia con il carattere = viene interpretato non come contenuto statico ma come
+un'espressione Groovy da valutare dinamicamente. Questo trasforma Freeplane in
+qualcosa di simile a un foglio di calcolo visuale: i nodi possono contenere
+calcoli, riferirsi al contenuto di altri nodi, aggregare valori, e aggiornarsi
+automaticamente quando i dati cambiano.
+
+L'analogia con uno spreadsheet è precisa: come in Excel il testo "=A1+B1" produce
+la somma dei valori nelle celle, in Freeplane "=node.parent['Budget']" accede
+all'attributo "Budget" del nodo genitore. Le formule sono scritte in Groovy, quindi
+hanno la piena potenza di un linguaggio di programmazione.
+
+
+Come funziona in dettaglio
+---------------------------
+
+--- Le origini (2010): il motore di trasformazione del testo ---
+
+Il plugin nasce nell'ottobre 2010. Il commit 3677d7a3 è particolarmente istruttivo
+perché descrive nel dettaglio l'architettura: l'idea centrale è che un FormulaPlugin
+intercetta il testo dei nodi prima che venga visualizzato, e se inizia con = lo
+sostituisce con il risultato della valutazione Groovy. Questo avviene non solo nel
+testo del nodo principale, ma anche nelle tabelle degli attributi, nei tooltip e
+nel pannello note (se l'opzione "Mostra note nella mappa" è attiva).
+
+Il commit richiede una rearchitettura di TextController: il metodo getText() viene
+rinominato getTransformedText() per distinguerlo da getText() che restituisce il
+testo non trasformato. Questo duale è fondamentale per evitare che le formule si
+autoriferiscano ininzionalmente.
+
+Nello stesso mese, il commit 35e29691 aggiunge due funzionalità importanti: la
+gestione dei riferimenti circolari (quando la formula di un nodo A dipende da B
+che dipende da A) — il plugin ora rileva il ciclo e lo segnala invece di andare
+in loop infinito — e un'opzione per non marcare visivamente i nodi che contengono
+formule (il marking default aiuta a identificarli a colpo d'occhio).
+
+--- Il sistema di dipendenze e aggiornamento automatico ---
+
+Una delle sfide principali delle formule è tenere i valori aggiornati quando i
+dati cambiano. Se il nodo B contiene "=A.text" e il testo di A cambia, B deve
+ricalcolarsi automaticamente.
+
+Nel 2018, una sequenza densa di commit costruisce un sistema sofisticato di
+tracciamento delle dipendenze. Il commit f273ade7 introduce l'API pubblica
+getPrecedents() e getDependents(): metodi che permettono di sapere da quali
+nodi dipende una formula e quali nodi dipendono da essa. Il commit 82aecb58
+corregge nomi e documentazione di questo sistema.
+
+I commit 938f149f e 01e51f27 (ottobre 2018) correggono problemi nel
+DependentsSearchStrategy e nel FormulaDependencyTracer, che stavano causando
+chiamate ricorsive non terminate e NullPointerException durante il calcolo
+delle dipendenze. Il commit e8ffd6cb corregge la persistenza dei valori tracciati.
+
+Nel 2024, il commit 66effa94 risolve un bug specifico: il risultato di una formula
+non veniva aggiornato correttamente per i nodi che accedevano ai dati tramite
+cloni (nodi che appaiono in più punti della mappa condividendo lo stesso contenuto).
+
+--- L'editor della formula ---
+
+Il plugin fornisce un editor dedicato con l'interfaccia dell'editor di script.
+Nel 2018, il commit 66415885 corregge la larghezza del pannello che mostra la
+traccia dell'eccezione quando una formula va in errore: il pannello era troppo
+stretto per leggere il messaggio di errore.
+
+Nel 2021, il commit ba8adffd sostituisce la libreria di highlighting sintattico,
+migliorando anche l'editor delle formule. Il commit fc5bf434 estende la disponibilità
+dell'editor a finestra di dialogo anche per il pannello note e il pannello dettagli
+dei nodi — non solo per il testo principale.
+
+Il commit a6f20816 (dicembre 2020) rende l'editor delle formule non modale: prima
+bisognava chiuderlo prima di poter interagire con il resto dell'applicazione.
+
+Nel 2021, il commit e30072b5 introduce un'opzione nelle preferenze per forzare la
+modalità modale degli editor di dialogo — utile per chi trova il comportamento non
+modale disorientante o per configurazioni multi-monitor.
+
+--- Formule tra mappe diverse ---
+
+Un caso d'uso avanzato è la formula che fa riferimento a nodi in mappe diverse da
+quella corrente. Il commit 27e3de61 (ottobre 2018) risolve il bug #2616 riguardante
+i riferimenti da altre mappe: il sistema ora gestisce correttamente il caso in cui
+la mappa referenziata sia chiusa, evitando eccezioni e comportamenti indefiniti.
+
+--- Formule e stili condizionali ---
+
+Il commit 8f17ede4 (novembre 2022) risolve il bug #843: le regole di formattazione
+condizionale basate su script non venivano applicate ai nuovi nodi. Il problema
+stava nel fatto che il listener di cambio mappa non era notificato tempestivamente
+quando un nuovo nodo veniva creato. La correzione introduce IMapChangeListener per
+garantire che i nuovi nodi siano soggetti alle stesse regole degli esistenti.
+
+--- Indipendenza configurabile (2015) ---
+
+Il commit 925ec4ed introduce un'opzione importante nelle preferenze: formattazione
+dei dati, elaborazione delle formule e rendering LaTeX possono essere abilitati e
+disabilitati indipendentemente. Prima erano un blocco unico. Questo permette, ad
+esempio, di usare LaTeX senza formule, o le formule senza la formattazione automatica
+dei numeri.
+
+--- Fix recenti ---
+
+Il commit 5b8d5f72 (aprile 2025) risolve un NPE nel FormulaDependencyTracer —
+il componente che traccia le dipendenze tra formule. Un NullPointerException indica
+che in certi casi il tracer tentava di operare su un riferimento non ancora
+inizializzato, probabilmente durante l'apertura o il caricamento di mappe con
+formule complesse.
+
+
+Riepilogo
+----------
+freeplane_plugin_formula trasforma Freeplane da strumento di organizzazione
+delle idee a strumento di analisi visuale. La sua complessità interna —
+tracciamento delle dipendenze, aggiornamento automatico, gestione dei cicli,
+riferimenti cross-mappa — è nascosta all'utente, che vede semplicemente nodi
+che "calcolano" il loro valore. L'integrazione con l'editor con highlighting
+sintattico e la possibilità di usare formule in attributi, note e dettagli
+rende il sistema estremamente flessibile per costruire vere e proprie applicazioni
+di analisi dati all'interno di una mappa mentale.

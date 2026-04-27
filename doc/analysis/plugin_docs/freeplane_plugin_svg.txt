@@ -1,0 +1,200 @@
+===========================================================================
+FREEPLANE — Plugin: freeplane_plugin_svg
+Descrizione funzionale basata sull'analisi dei commit (2009–2025)
+===========================================================================
+
+PANORAMICA GENERALE
+-------------------
+Il plugin freeplane_plugin_svg aggiunge a Freeplane il supporto per la grafica
+vettoriale scalabile (SVG). Permette di:
+  - incorporare immagini SVG come oggetti visivi all'interno dei nodi
+  - usare SVG come sfondo della mappa
+  - esportare l'intera mappa nei formati SVG e PDF
+
+È un plugin relativamente stabile: con 43 commit rilevanti su 159 totali,
+la sua storia è fatta più di consolidamento e correzione di bug che di grandi
+aggiunte funzionali. Le due librerie principali su cui si appoggia sono
+Apache Batik (per la visualizzazione e la renderizzazione SVG) e Apache FOP
+(per l'esportazione PDF tramite XSL-FO).
+
+
+ARCHITETTURA DEL PLUGIN
+-----------------------
+Il plugin si articola attorno a pochi componenti centrali:
+
+  SvgViewerFactory
+    È la factory che produce il componente visuale per mostrare un'immagine
+    SVG all'interno di un nodo. Usa le API di Batik per caricare e
+    renderizzare il file SVG in modo asincrono (tramite GVTTreeRenderer),
+    poi notifica il completamento tramite il listener gvtRenderingCompleted().
+    
+  BitmapViewerFactory / BitmapViewerComponent
+    Gestisce la visualizzazione di immagini raster (PNG, JPEG) ma è
+    coinvolta anche nel pipeline SVG, perché Batik converte internamente
+    l'SVG in una rappresentazione bitmap per la visualizzazione Swing.
+    
+  ExportVectorGraphic / ExportSvg / ExportPdf
+    Gestiscono l'esportazione della mappa. ExportVectorGraphic è la classe
+    base condivisa tra esportazione SVG e PDF; le classi derivate
+    implementano i dettagli specifici del formato.
+
+
+STORIA E PROBLEMI RICORRENTI
+-----------------------------
+
+Problema del Look and Feel durante l'esportazione (2013–2024)
+--------------------------------------------------------------
+Il problema più longevo nella storia del plugin riguarda l'interazione tra
+il processo di esportazione e il Look and Feel (LaF) di Swing, ovvero il
+tema grafico dell'applicazione.
+
+Il 2 dicembre 2013 vengono committati due fix consecutivi (hash a804a173 e
+f4c963b4) per risolvere un bug durante l'esportazione SVG/PDF quando si
+usano i LaF GTK o Nimbus: l'esportazione modificava temporaneamente il LaF
+per ottenere una resa grafica pulita, ma questo causava effetti collaterali
+visibili all'utente.
+
+Il 14 gennaio 2014 (hash 1ac96c42) viene fissato un bug correlato:
+dopo un'esportazione SVG, Freeplane non ripristinava correttamente il
+Look and Feel precedente.
+
+Il 21 settembre 2019 (hash 13e03dbf) il problema si ripresenta con il tema
+Darcula, popolare tema scuro: "Fix SVG and PDF export with Darcula LaF".
+
+Il 27 luglio 2024 (hash 93af3ff1) il team decide infine di adottare un
+approccio diverso: invece di cambiare temporaneamente il LaF durante
+l'esportazione, non lo si cambia affatto. Questo commit — che curiosamente
+descrive se stesso come il revert di un bug fix del 2013 — risolve una
+regressione documentata nell'issue #1920: "Freeplane menu fonts are increased
+each time File > Export > PDF is used". Ogni esportazione PDF causava un
+incremento progressivo della dimensione dei font nel menu dell'applicazione.
+
+
+Visualizzazione SVG nei nodi: bug di zoom e dimensioni (2010–2020)
+------------------------------------------------------------------
+Rendere correttamente un'immagine SVG all'interno di un nodo Freeplane
+ha richiesto anni di aggiustamenti, principalmente perché SVG è un formato
+vettoriale che deve essere "rastrerizzato" a una certa risoluzione, e questa
+resoluzione deve adattarsi dinamicamente allo zoom della mappa.
+
+Il primo bug di questo tipo risale a gennaio 2010 (hash c9ce9936): "bug fix
+for displaying svg graphics with not integer dimension" — le immagini SVG con
+dimensioni non intere (es. 100.5 × 75.3 pixel) causavano problemi di
+visualizzazione.
+
+Nel febbraio 2014 (hash 2eea90dd) viene introdotto un workaround per l'opzione
+"fit to zoom": il metodo di aggiustamento del rapporto larghezza/altezza
+mantiene le proporzioni originali dell'immagine, e viene introdotto un limite
+massimo alle dimensioni del viewer per eliminare gli errori "out of memory"
+che si verificavano con immagini molto grandi.
+
+Il 1° marzo 2014 (hash 42732cd4) un refactoring dei componenti viewer sposta
+la responsabilità del centraggio dell'immagine direttamente nelle
+implementazioni di ScalableComponent. Il commit note è onesto sul limite
+rimasto: "The only problem that remains is the bug involving the off centring
+of SVG images."
+
+Il 23 febbraio 2015 (hash 63e223d8) viene corretto lo zoom delle immagini
+esterne in generale: "Fix external image zooming".
+
+Il 19 novembre 2015 compaiono due commit con lo stesso titolo "Fix NPE"
+(hash 24581795 e a0f1cac4). Entrambi correggono un NullPointerException che
+esplodeva dentro gvtRenderingCompleted() — il callback asincrono di Batik
+che segnala il completamento della renderizzazione. Il problema si verificava
+quando il componente veniva distrutto prima che Batik finisse di renderizzare,
+lasciando un riferimento null a ExternalResource.
+
+Nel febbraio 2020 (hash 65d1fe0f e 02b5f924) due fix ravvicinati correggono
+la visualizzazione generale delle immagini SVG e degli sfondi SVG, toccando
+BitmapViewerFactory e ExternalResource.
+
+
+Esportazione PDF e dipendenza da Apache FOP
+-------------------------------------------
+L'esportazione in PDF dipende da Apache FOP, una libreria di terze parti che
+ha una propria storia di bug e versioni problematiche.
+
+Il 27 aprile 2012 (hash d19bb1d8) viene corretto il calcolo della risoluzione
+nell'esportazione PDF: "fix resolution for pdf export".
+
+Il 18 febbraio 2018 (hash 17ddd648) viene risolto un problema con il testo
+embedded nell'esportazione PDF: alcune configurazioni causavano la perdita del
+testo esportato.
+
+Il 14 dicembre 2019 (hash f0c2c90b) viene aggiunto un workaround specifico
+per un bug di FOP 2.4 (segnalato su JIRA di Apache come FOP-2896). Due giorni
+prima (hash a863367b) era già stato aggiornato il file build.gradle per
+includere la nuova versione di FOP come dipendenza.
+
+Il 20 agosto 2021 (hash 1cd87dfe) viene corretto un problema nell'esportazione
+PDF che causava una ricerca di font nella directory utente, rallentando o
+rompendo il processo: "fix pdf export removing font search in user directory
+performed by fop". Questo commit tocca i file di localizzazione in 22+ lingue,
+a indicare che il messaggio di errore mostrato all'utente veniva aggiornato
+di conseguenza.
+
+Il 21 marzo 2021 (hash 7a921d80) viene aggiunto un avviso esplicito alla prima
+esportazione PDF, presumibilmente per informare l'utente di limitazioni o
+requisiti particolari del processo.
+
+Il 2 novembre 2024 (hash 3b3475ab) vengono aggiornate e corrette le versioni
+delle dipendenze Batik e FOP nel file build.gradle, mantenendo la compatibilità
+con le versioni più recenti delle librerie.
+
+
+Sfondi SVG
+----------
+Dal commit del 14 marzo 2014 (hash af6f06ad) sappiamo che esiste la funzione
+"background image" per le mappe Freeplane: "fix loading background image on
+start". Questo fix corregge SvgViewerFactory e MapView per caricare
+correttamente l'immagine di sfondo SVG all'avvio dell'applicazione.
+
+Il 22 febbraio 2020 (hash 02b5f924) viene risolto un ulteriore bug sugli
+sfondi SVG, separato dal fix generale sulle immagini SVG committato il giorno
+precedente.
+
+
+Integrazione con Batik: gradienti e icone
+-----------------------------------------
+Il 14 ottobre 2017 (hash 2e72152f) viene risolto un problema nell'esportazione
+vettoriale: i gradienti CSS usati nelle icone SVG prodotte da svgSalamander
+(la libreria usata internamente per le icone di Freeplane) non venivano gestiti
+correttamente da Batik durante l'export. Il fix introduce un
+GradientExtensionHandler apposito.
+
+
+Preview e tooltip
+-----------------
+Il 24 dicembre 2018 (hash 971c4ae4) viene corretto il rendering SVG nelle
+anteprime e nei tooltip: "fix svg in previews and tooltips". Questo fix
+coinvolge ImageTooltipRendererFactory e SvgViewerFactory, e riguarda la
+visualizzazione dell'immagine quando si passa il mouse sopra un nodo con
+un'immagine SVG allegata.
+
+
+Evoluzione dell'infrastruttura di build
+----------------------------------------
+Il plugin ha attraversato diverse epoche del sistema di build di Freeplane:
+da Ant (2009) a Gradle con OSGi/BND (2014–2016) fino al Gradle moderno.
+
+Il commit del 2 gennaio 2015 (hash 45ae8049) rimuove tutti i file MANIFEST.MF
+gestiti manualmente, delegando la generazione al build system. Il 26 gennaio
+2015 (hash 96b107c8) aggiunge la dipendenza Xerces al plugin SVG, necessaria
+per il parsing XML durante l'esportazione PDF.
+
+Nel 2022 il plugin beneficia dell'aggiornamento globale di Freeplane a Java 17
+(hash 4b16c43d, marzo 2022), del passaggio al nuovo tema grafico FlatLaf
+(hash 40eb7bdf, gennaio 2022) e dell'aggiunta dell'opzione -R per eseguire
+script Groovy all'avvio (hash b0316941, aprile 2022 — questo commit tocca
+anche il plugin SVG perché coinvolge l'infrastruttura di avvio comune).
+
+
+CONCLUSIONE
+-----------
+Il plugin freeplane_plugin_svg è un componente maturo la cui complessità
+principale non sta nelle funzionalità esposte all'utente — che sono
+relativamente semplici (mostra SVG, esporta SVG/PDF) — ma nella difficoltà
+di integrare due librerie pesanti e complesse (Batik e FOP) con un'interfaccia
+grafica Swing che cambia look and feel e zoom dinamicamente. La lunga serie
+di fix attorno all'esportazione e alla visualizzazione testimonia questa
+sfida tecnica costante.

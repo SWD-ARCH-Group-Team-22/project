@@ -1,0 +1,97 @@
+FREEPLANE — MODULO: freeplane_plugin_openmaps
+=============================================
+
+Cos'è e a cosa serve
+----------------------
+Il plugin freeplane_plugin_openmaps integra OpenStreetMap direttamente in Freeplane,
+permettendo di agganciare coordinate geografiche ai nodi e di visualizzare una
+mappa interattiva associata. L'utente può assegnare a un nodo una posizione geografica
+— una città, un luogo di interesse, un indirizzo — e il plugin mostrerà la mappa
+OpenStreetMap corrispondente direttamente nell'interfaccia. Questo è utile per
+mappe concettuali con componente spaziale: pianificazione di viaggi, documentazione
+di luoghi, analisi territoriali.
+
+La storia dei commit rilevanti copre principalmente il periodo 2012-2014, anno di
+nascita e consolidamento, con pochi interventi successivi di manutenzione.
+
+
+Come funziona in dettaglio
+---------------------------
+
+--- La struttura dati: OpenMapsExtension e OpenMapsNodeHook ---
+
+Il plugin estende i nodi di Freeplane aggiungendo un "hook" — un componente
+agganciato al nodo che persiste nella mappa e ne arricchisce il comportamento.
+La classe OpenMapsNodeHook gestisce questo aggancio, mentre OpenMapsExtension
+contiene i dati geografici associati al nodo (coordinate, livello di zoom).
+
+Nel settembre 2012, una serie di commit ravvicinati stabilisce le fondamenta
+del plugin. Il commit c2288b9a corregge un bug critico: venivano creati multipli
+NodeHook sullo stesso nodo invece di uno solo. Il commit c6f9d625 risolve altri
+bug generali nella gestione del NodeHook. Il commit 40afbeb6 corregge la
+persistenza del livello di zoom: quando l'utente salvava la mappa, il valore
+dello zoom non veniva memorizzato correttamente e veniva perso alla riapertura.
+
+--- L'interazione con la mappa: scelta della posizione ---
+
+Il commit 5b1416d3 (settembre 2012) aggiunge un listener per la selezione delle
+posizioni geografiche tramite un ciclo di eventi: l'utente può fare doppio click
+sulla mappa per aggiungere una posizione. Il commit 004ee3f7 introduce un controller
+dedicato per questa interazione e passa alla libreria JMapViewer basata sul tipo
+Coordinate per gestire le posizioni — un tipo più preciso e ricco di un semplice
+punto.
+
+Il commit 83e5bd24 (agosto 2014) porta un cambiamento architetturale importante:
+viene introdotto il concetto di IconMouseListener — un listener per i click sulle
+icone nei nodi. Quando l'utente clicca sull'icona della mappa associata a un nodo,
+il plugin apre automaticamente il viewer OpenMaps. Prima di questa modifica, era
+necessario un meccanismo diverso per innescare la visualizzazione.
+
+--- L'undo e la persistenza ---
+
+Il commit 8898b0b9 (ottobre 2012) aggiunge il supporto all'undo per le operazioni
+di aggiunta di dati geografici: se l'ultima operazione era la creazione di una
+posizione, il comando undo la rimuove correttamente. Il messaggio del commit è
+onesto riguardo ai limiti: il redo non è ancora implementato in quel momento.
+
+Il commit 8d89b703 (agosto 2012) risolve un bug nella persistenza del testo
+dell'azione OpenMapsNodeHookAction, che risultava vuoto in certi casi, e corregge
+alcuni metodi ereditati relativi alla persistenza del nodo.
+
+--- Il problema dello User-Agent (2019) ---
+
+Il commit 5d541e27 (dicembre 2019) risolve un problema di accessibilità al servizio
+OpenStreetMap: il viewer non funzionava più perché inviava richieste HTTP senza
+un User-Agent specifico per Freeplane. OpenStreetMap — come molti servizi —
+blocca o limita le richieste prive di identificazione o con User-Agent generici.
+La correzione imposta un User-Agent che identifica esplicitamente il client come
+Freeplane, rispettando la politica di utilizzo del servizio.
+
+--- Integrazione con l'architettura OSGi e Gradle ---
+
+Il commit 7c7bdca9 (luglio 2014) sposta il plugin nella nuova struttura di directory
+del progetto Freeplane e ne aggiorna il sistema di build a Gradle. Il commit nota
+un problema pratico: la libreria JMapViewer usata dal plugin non era disponibile
+in nessun repository Maven pubblico, il che ha richiesto di includerla direttamente
+nel repository del progetto.
+
+Il commit 16fcbdd5 (aprile 2017) integra la refactoring di IconStoreFactory — una
+modifica che ha toccato molti moduli contemporaneamente e che normalizza come le
+icone vengono create e gestite in tutta l'applicazione.
+
+Il commit ddb73bd9 (gennaio 2016) risolve il bug #2305: il click nell'area delle
+icone di un nodo non selezionava correttamente il nodo stesso. Un problema di
+interazione tra IconController e IconMouseListener che aveva effetti anche su questo
+plugin, poiché l'interazione con le icone è il meccanismo principale di attivazione
+del viewer geografico.
+
+
+Riepilogo
+----------
+freeplane_plugin_openmaps è un plugin relativamente specializzato e di dimensioni
+contenute, ma che porta una funzionalità unica: la georeferenziazione dei nodi.
+La sua storia mostra il tipico ciclo di vita di un plugin maturo: una fase di
+costruzione intensa nel 2012, un consolidamento nel 2014, e poi pochi interventi
+puntuali negli anni successivi — principalmente per adeguarsi ai cambiamenti
+dell'ecosistema (aggiornamento Gradle, politiche di User-Agent, nuova struttura
+delle icone). Il plugin ha raggiunto una stabilità sostanziale già nel 2015.
