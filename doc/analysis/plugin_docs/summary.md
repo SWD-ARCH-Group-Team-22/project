@@ -21,3 +21,33 @@ It supports privacy features: for instance, since 2022 reports do not include lo
 It reports Freeplane bugs only: bugs from user-written scripts are not considered. The bugreporter plugin is excluded and its exceptions do not trigger a new report (avoid infinite loops). Bugs are not signaled in headless mode; sending reports is a priviledged action.
 ### Communication
 The bugreport plugin is connected to the core Freeplane code directly.
+
+## Freeplane JSyntaxPane
+It is in charge of creating highlightead and readable text in the Freeplane mind map interface. It implements readability and formatting settings depending on what the user is writing (comments, script code, LaTex formulas).
+It was born basically as a fork of the pre-existing LaTex plugin, and initially it supported the JSyntaxPane library. In its early stages, it was a sort of evolution and maintenance of the library. In the 2020s, a new syntax library was adopted, and it required many fix actions. Nowadays, the SyntaxPane supports the dark theme and tags within mindmaps in Freeplane.  
+It is crucial for productivity of all script editors in the Freeplane software. 
+### Communication
+Freeplane JSyntaxPane depends on the Freeplane Core only. However, many classes must be aware of its presence; these classes are:  
+- formula
+- markdown
+- latex
+- script
+
+Its Activator file suggests that the plugin works as a bridge between the Freeplane core GUI package and the external library in charge of formatting the code to enhance readability.
+## Freeplane Latex
+This plugin implements the LaTex formatting engine. It makes it possible from people working in scientific fields to use the software to render their documentation.  
+It is one of the main features of the software since its creation, and it was maintaned and evolved during time. Its first implementations were based on the HotEqn library, but from 2012 onwards, the JLaTeXMath Java libray was introduced. Nowadays, it supports advanced formatting features, as well as math fonts. It has always been embedded in the Freeplane mindmap visualizer.  
+The plugin UX was evolved starting from its very beginning: if in 2009 it was just a plain editor, nowadays LaTex support has been extended to details, notes, as well as its nodes are automatically deleted if there is no text. Graphical support for MacOS themes and for dark visualization was introudced in 2021, as well as minor GUI fixes.  
+Special features include:
+- Global Macro within the map
+- Support for Asiatic languages
+- Unparsed LaTeX formatting
+- Support for clones within the map
+
+### Communication
+This plugin depends on both the Freeplane Core Plugin and the JSyntaxPane one. 
+It communicates with the Freeplane core to become aware of some information, such as if the software has some command-line enabled features that impacts the graphical render of text, and, more importantly, to handle the Controller to format latex text when inserted in the map.  
+It is connected to `org.freeplane.features*`:
+- `.features.mode.*`: to control the MindMapper mode and to render LaTex text
+- `.features.text`: to access actual text and render it if required
+- `.feature.format`: to register the LaTex formatting as an accepted Freeplane render setting
