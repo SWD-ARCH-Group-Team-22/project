@@ -3,7 +3,7 @@
 
 ### 18/04/2026
 **In-depth analysis of the Launcher module in `freeplane_framework`**
-*   Started a detailed study of the `Launcher.java` class located in the repository: `/home/luca/Progetti/PoliTO/SDA/freeplane/freeplane_framework/`.
+*   Started a detailed study of the `Launcher.java` class located in the repository: `../freeplane/freeplane_framework/`.
 *   Identified the implementation of the **Singleton Pattern** using `AtomicBoolean` for thread-safe state management. This mechanism prevents catastrophic crashes caused by double-starting the OSGi framework (Knopflerfish).
 *   Analyzed the advantages of using `compareAndSet(false, true)` over traditional `synchronized` blocks to ensure lock-free performance and zero contention during the initialization phase.
 
