@@ -1,0 +1,43 @@
+@startuml Freeplane_Container_Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+LAYOUT_TOP_DOWN()
+
+Person(beginner, "Beginner User", "Someone who uses basic mind-mapping\nbuilding tools to support its workflow\nor its learning project")
+Person(advanced, "Advanced User", "Someone who deeply understand underlying\nfeatures of the software and who can enhance\nand automate its workflow through scripts")
+
+System_Boundary(app, "Freeplane Desktop"){
+    Container(freeplane, "Freeplane", "Java application", "Open-source mind map design software")
+    ContainerDb(file_system, "Local File System", "Operating System", "Stores data in .mm files")
+}
+
+System_Ext(browser, "Browser", "All URL are opened in the\nsystem-predefined Browser")
+System_Ext(visualizers, "External document visualizers", "Freeplane mindmaps can be exported\nand visualized in different formats")
+System_Ext(taskjuggler, "TaskJuggler", "Freeplane mindmaps can be converted\ninto Tasks within TaskJuggler")
+
+System_Ext(llm, "LLM Software Tools", "Freeplane offers advanced functionalities\nto integrate LLMs in its workflow")
+System_Ext(smtp, "Email tool", "Freeplane offers the chance to directly\nsend the mindmap through an SMTP gateaway")
+System_Ext(cloud_api, "External API and Cloud", "The software connects to external\ncloud and APIs to perform operations")
+
+llm -[hidden]down-> smtp
+smtp -[hidden]down-> cloud_api
+
+browser -[hidden]down-> visualizers
+visualizers -[hidden]down-> taskjuggler
+
+
+Rel_D(beginner, freeplane, "Uses in its everyday life")
+Rel_D(advanced, freeplane, "Uses in its everyday life")
+
+Rel_D(freeplane, file_system, "Stores data and settings in")
+
+Rel_R(freeplane, browser, "Opens external links in")
+Rel_R(freeplane, visualizers, "Exports mindmaps to")
+Rel_R(freeplane, taskjuggler, "Exports mindmaps to be tasks of")
+
+Rel_L(freeplane, llm, "Sends prompts and retrieves data from")
+Rel_L(freeplane, smtp, "Sends emails via")
+Rel_L(freeplane, cloud_api, "Exchanges data with")
+
+@enduml
