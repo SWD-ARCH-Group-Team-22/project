@@ -53,7 +53,7 @@ The following statistics provide a general overview of the selected repository s
 
 **Repository branch/snapshot:** `1.13.x`  
 **Number of files:** 3260  
-**Lines of Code (LOC):** 384077  
+**Lines of Code (LOC):** 361543
 **Number of Gradle subprojects/modules:** 17  
 **Number of directories:** ~2300, including source, test, plugin, resource, build, and auxiliary folders  
 **Main language:** Java  
