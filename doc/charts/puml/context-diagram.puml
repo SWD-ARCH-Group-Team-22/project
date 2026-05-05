@@ -1,0 +1,35 @@
+@startuml Freeplane C4 Context Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Freeplane Software Context Diagram
+
+
+Person(beginner, "Beginner User\n[Person]", "Someone who uses basic mind-mapping building tools to support its workflow or its learning project" , $sprite="angular")
+Person(advanced, "Advanced User\n[Person]", "Someone who deeply understand underlying features of the software and who can enhance and automate its workflow through script writing and plugin exploitation")
+
+System(freeplane, "Freeplane\n[Software System]", "Open-source mind map design software")
+
+System_Ext(fs, "File System", "Freeplane can both gather and store data from the computer, the OS and the File System are in charge of persistence")
+System_Ext(browser, "Browser", "All URL are opened in the system-predefined Browser")
+System_Ext(visualizers, "External document visualizers", "Freeplane mindmaps can be exported and visualized in different formats")
+System_Ext(llm, "LLM Software Tools", "Freeplane offers advanced functionalities to integrate LLMs in its workflow routine")
+System_Ext(smtp, "Email tool", "Freeplane offers the chance to directly send the mindmap through an SMTP gateaway")
+System_Ext(cloud_api, "External API and Cloud connection", "The software connects to a variety of external cloud and APIs to perform many operations")
+System_Ext(taskjuggler, "TaskJuggler", "Freeplane mindmaps can be converted into Tasks within TaskJuggler")
+
+
+
+Rel(beginner, freeplane, "Uses for basic mapping")
+Rel(advanced, freeplane, "Customize its experience through scripts")
+
+Rel(freeplane, fs, "Reads/Writes files to")
+Rel(freeplane, visualizers, "Exports mindmaps to")
+Rel(freeplane, llm, "Sends prompts and retrieves data from")
+Rel(freeplane, smtp, "Sends emails via")
+Rel(freeplane, cloud_api, "Exchanges data with")
+Rel(freeplane, taskjuggler, "Exports mindmaps to be tasks of")
+
+
+LAYOUT_WITH_LEGEND()
+
+@enduml

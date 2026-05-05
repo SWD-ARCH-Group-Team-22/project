@@ -1,18 +1,26 @@
 # Architectural Analysis of Freeplane – Reverse Engineering and Evaluation
 
-#### 1. Introduction and Analysis Methodology (Target: ~200 words)
-*   **Objective:** Define the scope of the document, the target of the analysis (Freeplane), and how you conducted the reverse engineering process.
-*   **Questions to answer:**
-    *   What is the dominant architectural style identified in Freeplane (e.g., Micro-kernel, event-driven)?
-    *   What Software Engineering process did you use to extract the architecture (e.g., static code analysis, documentation review, runtime analysis using a profiler/debugger)?
-    *   Why is a plug-in architecture crucial for the nature of a mind-mapping software?
+#### 1. Introduction and Analysis Methodology (Target: ~200 words) -> 208 words
+This report presents an architectural analysis of Freeplane with the objective of identifying its main structural characteristics, architectural style, and design principles. The analysis aims to reconstruct the system architecture and understand how its components are organized and interact.
 
-#### 2. The System in its Ecosystem: C4 Context Model (Target: ~300 words)
-*   **Objective:** Map how the Freeplane desktop application interfaces with the outside world "as-is".
+The reverse engineering process was conducted using static code analysis and documentation review. The codebase was examined to identify packages, modules, and dependencies, while repository documentation was used to support architectural interpretation.
+
+The system can be described as a **modular monolith enhanced with a micro-kernel (plug-in) pattern**, where a central core is extended through independently developed components. The codebase is organized into packages such as core, features, and view, which separate fundamental logic, functional behavior, and user interface concerns. This reflects a modular structure within a single deployable application. In addition, extensible elements within the features package indicate a micro-kernel (plug-in) pattern, allowing new functionality to be introduced without modifying the core. The presence of multiple modules and a large number of packages further confirms a structured and layered organization.
+
+This architectural combination is well suited to mind-mapping software. The modular monolith ensures simplicity, consistency, and ease of deployment, while the micro-kernel pattern enables extensibility to support diverse user needs. Together, these approaches support maintainability, adaptability, and long-term evolution.
+
+
+#### 2. The System in its Ecosystem: C4 Context Model (Target: ~300 words) - 314 words
+The context diagram illustrates how Freeplane operates within its external environment and interacts with both users and supporting systems. Two main user roles are identified. Beginner users interact with the system to create and manage mind maps using basic functionality, while advanced users extend the system through scripting and plugins, enabling automation and customization.
+
+Freeplane interacts with several external systems that support its core functionality. The most fundamental is the file system, which is responsible for storing and retrieving mind map data in XML-based formats, as well as associated resources such as images. This interaction reflects the system’s reliance on local persistence rather than external databases.
+
+In addition, Freeplane communicates with external tools to enhance usability and interoperability. External document visualizers are used to export and display mind maps in formats such as PDF or HTML, while web browsers are invoked to open hyperlinks embedded within maps. The system also integrates with external services such as email tools, cloud APIs, and task management tools, enabling users to share, synchronize, or repurpose their data in different contexts. Furthermore, advanced integrations such as LLM-based tools support extended functionality for automation and intelligent processing.
+
+From an architectural perspective, these interactions are mediated by the Freeplane application as a central component that encapsulates core logic and coordinates external communication. User inputs are handled through the user interface layer and translated into operations on the internal data model. These operations are then persisted via the file system using XML-based storage, or transformed into external representations through export services. Interactions with external tools and services, such as browsers, email systems, or external APIs, are triggered through defined integration points, ensuring that communication remains controlled within a clear system boundary.
+
+Overall, the context model highlights Freeplane as a standalone desktop application that integrates with a variety of external systems to provide flexibility and extended capabilities while preserving a clear system boundary.
 *   **Action:** *[Insert C4 Level 1 Diagram: Context]*
-*   **Questions to answer:**
-    *   Which actors or external systems interact with Freeplane (e.g., User, local File System for XML/MM I/O, external scripting engines like Groovy, web browsers for exports or links)?
-    *   How are these inputs/outputs handled architecturally by the system?
 
 #### 3. Decomposition and Runtime: C4 Container Model (Target: ~400 words)
 *   **Objective:** Show the deployable/executable units. For a desktop app like Freeplane, the "containers" are typically the base framework, the Core Engine, and the bundles/plugins.
