@@ -1,47 +1,136 @@
 # Journal
+
 ## Author: Gaia Martignone
 
-### 18/04/2026
-**Initial understanding of the project requirements and Freeplane documentation**
+---
 
-*   Started reviewing the general requirements of the Software Design and Architecture project.
-*   Focused on understanding the expected deliverables: overview report, design report, software architecture report, and individual journal.
-*   Read the available Freeplane documentation to get a first understanding of the system, its purpose, and its general structure.
-*   Identified Freeplane as a large open-source Java desktop application for mind mapping, organized around a core application and several plugin-based extensions.
-*   Took initial notes on the distinction between the two main parts of the project:
-    *   **Design analysis**, focused on dependencies between modules/components and design patterns.
-    *   **Software architecture analysis**, focused on reconstructing the architecture using the C4 model.
+## 09/04/2026 - 18/04/2026  
+### Project setup and first organization
 
-### 30/04/2026
-**Planning the dependency analysis**
+At the beginning of the project, my group and I chose Freeplane as the system to analyse.
 
-*   Started defining the scope of my part of the design report, focused on the analysis of dependencies between modules and software components.
-*   Organized the work into three main steps:
-    *   first, analyse **knowledge dependencies**, using the Git history and the co-change data;
-    *   then, analyse **code dependencies**, looking at the static structure of the project;
-    *   finally, compare the two results to understand where static dependencies and historical co-changes match or differ.
-*   Started analysing the material already created by teammates in our `project` repository.
-*   Checked the branch `feat/design_import_dependencies`, which is dedicated to this part of the project.
-*   Analysed the content of the folder `doc/analysis/mutual_commit_changes`, where the outputs of the automated dependency analysis were collected.
-*   The co-change analysis tool analysed the Git commit history and identified files that are often modified together.
-*   The generated reports were divided into three different time windows:
-    *   full repository history;
-    *   last 10 years;
-    *   last 5 years.
-*   Defined the next step: analyse the different report files, starting from the most recent ones. The goal is to extract the most relevant file pairs and group them by functional area, so that they can later be compared with the static code dependencies.
+First, we read the project requirements to understand what we had to submit:
 
-### 02/05/2026
-**Analysis of the last-5-years co-change report**
+- System Overview report;
+- Design report;
+- Software Architecture report;
+- individual journal.
 
-*   Started analysing the last-5-years co-change report, using the file `report_last_5_years/top_pairs.csv`.
-*   Chose this report as a starting point because it gives a more recent view of the files that currently tend to evolve together.
-*   Checked the structure of the CSV file, focusing on the file pairs, the class names, the number of co-changes, and the total number of changes for each file.
-*   Began grouping the most frequent pairs by area of the application, instead of treating them as isolated file pairs.
-*   The first groups that emerged are:
-    *   the Swing map view, with classes such as `MapView`, `NodeView`, and `MainView`;
-    *   the outline subsystem, with classes such as `ScrollableTreePanel`, `BreadcrumbPanel`, and `OutlinePane`;
-    *   tag and icon management, with classes such as `TagCategories`, `TagCategoryEditor`, and `TagEditor`;
-    *   the relation between API and scripting, with classes such as `Node`, `NodeRO`, and `NodeProxy`;
-    *   text rendering plugins, with classes such as `FormulaTextTransformer`, `LatexRenderer`, and `MarkdownRenderer`.
-*   This first inspection helped me identify which parts of the code are worth analysing in more detail.
-*   The next step will be to open the corresponding Freeplane classes and check whether the historical co-changes are also reflected in the static code structure.
+Then we started organizing the work in our project repository. We discussed how to structure the reports, how to keep the journals updated and how to manage the Git workflow.
+
+We created separate branches for the main parts of the project:
+
+- overview;
+- software architecture;
+- design.
+
+My main task is in the design part. Since more than one person is working on it, I created a personal branch from the design branch, so I can work on my part separately and then merge it with the rest.
+
+I also started looking at the Freeplane documentation and at the repository structure, to understand the system better.
+
+For the Design report, I am focusing mainly on dependency analysis. The idea is to look both at code dependencies and knowledge dependencies, and then compare the results.
+
+---
+
+## 21/04/2026 - 22/04/2026  
+### First look at the repository
+
+During these days, I continued looking at the Freeplane repository and at the main folders of the codebase.
+
+Since the project is very large, I did not try to understand every class immediately. I first tried to understand the general structure and to identify the parts that could be useful for my analysis.
+
+I also started looking at the material in our project repository, especially the co-change reports generated by our group. These reports help us find pairs of files that often changed together, without checking everything manually.
+
+---
+
+## 30/04/2026  
+### Planning the dependency analysis
+
+I organized my part of the Design report in three steps:
+
+1. analyse knowledge dependencies using co-change data;
+2. analyse code dependencies by looking at the code structure;
+3. compare the two results.
+
+I started from the co-change reports in our repository. We have three reports:
+
+- full repository history;
+- last 10 years;
+- last 5 years.
+
+This is useful because it helps separate more recent dependencies from older or more stable ones.
+
+### Next steps
+
+The next step is to analyse the reports in more detail, starting from the most recent one, and choose the most relevant file pairs to investigate.
+
+---
+
+## 02/05/2026  
+### Analysis of the last-5-years co-change report
+
+I started analysing the co-change report for the last 5 years.
+
+Instead of only reading the most frequent pairs, I grouped them by area of the application. The first groups I found were:
+
+- map graphical view;
+- outline;
+- tag and icon management;
+- API/scripting;
+- text rendering plugins;
+- Code Explorer plugin.
+
+This helped me understand which areas of the code could be more interesting to check later.
+
+### Next steps
+
+The next step is to compare these results with the older reports, to see if the same groups also appear over longer periods.
+
+---
+
+## 03/05/2026  
+### Analysis of the last-10-years co-change report
+
+I continued the analysis with the co-change report for the last 10 years and compared it with the last-5-years report.
+
+Most of the groups found in the 5-year report also appeared here. The map graphical view was still the strongest group, so it seems to be a stable and central part of the project.
+
+The outline and tag/icon groups were still present, but with very similar values to the 5-year report, so they seem mostly related to recent changes.
+
+Another interesting result is API/scripting, which becomes more visible in the 10-year report. This could be useful in the final report because it shows a relation between different modules.
+
+### Next steps
+
+The next step is to analyse the full-history report and decide whether to add a graph to show how some groups appear across the different time windows.
+
+---
+
+## 04/05/2026  
+### Review of the System Overview report
+
+I worked on the review of the System Overview report.
+
+I reread the report and changed some parts that were unclear or needed more detail. I also corrected some sentences and grammar mistakes.
+
+I tried to keep the text simple and within the required word limit.
+
+### Next steps
+
+For now, the review of the Overview report is done. At the end of the project, we will check it again together with the other reports, to make sure everything is consistent.
+
+I will continue working mainly on the dependency analysis for the Design report.
+
+---
+
+## 05/05/2026  
+### Full-history report and first draft on knowledge dependencies
+
+Today I analysed the full-history co-change report and compared it with the last-5-years and last-10-years reports.
+
+The map graphical view was again the strongest group. The full-history report also showed older groups related to startup, mode controllers, file management, import/export and UI infrastructure. I will use these mostly as context, because some paths and classes belong to older versions of the project.
+
+I then collected the main observations in a single co-change analysis document, organized by functional area. After that, I started writing a first draft of the Design report section about knowledge dependencies.
+
+### Next steps
+
+The next steps are to decide whether to add a graph to compare the main groups across the three time windows and to start checking in the code if the dependencies found in the reports are also visible in the static structure.
