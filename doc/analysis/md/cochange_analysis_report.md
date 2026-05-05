@@ -1,75 +1,84 @@
-# Co-change Analysis Report
+# Co-change Analysis Notes
 
-## Purpose of this document
+## Purpose
 
-This document summarizes the analysis of the co-change reports generated from the Git history of Freeplane.
+This file collects the first notes from the co-change analysis of Freeplane.
 
-The goal of this file is not to list every pair of files in the reports. Instead, the purpose is to identify the main areas of the system that tend to change together and that are therefore worth checking in the code during the design analysis.
+The goal is not to list every file pair found in the reports. The project is too large for that, and a long list would not be very useful. Instead, the idea is to use the co-change data as a first map of the system.
 
-In this work, co-change is used as an indication of **knowledge dependency**. If two files are often modified in the same commits, it is likely that developers need to understand both of them when making certain changes. This does not automatically mean that there is a direct code dependency, but it gives us useful hints about where to look.
+If two files are often modified in the same commits, this may mean that developers usually need to understand both of them when working on that part of the system. This is what we use as a sign of **knowledge dependency**.
 
-For this reason, the results of this analysis will later be compared with the static structure of the code, such as packages, imports, interfaces, controllers and module organization.
+A co-change does not automatically prove that there is a direct dependency in the code. For example, two files may change together even if one does not import the other. However, it is still useful because it shows where maintenance work tends to spread.
+
+The next step will be to compare these results with the code structure: packages, modules, imports, interfaces, controllers and plugins.
 
 ---
 
 ## Method
 
-The analysis is based on three co-change reports:
+The co-change reports were generated automatically from the Git history of Freeplane.
 
-- **last 5 years**, to focus on the most recent evolution of the project;
+We used three time windows:
+
+- **last 5 years**, to see the most recent co-change relations;
 - **last 10 years**, to check whether the same relations are also stable over a longer period;
-- **full history**, to get a broader historical view of the project.
+- **full history**, to understand the long-term evolution of the project.
 
-Each report contains pairs of files/classes, together with the number of times they changed together.
+For each report, we looked at the file `top_pairs.csv`, which contains pairs of files and the number of times they changed together.
 
-Instead of only taking the highest pairs one by one, the pairs were grouped by functional area. This makes the analysis more meaningful, because a single pair may be too specific, while a group of related pairs can point to a subsystem or to a recurring maintenance area.
+Instead of reading the pairs one by one, we grouped them by functional area. This is more useful because a single pair can be too specific, while a group of related pairs can show a real subsystem or feature area.
 
-The analysis was done in three steps:
+The main idea is simple:
 
-1. first, the last-5-years report was used to identify the main recent clusters;
-2. then, these clusters were compared with the last-10-years report;
-3. finally, the full-history report was used to understand which relations are long-term and which ones are mainly historical.
+- if many classes in the same area change together, this may show normal cohesion;
+- if classes from different modules change together, this may suggest a hidden or stronger dependency;
+- if a cluster appears in all time windows, it is probably a stable maintenance concern;
+- if it appears only in recent reports, it may be a newer feature or a recently modified area.
 
-For each cluster, the report considers:
+The full-history report was useful, but we read it more carefully because it also includes older paths, such as:
 
-- the main classes that appear;
-- how the cluster changes across the three time windows;
-- possible reasons for this behavior;
-- what should be checked later in the code.
+`freeplane/src/org/freeplane/...`
+
+while newer code uses paths such as:
+
+`freeplane/src/main/java/org/freeplane/...`
+
+So the full-history report is good for historical context, but not always enough to describe the current design.
 
 ---
 
-## Overview of the main clusters
+## Main clusters found
 
-| Cluster | Main emerging classes | General interpretation |
+The same main areas appear several times in the reports:
+
+| Cluster | Main classes | First interpretation |
 |---|---|---|
-| Swing map view | `MapView`, `NodeView`, `MainView`, `NodeViewFactory`, layout classes | strongest and most stable area |
-| Outline subsystem | `ScrollableTreePanel`, `BreadcrumbPanel`, `OutlinePane`, `MapAwareOutlinePane`, `OutlineController` | strong recent feature area |
-| API and scripting | `Node`, `NodeRO`, `NodeProxy`, `Proxy`, `MapProxy`, `ControllerProxy` | important cross-module dependency |
-| Text rendering plugins | `FormulaTextTransformer`, `LatexRenderer`, `MarkdownRenderer`, `MTextController` | separate plugins that evolve together |
-| Tag and icon management | `TagCategories`, `TagCategoryEditor`, `TagEditor`, `MIconController` | cohesive recent feature area |
-| Code Explorer plugin | `CodeNode`, `ClassNode`, `PackageNode`, `ProjectRootNode`, `CodeMapController` | mainly internal plugin cohesion |
-| Map controllers and headless mode | `IMapViewManager`, `MapViewController`, `HeadlessMapViewController` | controller-related area visible especially in the 10-year report |
-| Historical infrastructure | mode controller factories, startup classes, file managers | useful mainly as historical context |
+| Swing map view | `MapView`, `NodeView`, `MainView`, layout classes | strongest and most stable cluster |
+| Outline subsystem | `ScrollableTreePanel`, `BreadcrumbPanel`, `OutlinePane`, `OutlineController` | strong recent UI feature |
+| API and scripting | `Node`, `NodeRO`, `NodeProxy`, `Proxy` | important cross-module dependency |
+| Text rendering plugins | `FormulaTextTransformer`, `LatexRenderer`, `MarkdownRenderer` | separate plugins with similar maintenance concerns |
+| Tag and icon management | `TagCategories`, `TagCategoryEditor`, `TagEditor`, `MIconController` | cohesive feature area |
+| Code Explorer plugin | `CodeNode`, `ClassNode`, `PackageNode`, `CodeMapController` | mostly internal plugin cohesion |
+| Map controllers/headless mode | `IMapViewManager`, `MapViewController`, `HeadlessMapViewController` | visible especially in the 10-year report |
+| Historical infrastructure | mode factories, startup classes, file managers | useful mostly as historical context |
 
 ---
 
 ## 1. Swing map view
 
-The strongest cluster is related to the Swing map view.
+The clearest cluster is the Swing map view.
 
-The main classes that appear are:
+The main classes are:
 
-- `MapView`;
-- `NodeView`;
-- `MainView`;
-- `NodeViewFactory`;
-- `VerticalNodeViewLayoutStrategy`;
-- `NodeViewLayoutHelper`;
-- `NodeViewLayoutAdapter`;
-- `RootMainView`;
-- `ForkMainView`;
-- `BubbleMainView`.
+- `MapView`
+- `NodeView`
+- `MainView`
+- `NodeViewFactory`
+- `VerticalNodeViewLayoutStrategy`
+- `NodeViewLayoutHelper`
+- `RootMainView`
+- `ForkMainView`
+- `BubbleMainView`
 
 Representative pairs:
 
@@ -82,37 +91,36 @@ Representative pairs:
 | `NodeViewLayoutHelper` – `VerticalNodeViewLayoutStrategy` | 25 | 25 | - |
 | `NodeView` – `NodeViewFactory` | - | - | 53 |
 
-This cluster is already very strong in the last-5-years report. It remains strong in the last-10-years report, and it is also one of the most visible areas in the full-history report. This means that the relation between map view, node view and layout classes is not only recent, but has been important for a long part of the project history.
+This is the strongest result of the analysis. `MapView` and `NodeView` are always among the top pairs, in all three time windows.
 
-This result is quite expected, because Freeplane is mainly a mind-mapping application. The visual representation of the map is one of the core parts of the system. If the way nodes are displayed, arranged or rendered changes, several classes probably need to be updated together.
+This makes sense because Freeplane is mainly a visual mind-mapping application. The map view and the node view are central parts of the system. If the way nodes are drawn, arranged or updated changes, several UI classes probably need to change together.
 
-For this reason, the Swing map view is the clearest example of a stable knowledge dependency.
+At this stage, this looks like a normal and expected knowledge dependency inside the main UI subsystem. However, because the cluster is very strong, it is still worth checking in the code. The important question is whether these classes are well grouped in the same subsystem, or whether the map view depends on too many unrelated parts of the application.
 
-Things to verify in the code:
+Things to check later:
 
-- what responsibilities `MapView`, `NodeView` and `MainView` have;
-- whether these classes are located in the same package or subsystem;
-- how the layout-related classes are connected to `NodeView`;
-- whether the co-change corresponds to direct code dependencies;
-- whether this is normal cohesion inside the UI subsystem or a sign of strong coupling.
+- what `MapView`, `NodeView` and `MainView` are responsible for;
+- whether they are in the same package/subsystem;
+- how layout classes are connected to `NodeView`;
+- whether this is good UI cohesion or excessive coupling.
 
 ---
 
 ## 2. Outline subsystem
 
-Another important cluster is the outline subsystem.
+Another clear cluster is the outline subsystem.
 
-The main classes that appear are:
+Main classes:
 
-- `ScrollableTreePanel`;
-- `BreadcrumbPanel`;
-- `BlockPanel`;
-- `OutlinePane`;
-- `MapAwareOutlinePane`;
-- `OutlineController`;
-- `NavigationButtons`;
-- `NodePositioning`;
-- `OutlineViewport`.
+- `ScrollableTreePanel`
+- `BreadcrumbPanel`
+- `BlockPanel`
+- `OutlinePane`
+- `MapAwareOutlinePane`
+- `OutlineController`
+- `NavigationButtons`
+- `NodePositioning`
+- `OutlineViewport`
 
 Representative pairs:
 
@@ -124,36 +132,37 @@ Representative pairs:
 | `OutlinePane` – `ScrollableTreePanel` | 30 | 30 | 30 |
 | `OutlineController` – `ScrollableTreePanel` | 24 | 24 | - |
 
-This cluster is very strong in the last-5-years report, but the values remain almost the same in the last-10-years and full-history reports. This suggests that most of the relevant co-change activity for the outline subsystem happened in the most recent years.
+The outline cluster is very visible in the 5-year report, and the values remain the same in the 10-year and full-history reports. This suggests that most of this co-change activity is recent.
 
-A possible explanation is that the outline view is a recent or recently modified part of the application. Many pairs are centered around `ScrollableTreePanel`, so this class probably has an important role in the implementation of the outline view.
+Many pairs are centered around `ScrollableTreePanel`, so this class probably plays an important role in the outline view.
 
-This cluster looks compact and feature-oriented. It may simply show that the classes of the outline feature evolve together, which is not necessarily a design problem. However, it is still useful to check whether the outline is independent or whether it is strongly connected to the main map view.
+This does not necessarily mean bad design. The outline is a specific feature, and it is normal that its panels, controller and positioning classes change together. It may simply be a cohesive subsystem.
 
-Things to verify in the code:
+The interesting point is that the outline is another representation of the same map content. So it may need to stay aligned with the main map view, especially for selection, scrolling and node positioning.
 
-- whether these classes are in the same outline package;
-- what `ScrollableTreePanel` does;
+Things to check later:
+
+- whether the outline classes are in the same package;
+- how `ScrollableTreePanel` works;
 - how `OutlinePane`, `MapAwareOutlinePane` and `OutlineController` interact;
-- whether the outline depends directly on the main map view;
-- whether this cluster represents good feature cohesion or tight coupling with other UI parts.
+- whether the outline is cleanly separated from the main map view.
 
 ---
 
 ## 3. API and scripting
 
-One of the most interesting clusters is the relation between the public API and the scripting plugin.
+This is probably the most interesting cluster from a design point of view.
 
-The main classes that appear are:
+Main classes:
 
-- `Node`;
-- `NodeRO`;
-- `NodeProxy`;
-- `Proxy`;
-- `MapProxy`;
-- `ControllerProxy`;
-- `MindMap`;
-- `HeadlessMapCreator`.
+- `Node`
+- `NodeRO`
+- `NodeProxy`
+- `Proxy`
+- `MapProxy`
+- `ControllerProxy`
+- `MindMap`
+- `HeadlessMapCreator`
 
 Representative pairs:
 
@@ -166,34 +175,33 @@ Representative pairs:
 | `MindMap` – `MapProxy` | - | 10 | - |
 | `HeadlessMapCreator` – `ControllerProxy` | - | 10 | - |
 
-This cluster is already visible in the last-5-years report, becomes stronger in the last-10-years report, and is also confirmed in the full-history report through scripting-related classes such as `NodeProxy`, `Proxy`, `ScriptingEngine` and `ScriptingRegistration`.
+This cluster crosses module boundaries. `Node` and `NodeRO` are part of `freeplane_api`, while `NodeProxy` and the other proxy classes belong to `freeplane_plugin_script`.
 
-This is important because it crosses module boundaries. `Node` and `NodeRO` belong to the public API area, while `NodeProxy` and the other proxy classes belong to the scripting plugin. This suggests that when the public node API changes, the scripting layer may need to change as well.
+This suggests that the scripting plugin must stay aligned with the public API. Scripts need to access maps, nodes and controllers, but they do so through proxy classes. So, when the public API changes, the scripting proxies may need to change too.
 
-A possible reason is that scripts need to access Freeplane concepts such as maps and nodes, but they do it through proxy classes. These proxy classes probably have to stay aligned with the public API. So even if the modules are separated in the repository, they are still connected from a maintenance point of view.
+This is a good example of knowledge dependency that is not just internal cohesion. The modules are separated in the repository, but the Git history shows that they evolve together.
 
-This is one of the best candidates for the final Design report, because it shows a knowledge dependency between separate modules.
+This can be a good design if the scripting plugin depends only on public interfaces. It would be more problematic if it also depends on internal implementation details.
 
-Things to verify in the code:
+Things to check later:
 
 - which methods are exposed by `Node` and `NodeRO`;
-- whether `NodeProxy` implements, wraps or adapts these interfaces;
+- whether `NodeProxy` implements, wraps or adapts those interfaces;
 - how scripts access nodes and maps;
-- whether this dependency is visible through imports, inheritance or interface implementation;
-- whether the scripting plugin depends only on public APIs or also on internal classes.
+- whether the scripting plugin depends only on API classes or also on internal classes.
 
 ---
 
 ## 4. Text rendering plugins
 
-Another relevant cluster concerns text rendering and transformation.
+Another useful case is the group of text rendering plugins.
 
-The main classes that appear are:
+Main classes:
 
-- `FormulaTextTransformer`;
-- `LatexRenderer`;
-- `MarkdownRenderer`;
-- `MTextController`.
+- `FormulaTextTransformer`
+- `LatexRenderer`
+- `MarkdownRenderer`
+- `MTextController`
 
 Representative pairs:
 
@@ -206,216 +214,67 @@ Representative pairs:
 | `MTextController` – `MarkdownRenderer` | 9 | - | - |
 | `MTextController` – `LatexRenderer` | 9 | - | - |
 
-This cluster appears in the last-5-years report and is confirmed in the last-10-years report. It is less visible in the full-history report, so it seems more related to recent plugin evolution than to the oldest phases of the project.
+Formula, LaTeX and Markdown are separate plugin areas, but their renderer or transformer classes appear together in the co-change reports.
 
-The interesting point is that the classes belong to different plugins or text-related areas, but they still appear together in the co-change data. A possible explanation is that Formula, LaTeX and Markdown all deal with special text content inside nodes. Therefore, when the handling or rendering of node text changes, more than one plugin may be affected.
+A possible reason is that they all work on special text content inside nodes. So, if Freeplane changes how node text is transformed or rendered, several plugins may be affected at the same time.
 
-This is useful because it shows that a modular plugin structure does not always mean complete independence during maintenance.
+This is useful because it shows that plugin separation does not always mean full maintenance independence. Different plugins can still share the same general concern.
 
-Things to verify in the code:
+Things to check later:
 
-- what `FormulaTextTransformer` does;
-- how `LatexRenderer` and `MarkdownRenderer` work;
-- whether they share common interfaces or text APIs;
+- what each renderer/transformer does;
+- whether they share common text APIs;
 - what role `MTextController` has;
-- whether the co-change is caused by direct dependencies or by similar maintenance concerns across plugins.
+- whether this is a direct code dependency or just a similar maintenance concern.
 
 ---
 
-## 5. Tag and icon management
+## 5. Other clusters
 
-Another cluster is related to tags, tag categories and icons.
+Some other clusters are useful, but probably secondary for the final report.
 
-The main classes that appear are:
+### Tag and icon management
 
-- `TagCategories`;
-- `TagCategoryEditor`;
-- `TagEditor`;
-- `MIconController`;
-- `IconController`;
-- `Tag`;
-- `IconRegistry`.
+Main classes:
 
-Representative pairs:
+- `TagCategories`
+- `TagCategoryEditor`
+- `TagEditor`
+- `MIconController`
 
-| Pair | 5 years | 10 years | Full history |
-|---|---:|---:|---:|
-| `TagCategories` – `TagCategoryEditor` | 32 | 32 | 32 |
-| `TagCategoryEditor` – `TagEditor` | 23 | 23 | - |
-| `MIconController` – `TagEditor` | 21 | 21 | - |
-| `MIconController` – `TagCategoryEditor` | 18 | 18 | - |
-| `TagCategories` – `TagEditor` | 14 | 14 | - |
-| `TagCategories` – `MIconController` | 12 | 12 | - |
+This looks like a cohesive feature area. Model/data classes, editors and controllers change together. This is probably expected: if the structure of tags changes, the editor and controller may need updates.
 
-The values are almost identical in the last-5-years and last-10-years reports. In the full-history report, this area is only partially visible. This suggests that tag and icon management is mainly a recent co-change area.
+### Code Explorer plugin
 
-A possible explanation is that tags and icons are related user-facing features. If the structure of tag categories changes, the editor and controller logic may also need to change. The co-change connects model/data classes, UI editors and controllers.
+Main classes:
 
-This cluster seems to show feature cohesion. It is useful as supporting evidence, but probably less important than Swing map view or API/scripting for the final Design report.
+- `CodeNode`
+- `ClassNode`
+- `PackageNode`
+- `ProjectRootNode`
+- `CodeMapController`
 
-Things to verify in the code:
+This is mostly internal to the Code Explorer plugin. It may be useful as an example of internal plugin cohesion, but it is less interesting than API/scripting because it does not clearly cross module boundaries.
 
-- whether `TagCategories` represents the model/data structure;
-- what `TagCategoryEditor` and `TagEditor` do;
-- how `MIconController` connects tags and icons;
-- whether related tests also appear in the co-change data;
-- whether the cluster remains inside one feature or spreads across different modules.
+### Map controllers and headless mode
 
----
+Main classes:
 
-## 6. Code Explorer plugin
+- `IMapViewManager`
+- `MapViewController`
+- `HeadlessMapViewController`
 
-The Code Explorer plugin appears as another cohesive cluster.
+This appears especially in the 10-year report. It may help us understand how Freeplane separates normal UI mode from headless behavior.
 
-The main classes that appear are:
+### Historical infrastructure
 
-- `CodeNode`;
-- `ClassNode`;
-- `ClassesNode`;
-- `PackageNode`;
-- `ProjectRootNode`;
-- `CodeMap`;
-- `CodeMapController`;
-- `CodeExplorerConfigurator`;
-- `CodeProjectController`;
-- `CodeExplorerConfiguration`.
+The full-history report also shows older clusters:
 
-Representative pairs:
+- mode controller factories;
+- startup classes;
+- `Controller`, `ViewController`, `MenuBuilder`;
+- file management and import/export actions.
 
-| Pair | 5 years | 10 years | Full history |
-|---|---:|---:|---:|
-| `ClassNode` – `CodeNode` | 18 | 18 | - |
-| `ClassesNode` – `PackageNode` | 18 | 18 | - |
-| `CodeExplorerConfigurator` – `CodeProjectController` | 17 | 17 | - |
-| `CodeMapController` – `CodeExplorerConfiguration` | 17 | 17 | - |
-| `ClassesNode` – `CodeNode` | 16 | 16 | - |
-| `CodeNode` – `ProjectRootNode` | 16 | 16 | - |
-
-The values are almost identical in the last-5-years and last-10-years reports. This suggests that the relevant co-change activity is concentrated in the recent part of the history.
-
-This cluster is mostly internal to a plugin. A possible explanation is that the Code Explorer plugin contains several classes that represent elements of a code structure, such as classes, packages and project roots. When the internal model or behavior of the plugin changes, several of these classes may need to be updated together.
-
-This is useful as an example of internal plugin cohesion, but it is probably not a primary case for the final Design report unless the code analysis reveals strong dependencies with the core.
-
-Things to verify in the code:
-
-- how `CodeNode`, `ClassNode`, `PackageNode` and `ProjectRootNode` are related;
-- what `CodeMapController` coordinates;
-- whether the plugin is mostly isolated from the core;
-- whether the plugin uses common Freeplane APIs or depends on internal classes.
+These are useful to understand the old evolution of the system. However, some paths belong to older project structures, so they should be used carefully when discussing the current design.
 
 ---
-
-## 7. Map controllers and headless mode
-
-A cluster that becomes more visible in the last-10-years report is related to map controllers and headless mode.
-
-The main classes that appear are:
-
-- `IMapViewManager`;
-- `MapViewController`;
-- `HeadlessMapViewController`;
-- `FrameController`;
-- `ViewController`;
-- `HeadlessUIController`.
-
-Representative pairs:
-
-| Pair | 5 years | 10 years | Full history |
-|---|---:|---:|---:|
-| `IMapViewManager` – `HeadlessMapViewController` | - | 27 | - |
-| `IMapViewManager` – `MapViewController` | - | 27 | - |
-| `HeadlessMapViewController` – `MapViewController` | - | 26 | - |
-| `FrameController` – `ViewController` | - | 18 | present |
-| `ViewController` – `HeadlessUIController` | - | 14 | present |
-
-This cluster is not very visible in the last-5-years report, but it appears clearly in the last-10-years report. In the full-history report, related controller and UI infrastructure classes are also present, although usually as part of broader historical clusters.
-
-A possible explanation is that Freeplane supports both normal graphical usage and headless behavior. If both modes share part of the map management logic, then changes in one controller may require changes in the other.
-
-This cluster is useful because it can help connect the co-change analysis with the static dependency analysis. In particular, it can show whether Freeplane separates UI-dependent and UI-independent logic clearly.
-
-Things to verify in the code:
-
-- what `IMapViewManager` defines;
-- how `MapViewController` and `HeadlessMapViewController` differ;
-- whether the headless controller reuses or duplicates UI controller logic;
-- whether this area clearly separates UI and non-UI behavior.
-
----
-
-## 8. Historical clusters from the full-history report
-
-The full-history report also highlights some older areas that are not central in the recent reports.
-
-Examples include:
-
-| Historical area | Example classes/pairs | Possible interpretation |
-|---|---|---|
-| Mode controllers and startup | `BModeControllerFactory`, `MModeControllerFactory`, `FModeControllerFactory`, `FreeplaneStarter` | older work around application modes and initialization |
-| Core controllers and UI infrastructure | `Controller`, `ViewController`, `MenuBuilder`, `ResourceController` | central infrastructure evolved together with the UI |
-| File management and import/export | `MFileManager`, `RevertAction`, `ExportBranchAction`, `ImportLinkedBranchAction` | older concerns related to persistence and map file operations |
-| Scripting internals | `NodeProxy`, `Proxy`, `ScriptingEngine`, `ScriptingRegistration` | scripting has been historically important |
-
-These clusters are useful to understand the long-term evolution of Freeplane, but they should be used carefully. Some paths in the full-history report refer to older project structures, for example `freeplane/src/org/freeplane/...`, instead of the more recent `freeplane/src/main/java/org/freeplane/...`.
-
-For this reason, the full-history report should not be used alone to describe the current design. It is more useful as historical context and as confirmation of long-term recurring areas, especially the Swing map view and scripting.
-
----
-
-## Main conclusions
-
-The co-change analysis shows that the most relevant knowledge dependencies are not randomly distributed across the repository. They are concentrated in a limited number of recurring areas.
-
-The strongest result is the **Swing map view**, which appears as a dominant cluster in all three time windows. This makes it the best example of a stable and central knowledge dependency.
-
-The **outline subsystem**, **tag/icon management** and **Code Explorer plugin** appear mainly as strong recent clusters. Their values are mostly unchanged between the last-5-years and last-10-years reports, so their co-change activity seems concentrated in the recent history of the project.
-
-The **API and scripting** cluster is particularly important because it crosses module boundaries. It becomes stronger in the last-10-years report and is also supported by the full-history report. This makes it a good example of a knowledge dependency that may be less obvious from the repository structure alone.
-
-The **text rendering plugins** show that separated plugins can still evolve together when they address similar concerns. This can be useful to discuss hidden maintenance dependencies between modular parts of the system.
-
-Finally, the full-history report shows older clusters related to startup, mode controllers, UI infrastructure and file management. These areas are useful as historical context, but they are less representative of the current design and should probably not be the main focus of the final report.
-
----
-
-## Suggested next steps for code analysis
-
-Based on the co-change results, the next code inspection phase should focus on the following areas.
-
-1. **Swing map view**  
-   Check `MapView`, `NodeView`, `MainView` and layout-related classes.  
-   The goal is to verify whether the strongest historical co-change cluster corresponds to strong static dependencies.
-
-2. **API and scripting**  
-   Check `Node`, `NodeRO`, `NodeProxy`, `Proxy`, `MapProxy` and `ControllerProxy`.  
-   The goal is to analyse a cross-module dependency between the public API and the scripting plugin.
-
-3. **Outline subsystem**  
-   Check `ScrollableTreePanel`, `OutlinePane`, `MapAwareOutlinePane` and `OutlineController`.  
-   The goal is to understand whether this is a cohesive independent subsystem or whether it is tightly connected to the main map view.
-
-4. **Text rendering plugins**  
-   Check `FormulaTextTransformer`, `LatexRenderer`, `MarkdownRenderer` and `MTextController`.  
-   The goal is to understand why separated text-related plugins evolve together.
-
-5. **Map controllers and headless mode**  
-   Check `IMapViewManager`, `MapViewController` and `HeadlessMapViewController`.  
-   The goal is to understand how normal UI mode and headless mode share controller logic.
-
-Secondary areas, such as tag/icon management, Code Explorer, command search and style editing, can be used as supporting examples if needed.
-
----
-
-## Use in the Design report
-
-This file is an intermediate analysis document. The final Design report should not include all the tables and observations in full. Instead, it should use this analysis to select a small number of meaningful examples.
-
-The most useful examples for the final report are:
-
-- **Swing map view**, as the strongest stable knowledge dependency;
-- **API and scripting**, as the clearest cross-module dependency;
-- **Outline subsystem**, as a strong recent cohesive subsystem;
-- **Text rendering plugins**, as an example of separate plugins that evolve together.
-
-These examples will then be compared with the static code dependencies, to understand whether the historical evolution of Freeplane is consistent with its current modular structure.
