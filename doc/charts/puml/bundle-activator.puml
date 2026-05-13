@@ -1,0 +1,71 @@
+@startuml
+
+title OSGi and Freeplane
+
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam DefaultFontName Helvetica
+skinparam class {
+    BackgroundColor White
+    ArrowColor #555555
+    BorderColor #444444
+    HeaderBackgroundColor #F4F6F7
+}
+skinparam package {
+    FontSize 14
+    Style folder
+}
+skinparam note {
+    BackgroundColor #FFFCDF
+    BorderColor #F1C40F
+    FontColor #333333
+}
+
+top to bottom direction
+
+package "Freeplane Main" as core <<org.freeplane.main.osgi>> {
+    class ActivatorImpl {
+        +start()
+        +loadPlugins()
+    }
+}
+
+package "OSGi Framework" as osgi <<org.osgi.framework>> {
+    interface BundleActivator {
+        + start()
+    }
+
+    interface BundleContext {}
+    class ServiceRegistry {}
+    interface ServiceReference {}
+    interface ServiceRegistration {}
+    interface ServiceListener {}
+    class ServiceEvent {}
+}
+
+
+class Bundle_A {}
+note top of Bundle_A : Service Publisher
+
+class Bundle_B {}
+note top of Bundle_B : Service Consumer
+
+ActivatorImpl ..|> BundleActivator : implements
+ActivatorImpl --> Bundle_A : installs & starts >
+ActivatorImpl --> Bundle_B : installs & starts >
+
+Bundle_A --> BundleContext : registers service via >
+BundleContext --> ServiceRegistry : updates >
+ServiceRegistry ..> ServiceRegistration : creates >
+ServiceRegistration --> Bundle_A : returned as receipt to >
+
+Bundle_B --> BundleContext : requests service via >
+ServiceRegistry ..> ServiceReference : creates >
+ServiceReference --> Bundle_B : returned to Consumer >
+
+Bundle_B ..|> ServiceListener : implements
+Bundle_B --> BundleContext : subscribes listener via >
+ServiceRegistry --> ServiceEvent : issues on change >
+ServiceEvent --> ServiceListener : triggers >
+
+@enduml
