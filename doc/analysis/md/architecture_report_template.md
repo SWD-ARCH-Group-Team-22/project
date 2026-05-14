@@ -31,12 +31,13 @@ Overall, the context model highlights Freeplane as a standalone desktop applicat
     *   How do these containers communicate at runtime (e.g., separate classloading, direct in-memory calls)?
 
 #### 4. Mapping to Clean Architecture: Theory vs. Reality (Target: ~500 words)
-This section aims to clarify the architectural choices made to build the software. The official documentation describes Freeplane as an Extension-object-driven application: objects are built to be extensible from the outside while remaining independent from their extensions.  
-The Extension-Object pattern is a Design Pattern defined by Erich Gamma in 1998. However, it provides a useful starting point to better understand how it fits in the broader architectural environment.  
-The first step was to define _entities_, _use cases_ and _external layers_. To figure out a starting point, Freeplane developers were contacted; they provided an AI tool trained specifcally on the repository. The chatbot, when propmpted, pointed to the package `org.freeplane.features.map` as a business logic package.
-To double check, a statistical analysis was carried out: data from commits throughout the software's lifecycle was extracted, and metrics were calculated: a stability measure was computed, considering average time between commits, number of commits and package age. This first analysis returned unexpected results: `org.freeplane.features.map` is a very unstable component, with a commit every 3 days on average.  
-This can be explained by the high coupling between the package and UI components. A deeper analysis reveals that almost 43% of commits share changes with freeplane UI components, and this number grows if we look at subpackages such as `org.freeplane.features.map.filemode` or `org.freeplane.features.map.clipboard` (both at almost 61% of shared commit number with ui components). This data suggests that the Clean Architecture patterns are not well-respected in the software: core business logic should have almost no co-change with UI and graphical features. 
-Code analysis reveals that most classes in the package have dependencies on visual interface, both on custom Freeplane UI classes and standard Java AWT ones. The approach is different: while dependencies towards `org.freeplane.ui` packages respect modern architectural patterns, such as the `Dependency Injection Principle`, such as dependencies ruled by Interfaces, java UI standard classes are directly imported, thus violating the same principles developers tried to respect with custom packages. In both cases, the Clean Architecture is not respected: since interfaces are defined in the same package that handle the concrete implementation, there is still dependency on UI package from business logic classes. 
+This section aims to clarify the architectural choices made to build the software, and to define if Clean Architecture principles are respected. 
+The first step is to define _entities_, _use cases_ and _external layers_, and where to find them. The package `org.freeplane.features.map` is the perfect candidate: its classes define core software logic, such as how nodes are defined and organized within the map.  
+
+To double check, data from the official repository was analyzed. Particularly, we tried to estimate package stability from the number of commits directly involving the package. The first result seemed to contradict the thesis: `org.freeplane.features.map` is a very unstable package, with hundreds of commits during the software lifecycle.
+This can be explained by the high coupling between the package and UI components. A deeper analysis reveals that almost 43% of commits share changes with freeplane UI components, and this number grows if we look at subpackages such as `org.freeplane.features.map.filemode` or `org.freeplane.features.map.clipboard` (both at almost 61% of shared commit number with ui components). This data suggests that the Clean Architecture patterns are not well-respected in the software: core business logic should have almost no co-change with UI and graphical features.  
+
+Code analysis reveals that most classes in the package have dependencies on the frontend, involving both custom Freeplane UI classes and standard Java AWT ones. There is a mixed approach: in many cases classes import Interfaces from the `org.freeplane.features.ui` package, that represent the abstraction for the User Interface management. However, sometimes there is direct interaction with frontend classes: for instance, class `MapController` manages map view through the `IMapViewManager` interface, but it implements a concrete method for managing an external peripheral (the mouse, through `MouseEventActor`). Many concrete standard Java UI classes are imported as well. This mixed approach results in high-coupling between the business logic and external layers in the architecture, making it less isolated and more difficult to be tested and extended or modified.
 
 ```plantuml
     @startuml
@@ -75,7 +76,10 @@ Code analysis reveals that most classes in the package have dependencies on visu
             }
             class IMapViewManager {
             }
-            class ViewController {}
+        }
+
+        package "Swing" as swift <<org.freeplane.view.swing.ui>> #FFFFFF {
+            class MouseEventActor #FFF0F0 {}
         }
     }
 
@@ -99,9 +103,11 @@ Code analysis reveals that most classes in the package have dependencies on visu
 
     MapController -[#2ECC71,thickness=2]up-> IMapViewChangeListener : <<complies>>
     MapController -[#2ECC71,thickness=2]up-> IMapViewManager : <<complies>>
+    MapController -[#E74C3C,thickness=2]up-> MouseEventActor : <<violates>>
 
     MMapController -[#2ECC71,thickness=2]up-> IMapViewChangeListener : <<complies>>
     MMapController -[#E74C3C,thickness=2]up-> GraphicEnvironment : <<violates>>
+
 
 
     note right of UIFeatures
@@ -113,14 +119,13 @@ Code analysis reveals that most classes in the package have dependencies on visu
     end note
 
     legend right
-        <back:#E74C3C>   </back> : DIP not respected -> points to the dependent package
-        <back:#2ECC71>   </back> : DIP respected -> points to the dependent package
+        <back:#E74C3C>   </back> : non-compliant -> points to the dependent package
+        <back:#2ECC71>   </back> : compliant -> points to the dependent package
     endlegend
 
     @enduml
 
 ```
-
 
 
 There are other crucial violations of the Clean Architecture pattern: there is no clear definition of _entities_, _use cases_ and other layers. Some classes may look similar to one of these concepts: `MapModel` could be classified as an _entity_, `MapController` as a _use case_, `Controller` from `org.freeplane.features.mode` as an _adapter_. Most critical violations of the Clean Architecture pattern can be found in the dependency among these three classes: `MapModel` and `MapController` depend on the `Controller`; the flow of dependencies is broken and therefore inner business logic cannot be tested in isolation. 
@@ -237,10 +242,11 @@ There are other crucial violations of the Clean Architecture pattern: there is n
     @enduml
 ```
 
-Compliance with the principles from the Clean Architecture pattern can be found in the _persistence layer_: classes such as `MapReader` and `MapWriter` are at the outer layer of the architecture, and there are no dependency violations.
-These architectural flaws can be extended to the application as a whole: the analysis of the `org.freeplane.features.map` package is a case study which can fairly represent the overall structure of the software. Freeplane does not completely comply with modern architectural patterns and particularly with the Clean Architecture one: there is not a clear boundary between _entites_ and _use cases_, and business logic is too coupled to the UI. Furthermore, dependency direction is wrong with respect to Clean Architecture principles. However, the persistence layer respects the pattern.  
-This architectural choices can be explained by the age of the software, whose development started in 2009.
+Compliance with the principles from the Clean Architecture pattern can be found in the _persistence layer_: classes such as `MapReader` and `MapWriter` are at the outer layer of the architecture, and there are no dependency violations. They perform operations to save or read data from the mindmap directly in the `.mm` file. 
+The `org.freeplane.features.filter` package suffers from the same set of problems: its `FilterController` has the same mixed approach at User Interface import dependencies, and it mixes business logic, application logic, and frontend concerns in the same class.. That's why architectural flaws from `org.freeplane.features.map` package can be fairly extended to the whole software structure.
 
+To sum up, the software does not fully comply to Clean Architecture principles. There are many violations that concern boundaries mainly: the most serious violation is the lack of clear division between _entities_ and _use cases_, and the broken dependency flow. Dependency on concrete User Inteface methods make the software more difficult to be tested in isolation.
+These violations have an explanation: as reported in the Official Documentation, core classes were designed to be extensible, and to follow the Extension-Object Design Pattern defined by Erich Gamma. This architectural choice aims at building extension to well-defined objects. Lack of compliance to the Clean Architecture can be explained by the need of having both _entities_ and _use cases_ in the same set of classes to make them easily extensible.
 
 #### 5. Zooming into the Engine: C4 Component Model of the Core (Target: ~600 words)
 *   **Objective:** Detail the internal design of the Core and showcase the extension points.
