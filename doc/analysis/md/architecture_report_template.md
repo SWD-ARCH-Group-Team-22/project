@@ -33,10 +33,10 @@ Overall, the context model highlights Freeplane as a standalone desktop applicat
 #### 4. Mapping to Clean Architecture: Theory vs. Reality (Target: ~500 words)
 This section aims to clarify the architectural choices made to build the software. The official documentation describes Freeplane as an Extension-object-driven application: objects are built to be extensible from the outside while remaining independent from their extensions.  
 The Extension-Object pattern is a Design Pattern defined by Erich Gamma in 1998. However, it provides a useful starting point to better understand how it fits in the broader architectural environment.  
-The first step was to define _entities_, _use cases_ and _external layers_. To figure out a starting point, Freeplane developers were contacted, and they provided an AI tool, deepwiki.com, to ask questions to gather information about the codebase. The chatbot gave us a hint: entities could be found in many packages. `org.freeplane.features.map` was among them. This package is responsible for the definition of basic business rules for managing nodes and maps.  
+The first step was to define _entities_, _use cases_ and _external layers_. To figure out a starting point, Freeplane developers were contacted; they provided an AI tool trained specifcally on the repository. The chatbot, when propmpted, pointed to the package `org.freeplane.features.map` as a business logic package.
 To double check, a statistical analysis was carried out: data from commits throughout the software's lifecycle was extracted, and metrics were calculated: a stability measure was computed, considering average time between commits, number of commits and package age. This first analysis returned unexpected results: `org.freeplane.features.map` is a very unstable component, with a commit every 3 days on average.  
-This can be explained by the high coupling between the package and UI components. A deeper analysis reveals that almost 43% of commits share changes with freeplane UI components, and this number grows if we look at subpackages such as `org.freeplane.features.map.filemode` or `org.freeplane.features.map.clipboard` (both at almost 61% of shared commit number with ui components).  
-Code analysis reveals that most classes in the package have dependencies on visual interface, both on custom Freeplane UI classes and standard Java AWT ones. The approach is different: while dependencies towards `org.freeplane.ui` packages respect Clean Architecture rules, such as dependencies ruled by Interfaces, java UI standard classes are directly imported, thus violating the same principles developers tried to respect with custom packages.  
+This can be explained by the high coupling between the package and UI components. A deeper analysis reveals that almost 43% of commits share changes with freeplane UI components, and this number grows if we look at subpackages such as `org.freeplane.features.map.filemode` or `org.freeplane.features.map.clipboard` (both at almost 61% of shared commit number with ui components). This data suggests that the Clean Architecture patterns are not well-respected in the software: core business logic should have almost no co-change with UI and graphical features. 
+Code analysis reveals that most classes in the package have dependencies on visual interface, both on custom Freeplane UI classes and standard Java AWT ones. The approach is different: while dependencies towards `org.freeplane.ui` packages respect modern architectural patterns, such as the `Dependency Injection Principle`, such as dependencies ruled by Interfaces, java UI standard classes are directly imported, thus violating the same principles developers tried to respect with custom packages. In both cases, the Clean Architecture is not respected: since interfaces are defined in the same package that handle the concrete implementation, there is still dependency on UI package from business logic classes. 
 
 ```plantuml
     @startuml
@@ -113,8 +113,8 @@ Code analysis reveals that most classes in the package have dependencies on visu
     end note
 
     legend right
-        <back:#E74C3C>   </back> : Architectural violation -> points to the dependent package
-        <back:#2ECC71>   </back> : Dependency Compliant -> points to the dependent package
+        <back:#E74C3C>   </back> : DIP not respected -> points to the dependent package
+        <back:#2ECC71>   </back> : DIP respected -> points to the dependent package
     endlegend
 
     @enduml
@@ -238,7 +238,8 @@ There are other crucial violations of the Clean Architecture pattern: there is n
 ```
 
 Compliance with the principles from the Clean Architecture pattern can be found in the _persistence layer_: classes such as `MapReader` and `MapWriter` are at the outer layer of the architecture, and there are no dependency violations.
-These architectural flaws can be extended to the application as a whole: the analysis of the `org.freeplane.features.map` package is a case study which can fairly represent the overall structure of the software. Freeplane does not comply with modern architectural patterns and particularly with the Clean Architecture one, and it can be explained by the age of the software, whose development started in 2009.
+These architectural flaws can be extended to the application as a whole: the analysis of the `org.freeplane.features.map` package is a case study which can fairly represent the overall structure of the software. Freeplane does not completely comply with modern architectural patterns and particularly with the Clean Architecture one: there is not a clear boundary between _entites_ and _use cases_, and business logic is too coupled to the UI. Furthermore, dependency direction is wrong with respect to Clean Architecture principles. However, the persistence layer respects the pattern.  
+This architectural choices can be explained by the age of the software, whose development started in 2009.
 
 
 #### 5. Zooming into the Engine: C4 Component Model of the Core (Target: ~600 words)
@@ -338,9 +339,11 @@ On the other hand, on the Service Layer, a clear dependency tree cannot be drawn
 This structure provides both freedom and constraints to developers: new features can be added by creating a new dedicated plugin. Moreover, since bundles are independent and well separated, deployment and maintenance does not affect the overall system. Caveats of this architectural choice are the programming language and the complete compliance to the framework: developers must write all plugins in Java (the OSGi framework doesn't support other programming languages), and they must write plugins that implement the logic described above.
 
 #### Code Analysis: Boundaries in Freeplane Core
-The object of this short analysis is to understand how boundaries are respected at the core level. The analysis is carried on the `org.freeplane.features.map` package. The analysis has been carried on through analysis of `git log` and clusterization of classes that change together frequently. The minumun threshold is 10 shared commits. 
-The package is affected by some Common Closure Principle violations. Most of them are related to changes that affect the `MapController` class and many visual components that are related to `Swing` library.   
-Within the package, classes that host the most important business logic features do not change together: for instance, `MapModel` and `NodeModel` never change in the same commit. That is good news for developers and maintainers, since it suggests low coupling between core business logic features, that are well-separated. Even though in clear violation of Clean Architecture principle, a lower, looser level of component separation has been put in place.
+The object of this short analysis is to understand how boundaries are respected at the core level. The analysis is carried on the `org.freeplane.features.map` package. This package is representative of the overall architecture, since it includes classes that manage core software logic, such as Nodes and MindMap models. 
+Data was extracted from the main repository, exploiting `git log`, and analysis is carried out through the logical coupling analysis method, where groups that change together frequently have been put in the same cluster. The co-change threshold (minimun number of git commits classes must share to be included in the analysis) is 10.  
+Many Common Closure Principle violations can be found: it means that classes often change together, even if they shouldn't. Most of them are related to changes that affect the `MapController` class and many visual components that are related to `Swing` library. This data suggest loose boundaries, at least between entities and UI features.
+Within the package, classes that host the most important business logic features rarely change together: for instance, `MapModel` and `NodeModel` never change in the same commit. They do not have static dependencies on each other either. That is proof that at business level core components are well separated. That is good news for developers and maintainers, since it suggests low coupling between core business logic feature.  
+Even though in clear violation of Clean Architecture principle, a lower, looser level of component separation has been put in place.
 
 #### 7. Architectural Evaluation and Conclusions (Target: ~100 words)
 *   **Objective:** Summarize your analysis with a critical eye.
