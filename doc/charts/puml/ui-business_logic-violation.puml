@@ -1,0 +1,74 @@
+@startuml
+title Freeplane Clean Architecture Violations - Case Study
+
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam DefaultFontName Helvetica
+skinparam class {
+    BackgroundColor White
+    ArrowColor #555555
+    BorderColor #444444
+    HeaderBackgroundColor #F4F6F7
+}
+skinparam package {
+    FontSize 14
+    Style folder
+}
+skinparam note {
+    BackgroundColor #FFFCDF
+    BorderColor #F1C40F
+    FontColor #333333
+}
+
+top to bottom direction
+
+package "Presentation Layer (UI)" as UILayer #E8F4F8 {
+    
+    class "java.awt.Color" as JavaColor #FFF0F0
+    class "java.awt.GraphicEnvironment" as GraphicEnvironment #FFF0F0
+
+
+
+    package "UI Features" as UIFeatures <<org.freeplane.features.ui>> #FFFFFF {
+        class IMapViewChangeListener {
+        }
+        class IMapViewManager {
+        }
+        class ViewController {}
+    }
+}
+
+package "Domain Layer (Logic)" as LogicLayer #EAF8E8 {
+    
+    package "NodeManagementLogic" as NodeLogic <<org.freeplane.features.node>> #FFFFFF {
+
+        class MapController <<central map orchestrator>> {
+        }
+
+    }
+
+    package "MindMap Mode" as MM <<org.freeplane.map.mindmap>> #FFFFFF {
+        class MMapController {}
+    }
+}
+
+UILayer -[hidden]down-> LogicLayer
+
+MapController -[#E74C3C,thickness=2]up-> JavaColor : <<violates>>
+
+MapController -[#2ECC71,thickness=2]up-> IMapViewChangeListener : <<complies>>
+MapController -[#2ECC71,thickness=2]up-> IMapViewManager : <<complies>>
+
+MMapController -[#2ECC71,thickness=2]up-> IMapViewChangeListener : <<complies>>
+MMapController -[#E74C3C,thickness=2]up-> GraphicEnvironment : <<violates>>
+
+
+note right of UIFeatures
+  **COMPLIANT:**
+  This set of dependencies is compliant 
+  with clean architecture: the business 
+  logic doesn't know anything about the 
+  concrete UI object.
+end note
+
+@enduml

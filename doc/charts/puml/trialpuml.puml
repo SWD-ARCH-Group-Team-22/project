@@ -1,0 +1,28 @@
+@startuml
+title Esempio di Diagramma dei Componenti
+
+package "Client Side" {
+  [Browser Web] as Client
+}
+
+node "Server Side" {
+  component "Gestore Autenticazione" as Auth
+  component "Motore Ordini" as Ordini
+  () "API REST" as API
+}
+
+database "Data Tier" {
+  [Database Principale] as DB
+}
+
+' Relazioni
+Client ..> API : Richieste HTTP
+API - Auth : Fornita da
+API - Ordini : Fornita da
+
+Auth --> DB : Legge/Scrive
+Ordini --> DB : Legge/Scrive
+
+note right of Auth : Verifica token JWT
+
+@enduml
