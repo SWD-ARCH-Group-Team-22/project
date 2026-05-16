@@ -3,11 +3,10 @@
 #### 1. Introduction and Analysis Methodology (Target: ~200 words) -> 208 words
 This report presents an architectural analysis of Freeplane with the objective of identifying its main structural characteristics, architectural style, and design principles. The analysis aims to reconstruct the system architecture and understand how its components are organized and interact.
 
-The reverse engineering process was conducted using static code analysis and documentation review. The codebase was examined to identify packages, modules, and dependencies, while repository documentation was used to support architectural interpretation.
+The reverse engineering process was conducted using static code analysis, documentation review and statistics gathered directly from the official Freeplane repository. The codebase was examined to identify packages, modules, and dependencies, while repository documentation was used to support architectural interpretation.
 
-The system can be described as a **modular monolith enhanced with a micro-kernel (plug-in) pattern**, where a central core is extended through independently developed components. The codebase is organized into packages such as core, features, and view, which separate fundamental logic, functional behavior, and user interface concerns. This reflects a modular structure within a single deployable application. In addition, extensible elements within the features package indicate a micro-kernel (plug-in) pattern, allowing new functionality to be introduced without modifying the core. The presence of multiple modules and a large number of packages further confirms a structured and layered organization.
+The system can be described as an **imperfect micro-kernel (plug-in) monolith**; extensible objects are linked to the core system with the OSGi framework, an industry-standard solution for blending separate components in a single entry point from the user standpoint. However, the core module is not just a shell, and it implements core business logic and the frontend. Plugins represent extensions: they do not make the software, but they extend it with advanced features. This pattern breakes some of the micro-kernel architectural style principles, thus the _imperfect_ definition.
 
-This architectural combination is well suited to mind-mapping software. The modular monolith ensures simplicity, consistency, and ease of deployment, while the micro-kernel pattern enables extensibility to support diverse user needs. Together, these approaches support maintainability, adaptability, and long-term evolution.
 
 
 #### 2. The System in its Ecosystem: C4 Context Model (Target: ~300 words) - 314 words
