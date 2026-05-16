@@ -1,0 +1,28 @@
+@startuml
+
+title Class Diagram: Dependency Violation
+
+package "Node" as node <<org.freeplane.features.map>> {
+    class MapModel{
+        + getCurrentModeController()
+    }
+
+    class MapController {
+        + getCurrentController()
+    }
+
+}
+
+
+package "Mode" as mode <<org.freeplane.features.mode>>{
+    
+    class Controller {
+    + Adapter()
+    }    
+}
+
+MapModel --> Controller : depends on
+MapController --> Controller : depends on
+
+
+@enduml
