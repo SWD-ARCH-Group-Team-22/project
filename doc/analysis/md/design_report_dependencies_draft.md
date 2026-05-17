@@ -19,3 +19,13 @@ The most interesting case is the relation between the public API and the scripti
 Finally, the text rendering plugins show another useful case. `FormulaTextTransformer`, `LatexRenderer` and `MarkdownRenderer` belong to different plugin areas, but they all deal with the same general concern: transforming or rendering text inside nodes. So their co-change may mean that, when Freeplane changes how node text is handled, more than one text-related plugin has to be updated.
 
 This first analysis does not prove design problems by itself. It gives us a set of meaningful areas to inspect next in the code dependencies analysis.
+
+### Code dependencies in the Swing map view
+
+The code inspection confirms that the Swing map view cluster is not only a historical relation. `MapView`, `NodeView` and `MainView` form the main visual structure of the map: `MapView` manages the overall graphical view, `NodeView` represents a single node linked to its `NodeModel`, and `MainView` shows the visible content of the node.
+
+This explains why these classes often changed together in the co-change reports. A change in how nodes are displayed, selected, folded, styled or updated can affect more than one level of the visual structure. For this reason, the dependency seems mostly justified: it is strong, but linked to the same responsibility, namely showing and updating the visual map. This is consistent with the Common Closure Principle, because classes that change for the same reason are kept in the same subsystem.
+
+At the same time, to display nodes correctly, the map view needs information from many other parts of the system, such as styles, filters, text, links, icons, UI listeners and the map model. This creates high fan-out, meaning many outgoing links to other packages. This is understandable, because a visual node contains many different elements, but it also increases cognitive load: modifying this area requires understanding several connected classes and subsystems.
+
+`NodeViewFactory` helps to keep part of this complexity more controlled, because the creation of visual node components is concentrated there instead of being spread inside `MapView`.
