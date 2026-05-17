@@ -1,0 +1,70 @@
+@startuml Freeplane_Core_Component_Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Freeplane Core Component Diagram
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+Person(user, "User", "Creates, edits, and manages mind maps")
+
+Container_Boundary(core, "Freeplane Core Container") {
+
+Component(ui, "Swing UI Components", "Java Swing", "Provides graphical user interface rendering and user interaction")
+
+Component(modeController, "ModeController", "Java Component", "Coordinates application modes and orchestrates interactions between UI and services")
+
+Component(mapController, "MapController", "Java Component", "Handles navigation, node selection, listener coordination, and map operations")
+
+Component(mmapController, "MMapController", "Java Component", "Extends MapController with editing operations, CRUD actions, and clipboard handling")
+
+Component(pluginManager, "PluginManager", "Java Component", "Discovers, loads, and registers plugins during application startup")
+
+Component(extensionRegistry, "ExtensionRegistry", "Java Component", "Manages extension objects dynamically attached to nodes")
+
+Component(eventDispatcher, "Event Dispatcher", "Java Component", "Propagates model updates to UI components and plugins through listeners")
+
+Component(mapModel, "MapModel", "Java Component", "Represents the global structure of a mind map and maintains node registry")
+
+Component(nodeModel, "NodeModel", "Java Component", "Represents individual nodes, hierarchy, text, metadata, and folding state")
+
+Component(sharedData, "SharedNodeData", "Java Component", "Stores data shared between cloned nodes")
+
+Component(mapReader, "MapReader", "Java Component", "Reads XML-based .mm files and reconstructs map structures")
+
+Component(mapWriter, "MapWriter", "Java Component", "Serializes map structures into XML-based .mm files")
+}
+
+System_Ext(pluginSystem, "Plugin Extensions", "Optional plugins extending Freeplane functionality")
+
+Rel(user, ui, "Interacts with", "GUI")
+
+Rel(ui, modeController, "Delegates user actions to", "Java Method Call")
+
+Rel(modeController, mapController, "Coordinates map operations", "Java Method Call")
+
+Rel(mapController, mmapController, "Delegates editing operations", "Java Method Call")
+
+Rel(mapController, mapModel, "Manipulates and queries", "Java Method Call")
+
+Rel(mapModel, nodeModel, "Contains", "Object Composition")
+
+Rel(nodeModel, sharedData, "Uses shared node state", "Java Reference")
+
+Rel(mapController, eventDispatcher, "Dispatches model updates through", "Observer Pattern")
+
+Rel(eventDispatcher, ui, "Notifies UI components", "Listener Events")
+
+Rel(eventDispatcher, pluginSystem, "Notifies plugins", "Listener Events")
+
+Rel(pluginManager, pluginSystem, "Loads and registers", "Plugin Lifecycle")
+
+Rel(pluginManager, extensionRegistry, "Registers extensions in", "Java Method Call")
+
+Rel(extensionRegistry, nodeModel, "Attaches extension objects to", "Extension Object Pattern")
+
+Rel(mapController, mapReader, "Loads maps through", "XML File I/O")
+
+Rel(mapController, mapWriter, "Persists maps through", "XML File I/O")
+
+@enduml

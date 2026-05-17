@@ -1,0 +1,56 @@
+@startuml Freeplane_Container_Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Freeplane Container Diagram
+
+LAYOUT_WITH_LEGEND()
+LAYOUT_TOP_DOWN()
+
+Person(beginner, "Beginner User", "Uses Freeplane for creating and organizing mind maps")
+Person(advanced, "Advanced User", "Uses scripting and plugins to automate and extend functionality")
+
+System_Boundary(app, "Freeplane Desktop Application") {
+
+Container(freeplane, "Freeplane Application", "Java Desktop Application", "Provides mind map editing, visualization, plugin management, scripting, and export functionalities")
+
+ContainerDb(file_system, "Local File System", "XML / .mm Files", "Stores mind maps, settings, images, and application resources")
+}
+
+System_Ext(browser, "Web Browser", "Opens hyperlinks and external web resources")
+
+System_Ext(visualizers, "Export Services", "Supports exporting and visualization of PDF, HTML, and image formats")
+
+
+System_Ext(ai, "AI/LLM Services", "Provides AI-assisted functionality and language model capabilities")
+
+System_Ext(taskjuggler, "TaskJuggler", "Supports task and project management integration")
+
+System_Ext(email, "Email Tool", "Supports sending exported maps and notifications")
+
+System_Ext(cloud_api, "External APIs and Cloud Services", "Provides external integrations and cloud-based services")
+
+browser -[hidden]down-> visualizers
+visualizers -[hidden]down-> email
+
+ai -[hidden]down-> taskjuggler
+taskjuggler -[hidden]down-> cloud_api
+
+Rel_D(beginner, freeplane, "Creates and manages mind maps", "GUI Interaction")
+
+Rel_D(advanced, freeplane, "Uses plugins and scripting", "GUI Interaction")
+
+Rel_D(freeplane, file_system, "Reads and writes mind map data", "XML File I/O")
+
+Rel_R(freeplane, browser, "Opens external hyperlinks", "HTTP/HTTPS")
+
+Rel_R(freeplane, visualizers, "Exports mind maps", "Export API")
+
+Rel_R(freeplane, ai, "Sends prompts and retrieves responses", "HTTPS/API")
+
+Rel_R(freeplane, taskjuggler, "Exports task structures", "File Export")
+
+Rel_R(freeplane, email, "Sends emails and shared content", "SMTP")
+
+Rel_R(freeplane, cloud_api, "Exchanges external data", "REST/HTTPS")
+
+@enduml
