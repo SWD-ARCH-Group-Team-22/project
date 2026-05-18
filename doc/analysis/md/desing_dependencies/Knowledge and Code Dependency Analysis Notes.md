@@ -298,6 +298,10 @@ The following sections analyse the main clusters found in the co-change reports,
 
 ### 1. Swing map view
 
+![Map view dependency diagram](../../../img/design/map_view_dependencies.png)
+
+*Figure: simplified relation between `MapView`, `NodeView`, `MainView`, `NodeViewFactory` and `NodeModel`.*
+
 The first code dependency case we analysed is the Swing map view cluster. It was the strongest cluster in the co-change analysis: `MapView`, `NodeView`, `MainView`, `NodeViewFactory` and the layout classes appeared together in all three time windows. For this reason, we used it as the first area to inspect in the source code.
 
 The code confirms that this is not just an accidental historical relation. These classes work together to show the mind map on the screen. The basic structure is:
