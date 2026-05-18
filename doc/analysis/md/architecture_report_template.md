@@ -63,13 +63,56 @@ Freeplane supports built-in LLM interaction. Through a dedicated plugin, users c
 All these features show how the software is more than just a mind-mapping tool, but it can described as a productivity software: mindmaps can be useful for a large variety of users, and productivity features make the software more appealing to highly professional users looking for ways to speed up their workflow.
 
 
-#### 3. Decomposition and Runtime: C4 Container Model (Target: ~400 words)
-*   **Objective:** Show the deployable/executable units. For a desktop app like Freeplane, the "containers" are typically the base framework, the Core Engine, and the bundles/plugins.
-*   **Action:** *[Insert C4 Level 2 Diagram: Container]*
-*   **Questions to answer:**
-    *   How is the runtime structured? What is the role of the plugin framework (e.g., OSGi / Equinox) that acts as the host?
-    *   Which logical/physical modules make up the unalterable "Core," and which are identified as external "Plugins" (e.g., PDF export plugin, scripting plugin, LaTeX plugin)?
-    *   How do these containers communicate at runtime (e.g., separate classloading, direct in-memory calls)?
+#### 3. Decomposition and Runtime: C4 Container Model 
+
+The Container Model aims at showing how the software is built, from a lower, more detailed standpoint. 
+
+
+```plantuml
+
+    @startuml Freeplane_Container_Diagram
+        !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+        title Freeplane Container Diagram
+
+        LAYOUT_TOP_DOWN()
+
+        Person(beginner, "User\n[Person]", "Someone who uses basic mind-mapping building tools to support their workflow or learning project")
+        Person(advanced, "Advanced User\n[Person]", "Someone who deeply understands the underlying features of the software and can enhance and automate their workflow through script writing and plugin exploitation")
+
+        System_Boundary(app, "Freeplane Desktop") {
+            Container(freeplane, "Freeplane", "Java Application", "Open-source mind map design software")
+            System_Ext(file_system, "File System", "Freeplane can both gather and store data from the computer; the OS and the File System are in charge of persistence")
+        }
+
+        System_Ext(browser, "Browser", "All URLs are opened in the system-predefined Browser")
+        System_Ext(llm, "LLM Software Tools", "Freeplane offers advanced functionalities to integrate LLMs in its workflow routine")
+        System_Ext(smtp, "Email Tool", "Freeplane offers the chance to redirect users to their preferred email provider")
+        System_Ext(taskjuggler, "TaskJuggler", "Freeplane mindmaps can be converted into Tasks within TaskJuggler")
+
+        llm -[hidden]down-> smtp
+
+        Rel_D(beginner, freeplane, "Uses for basic mapping")
+        Rel_D(advanced, freeplane, "Uses and customizes their experience through scripts")
+
+        Rel_D(freeplane, file_system, "Reads/Writes files to")
+        Rel_R(freeplane, browser, "Opens URLs in")
+        Rel_R(freeplane, taskjuggler, "Exports mindmaps to be tasks of")
+        Rel_L(freeplane, llm, "Sends prompts and retrieves data from")
+        Rel(freeplane, smtp, "Redirects to")
+
+        LAYOUT_WITH_LEGEND()
+
+    @enduml
+```
+
+Freeplane is represented as a single Container software. This choice can be explained by the nature of its technology stack. Freeplane has multiple plugins, that are connected to the core through the OSGi framework. This implementation ensures separation among plugins, making them independent from one another; theoretically, Freeplane plugins can be autonomously developed, tested and integrated in the environment. Moreover, they do not extend core software functionalities: plugins bring advanced features, both graphical and functional. The core software alone would work well without plugins.  
+However, the software has been represented as a single Component unit because OSGi bundles have not independent life. Even though they are developed externally, they require the OSGi engine to be executed. Plugins such as `freeplane script` or `freeplane latex` cannot exist outside the Freeplane environment. That is because all plugins plugins are designed to extend features in the core Freeplane application. 
+Furthermore, they cannot be even run outside the launcher defined in the core `freeplane` package: the OSGi implementation require the framework to start plugins with a sequential process, managed by a kernel that is instantiated in the launcher implemented in the core package.
+These consideration have led the analysis to consider the software as composed of a single container. In this situation, independent deployability cannot justify the definition of plugins as independent units.
+
+The persistence layer is managed by the Operating System. Freeplane stores information related to the single mind-map in a proprietary file format, that is the `.mm`. This is an XML-derived format that fits the definition of mindmaps as nested blocks of nodes. Users can independentely decide which area of their File System save data to. 
+
 
 #### 4. Mapping to Clean Architecture: Theory vs. Reality (Target: ~500 words)
 This section aims to clarify the architectural choices made to build the software, and to define if Clean Architecture principles are respected. 
@@ -278,16 +321,18 @@ There are other crucial violations of the Clean Architecture pattern: there is n
     MapModel --> IController : depends on
     MapController --> IController : depends on
     Controller -[hidden]up-> IController
-    Controller --> IController : implements
+    Controller ..|> IController : implements
 
     @enduml
 ```
+This situation leverages the Dependency Inversion Principle to decouple the three classes, and it introduces a Boundary Interface that exposes signatures which outer components must adhere to. This way, the set of involved classes is compliant with the Clean Architecture pattern.
 
 Compliance with the principles from the Clean Architecture pattern can be found in the _persistence layer_: classes such as `MapReader` and `MapWriter` are at the outer layer of the architecture, and there are no dependency violations. They perform operations to save or read data from the mindmap directly in the `.mm` file. 
 The `org.freeplane.features.filter` package suffers from the same set of problems: its `FilterController` has the same mixed approach at User Interface import dependencies, and it mixes business logic, application logic, and frontend concerns in the same class.. That's why architectural flaws from `org.freeplane.features.map` package can be fairly extended to the whole software structure.
 
-To sum up, the software does not fully comply to Clean Architecture principles. There are many violations that concern boundaries mainly: the most serious violation is the lack of clear division between _entities_ and _use cases_, and the broken dependency flow. Dependency on concrete User Inteface methods make the software more difficult to be tested in isolation.
-These violations have an explanation: as reported in the Official Documentation, core classes were designed to be extensible, and to follow the Extension-Object Design Pattern defined by Erich Gamma. This architectural choice aims at building extension to well-defined objects. Lack of compliance to the Clean Architecture can be explained by the need of having both _entities_ and _use cases_ in the same set of classes to make them easily extensible.
+To sum up, the software does not fully comply with Clean Architecture principles. There are many violations that mainly concern architectural boundaries: the most serious violation is the lack of clear division between entities and use cases, and the broken dependency flow. Dependency on concrete User Interface methods makes the software more difficult to be tested in isolation.
+These violations have an explanation: as reported in the Official Documentation, core classes were designed to be extensible, and to follow the Extension-Object Design Pattern defined by Erich Gamma. This architectural choice aims at building extensions to well-defined objects. The lack of compliance with the Clean Architecture can be explained by the need to have both entities and use cases in the same set of classes to make them easily extensible.
+However, Extensible Object theory does not justify the direct implementation of UI elements in core entities. This remains a pure violation of the Separation of Concerns at an architectural level.
 
 #### 5. Zooming into the Engine: C4 Component Model of the Core (Target: ~600 words)
 *   **Objective:** Detail the internal design of the Core and showcase the extension points.
@@ -305,7 +350,7 @@ Freeplane is built on top of the OSGi framework, in the Knopflerfish implementat
 3. Service Layer: bundles provide services, that are registered within the Framework exploiting mechanisms that are built in OSGi environment. Such services can be published or unpublished at anytime. They look like plain Java Objects.  
 
 The OSGi bundles are built to be independent from one another: there is no shared knowledge, code or data, and all references to classes or methods in other plugins throw OSGi errors. Plugins and Core have therefore strict boundaries, that can be crossed by pointing to published services only.  
-At the Module Layer, circular dependencies are critical and they can lead to deadlock: it can happen when thread 1 starts Bundle 1 which requires a Service from Bundle 2, and it stops until it is published. Thread 2 starts Bundle 2 which requires a service from Bundle 1. It stops. The application is now locked permanently. This can be solved by implementing additional features provided by the framework.  
+At the Module Layer, circular dependencies are critical and they can lead to deadlock: it can happen when thread 1 starts Bundle 1 which requires a Service from Bundle 2, and it stops until it is published. Thread 2 starts Bundle 2 which requires a service from Bundle 1. It stops. The application is locked permanently. This can be solved by implementing additional features provided by the framework.  
 Freeplane resolves these dependencies at runtime, since it provides a single Activator that is responsible of building the application attaching different plugins.
 On the other hand, on the Service Layer, a clear dependency tree cannot be drawn. That is because Bundles can both publish and exploit services published by other Bundles, that will likely require Service published by plugins that exploit their services. Dependencies are therefore resolved at run-time: bundles may or may not publish or request services. This pattern makes debugging more difficult, because sometimes it is difficult to track flow of information across bundles in Freeplane.
 
