@@ -1,0 +1,67 @@
+@startuml
+title Swing map view cluster - code dependencies
+
+left to right direction
+set namespaceSeparator none
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 140
+skinparam ranksep 110
+skinparam ArrowFontSize 12
+
+hide empty members
+
+package "org.freeplane" as Freeplane {
+
+  package "view/swing/map" as MapPkg {
+    class MapView
+    class NodeView
+    class NodeViewFactory
+    class MainView
+
+    MapView -[hidden]right- NodeView
+    MapView -[hidden]down- NodeViewFactory
+    NodeViewFactory -[hidden]right- MainView
+    NodeView -[hidden]down- MainView
+  }
+
+  package "features/map" as FeaturesPkg {
+    class NodeModel
+  }
+
+  NodeView -[hidden]down- NodeModel
+}
+
+class "External concerns\nstyles, filters, text,\nlinks, icons, UI listeners" as ExternalConcerns
+
+NodeView -[hidden]right- ExternalConcerns
+
+MapView --> NodeView : manages
+NodeView --> MainView : contains
+NodeView --> NodeModel : represents
+
+MapView ..> NodeViewFactory : uses for\ncreation
+NodeViewFactory ..> MainView : creates
+NodeViewFactory ..> NodeView : creates
+
+NodeView -[#gray,dashed]-> ExternalConcerns : uses
+MapView -[#gray,dashed]-> ExternalConcerns : uses
+
+note right of ExternalConcerns
+External concerns are grouped here to keep
+the diagram readable. They show that the map
+view depends on several surrounding subsystems,
+which contributes to its high fan-out and
+higher cognitive load.
+end note
+
+legend bottom right
+  <b>Line styles</b>
+  Solid black line: main structural dependency
+  Dashed black line: creation / construction dependency
+  Dashed gray line: secondary dependency
+endlegend
+@enduml

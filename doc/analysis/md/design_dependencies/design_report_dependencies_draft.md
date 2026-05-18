@@ -22,7 +22,7 @@ This first analysis does not prove design problems by itself. It gives us a set 
 
 ### Code dependencies in the Swing map view
 
-The code inspection confirms that the Swing map view cluster is not only a historical relation. `MapView`, `NodeView` and `MainView` form the main visual structure of the map: `MapView` manages the overall graphical view, `NodeView` represents a single node linked to its `NodeModel`, and `MainView` shows the visible content of the node.
+The code inspection confirms that the Swing map view cluster is not only a historical relation. `MapView`, `NodeView` and `MainView` are directly connected because they form the main visual structure of the map. `MapView` manages the overall graphical view, `NodeView` represents a single node and is linked to the corresponding `NodeModel`, which stores the node data, while `MainView` shows the visible content of the node, such as text, icons, borders and link indicators.
 
 This explains why these classes often changed together in the co-change reports. A change in how nodes are displayed, selected, folded, styled or updated can affect more than one level of the visual structure. For this reason, the dependency seems mostly justified: it is strong, but linked to the same responsibility, namely showing and updating the visual map. This is consistent with the Common Closure Principle, because classes that change for the same reason are kept in the same subsystem.
 
