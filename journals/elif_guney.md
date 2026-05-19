@@ -24,5 +24,6 @@ Began revised architecture report to reflect updates in the diagrams.
 Completed the Introduction and Analysis Methodology section, explained the reverse engineering process.    
 Completed the “System in its Ecosystem: C4 Context Model” section, detailing system interactions and architectural interpretation.
 
-
-
+### 16/05/2026 - 19/05/2026 
+Created core component diagram and explanations in report. Seperated core and plugin ecosystem diagrams.  
+Review and fixed container diagram relations.
