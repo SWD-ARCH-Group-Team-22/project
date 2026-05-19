@@ -71,37 +71,48 @@ The Container Model aims at showing how the software is built, from a lower, mor
 ```plantuml
 
     @startuml Freeplane_Container_Diagram
-        !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-        title Freeplane Container Diagram
+    title Freeplane Container Diagram
 
-        LAYOUT_TOP_DOWN()
+    LAYOUT_WITH_LEGEND()
+    LAYOUT_TOP_DOWN()
 
-        Person(beginner, "User\n[Person]", "Someone who uses basic mind-mapping building tools to support their workflow or learning project")
-        Person(advanced, "Advanced User\n[Person]", "Someone who deeply understands the underlying features of the software and can enhance and automate their workflow through script writing and plugin exploitation")
+    Person(beginner, "Beginner User", "Uses Freeplane for creating and organizing mind maps")
+    Person(advanced, "Advanced User", "Uses scripting and plugins to automate and extend functionality")
 
-        System_Boundary(app, "Freeplane Desktop") {
-            Container(freeplane, "Freeplane", "Java Application", "Open-source mind map design software")
-            System_Ext(file_system, "File System", "Freeplane can both gather and store data from the computer; the OS and the File System are in charge of persistence")
-        }
+    System_Boundary(app, "Freeplane Desktop Application") {
 
-        System_Ext(browser, "Browser", "All URLs are opened in the system-predefined Browser")
-        System_Ext(llm, "LLM Software Tools", "Freeplane offers advanced functionalities to integrate LLMs in its workflow routine")
-        System_Ext(smtp, "Email Tool", "Freeplane offers the chance to redirect users to their preferred email provider")
-        System_Ext(taskjuggler, "TaskJuggler", "Freeplane mindmaps can be converted into Tasks within TaskJuggler")
+    Container(freeplane, "Freeplane Application", "Java Desktop Application", "Provides mind map editing, visualization, plugin management, scripting, and export functionalities")
 
-        llm -[hidden]down-> smtp
+    ContainerDb(file_system, "Local File System", "XML / .mm Files", "Stores mind maps, settings, images, and application resources")
+    }
 
-        Rel_D(beginner, freeplane, "Uses for basic mapping")
-        Rel_D(advanced, freeplane, "Uses and customizes their experience through scripts")
+    System_Ext(browser, "Web Browser", "Opens hyperlinks and external web resources")
 
-        Rel_D(freeplane, file_system, "Reads/Writes files to")
-        Rel_R(freeplane, browser, "Opens URLs in")
-        Rel_R(freeplane, taskjuggler, "Exports mindmaps to be tasks of")
-        Rel_L(freeplane, llm, "Sends prompts and retrieves data from")
-        Rel(freeplane, smtp, "Redirects to")
+    System_Ext(ai, "AI/LLM Services", "Provides AI-assisted functionality and language model capabilities")
 
-        LAYOUT_WITH_LEGEND()
+    System_Ext(taskjuggler, "TaskJuggler", "Supports task and project management integration")
+
+    System_Ext(email, "Email Tool", "Support integration with external email systems")
+
+    
+    ai -[hidden]down-> taskjuggler
+
+    Rel_D(beginner, freeplane, "Creates and manages mind maps", "GUI Interaction")
+
+    Rel_D(advanced, freeplane, "Uses plugins and scripting", "GUI Interaction")
+
+    Rel_D(freeplane, file_system, "Reads and writes mind map data", "XML File I/O")
+
+    Rel_R(freeplane, browser, "Opens external hyperlinks", "HTTP/HTTPS")
+
+    Rel_R(freeplane, ai, "Sends prompts and retrieves responses", "HTTPS/API")
+
+    Rel_R(freeplane, taskjuggler, "Exports task structures", "File Export")
+
+    Rel_R(freeplane, email, "Redirects to", "OS")
+
 
     @enduml
 ```
