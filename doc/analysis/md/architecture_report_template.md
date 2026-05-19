@@ -26,13 +26,11 @@ Freeplane was born as a fork of the well-known Freemind software. The official d
 
     System(freeplane, "Freeplane\n[Software System]", "Open-source mind map design software")
 
-    System_Ext(fs, "File System", "Freeplane can both gather and store data from the computer, the OS and the File System are in charge of persistence")
-    System_Ext(browser, "Browser", "All URL are opened in the system-predefined Browser")
-    System_Ext(llm, "LLM Software Tools", "Freeplane offers advanced functionalities to integrate LLMs in its workflow routine")
-    System_Ext(smtp, "Email tool", "Freeplane offers the chance to redirect users to their preferred email provider")
-    System_Ext(taskjuggler, "TaskJuggler", "Freeplane mindmaps can be converted into Tasks within TaskJuggler")
-
-
+    System_Ext(fs, "File System", "[Software System]\nProvides persistent storage for files and application resources")
+    System_Ext(browser, "Web Browser", "[Software System]\nDisplays web pages and external hyperlinks")
+    System_Ext(llm, "LLM Software Tools", "[Software System]\nProvides external AI and language model services")
+    System_Ext(smtp, "Email Tool", "[Software System]\nProvides email composition and delivery services")
+    System_Ext(taskjuggler, "TaskJuggler", "[Software System]\nProject and task management application")
 
     Rel(beginner, freeplane, "Uses for basic mapping")
     Rel(advanced, freeplane, "uses and customizes its experience through scripts")
@@ -88,14 +86,13 @@ The Container Model aims at showing how the software is built, from a lower, mor
     ContainerDb(file_system, "Local File System", "XML / .mm Files", "Stores mind maps, settings, images, and application resources")
     }
 
-    System_Ext(browser, "Web Browser", "Opens hyperlinks and external web resources")
+    System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
 
-    System_Ext(ai, "AI/LLM Services", "Provides AI-assisted functionality and language model capabilities")
+    System_Ext(ai, "AI/LLM Services", "External AI and language model services")
 
-    System_Ext(taskjuggler, "TaskJuggler", "Supports task and project management integration")
+    System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
 
-    System_Ext(email, "Email Tool", "Support integration with external email systems")
-
+    System_Ext(email, "Email Tool", "Email composition and delivery service")
     
     ai -[hidden]down-> taskjuggler
 
@@ -111,7 +108,7 @@ The Container Model aims at showing how the software is built, from a lower, mor
 
     Rel_R(freeplane, taskjuggler, "Exports task structures", "File Export")
 
-    Rel_R(freeplane, email, "Redirects to", "OS")
+    Rel_R(freeplane, email, "Redirects users for email sharing", "OS")
 
 
     @enduml
