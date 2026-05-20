@@ -445,6 +445,72 @@ Many Common Closure Principle violations can be found: it means that classes oft
 Within the package, classes that host the most important business logic features rarely change together: for instance, `MapModel` and `NodeModel` never change in the same commit. They do not have static dependencies on each other either. That is proof that at business level core components are well separated. That is evidence that the `freeplane.org.features.map` acts as a generic container, where different logic coexists. This is an architectural flaw that can reduce testability and isolation.
 Even though in clear violation of Clean Architecture principle, a lower, looser level of component separation has been put in place.
 
+### SOLID Analysis
+
+The analysis starts from `org.freeplane.features.map` and is broadened to the entire `features` layer to verify whether violations are systemic.
+
+**Single Responsibility Principle (SRP):**
+Controllers are God Objects. `MapController` aggregates IO setup, action registration, navigation, folding, and event orchestration:
+
+```java
+public MapController(ModeController modeController) {
+    mapWriter = new MapWriter(this);
+    mapReader = new MapReader(readManager);
+    createActions(modeController);
+}
+```
+
+`FilterController` (1,179 lines) similarly aggregates filter logic, toolbar construction, and XML persistence. `ModeController` (491 lines) handles 10+ distinct responsibilities. This pattern repeats across the codebase.
+
+**Open/Closed Principle (OCP):**
+`NodeLevelConditionController.createASelectableCondition()` uses `if`-chains — adding a new condition type requires modifying existing code:
+
+```java
+if (simpleCondition.objectEquals(ConditionFactory.FILTER_IS_EQUAL_TO))
+    return new NodeLevelCompareCondition(...);
+if (simpleCondition.objectEquals(FILTER_LEAF))
+    return new LeafCondition();
+```
+
+However, the `filter.condition` subpackage shows OCP **compliance** through a Strategy/Decorator pattern (`ASelectableCondition`, `DecoratedCondition`).
+
+**Liskov Substitution Principle (LSP):**
+`SingleCopySource` extends `NodeModel` but breaks the base class contract:
+
+```java
+class SingleCopySource extends NodeModel {
+    @Override
+    public void acceptViewVisitor(INodeViewVisitor visitor) {
+       throw new RuntimeException("method not supported");
+    }
+    @Override
+    public IExtension putExtension(IExtension extension) {
+       throw new RuntimeException("method not supported");
+    }
+}
+```
+
+**Interface Segregation Principle (ISP):**
+`IMapSelection` bundles selection, navigation, scrolling, filtering, and visibility into one fat interface. In contrast, `INodeChangeListener` (single method: `nodeChanged`) is a clean, minimal interface.
+
+**Dependency Inversion Principle (DIP):**
+This is the most pervasive violation. `Controller.getCurrentController()` — a concrete global singleton — is called hundreds of times across the `features` layer:
+
+```java
+Filter filter = Controller.getCurrentController().getSelection().getFilter();
+```
+
+`MapWriter` directly instantiates concrete dependencies rather than receiving abstractions:
+
+```java
+TreeXmlWriter createTreeWriter(final Writer writer) {
+    return new TreeXmlWriter(writeManager, writer,
+        ResourceController.getResourceController().getBooleanProperty("useAsciiCharset"));
+}
+```
+
+**Conclusion:** The violations found in `features.map` are not isolated — they are **systemic architectural patterns** that repeat across the entire core.
+
 #### 7. Architectural Evaluation and Conclusions (Target: ~100 words)
 *   **Objective:** Summarize your analysis with a critical eye.
 *   **Questions to answer:**
