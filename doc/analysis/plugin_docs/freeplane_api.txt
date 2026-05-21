@@ -1,0 +1,130 @@
+FREEPLANE — MODULO: freeplane_api
+==================================
+
+Cos'è e a cosa serve
+----------------------
+Il modulo freeplane_api è il contratto pubblico di Freeplane: l'insieme delle
+interfacce Java che definiscono ciò che gli script Groovy, i plugin e gli add-on
+possono fare con le mappe e i nodi. Invece di accedere direttamente alle classi
+interne (che possono cambiare senza preavviso), uno script usa esclusivamente
+l'API pubblica — che viene mantenuta stabile nel tempo o deprecata con attenzione
+prima di essere rimossa.
+
+Questo modulo è particolarmente denso di commit di tipo api_change, che riflettono
+l'evoluzione deliberata del contratto pubblico verso maggiore espressività e
+coerenza. La storia inizia nel 2018 quando l'API viene formalmente estratta in un
+modulo separato, e da allora è cresciuta in modo costante.
+
+
+Come funziona in dettaglio
+---------------------------
+
+--- La nascita come modulo autonomo (2018) ---
+
+Il commit fondativo è il 4973e455 (giugno 2018): l'API viene spostata nel progetto
+core e distribuita come JAR separato. Prima di questo, le interfacce pubbliche
+erano disperse all'interno del plugin script. La separazione è importante perché
+permette di usare l'API come dipendenza in altri moduli senza dover includere
+l'intero plugin di scripting.
+
+Il commit 42e21482, immediatamente successivo, enuncia un principio architetturale:
+il pacchetto freeplane_api non deve dipendere da nessun altro pacchetto di
+Freeplane. Deve essere autonomo, usabile da qualsiasi contesto esterno.
+
+--- L'API di caricamento mappe (MapLoader, 2018) ---
+
+Nel luglio 2018 viene costruita l'API per caricare e manipolare mappe in modo
+programmatico. I commit b64c78d5, d2c45816, 79de8564 e bb1e7869 definiscono la
+MapLoader API, che permette agli script di aprire mappe senza necessariamente
+mostrarle nella UI (modalità "hidden map"). Il commit a76dc05a rinomina i metodi
+per chiarezza: newMap diventa openMap, newMapFromTemplate diventa openUntitledMap,
+e hiddenMap rimane come metodo separato.
+
+--- Il sistema di permessi degli script (2018) ---
+
+I commit 9e6f7623 e 7ca12ca6 introducono una distinzione importante tra script che
+vengono eseguiti con tutti i permessi (API scripts in modalità headless) e script
+che vengono eseguiti con permessi standard. Questo è rilevante per gli script
+usati in ambienti automatizzati, dove il controllo delle autorizzazioni deve essere
+più flessibile.
+
+--- Quantità e unità di misura (2020) ---
+
+Il commit 4047c97a (dicembre 2020) porta una novità architettuale: l'API inizia
+a usare oggetti Quantity e unità di misura (Length Units) invece di numeri interi
+grezzi per le proprietà geometriche dei nodi come larghezza, altezza e distanze.
+Questo rende il codice degli script più esplicito e meno soggetto a errori di
+interpretazione delle unità.
+
+--- Layout dei nodi figli (2022-2023) ---
+
+Una delle aree di sviluppo più attive riguarda il sistema di layout dei nodi
+figli. Nel 2022, una serie di commit costruisce un intero nuovo sistema:
+il commit 5dbc7713 introduce l'enum ChildNodesLayout con decine di layout
+possibili (con relativi file SVG per visualizzarli nelle preferenze), il commit
+4f2aef94 implementa il modello e i controller, il commit 598bd606 sostituisce
+i tre vecchi enum con quello nuovo.
+
+Il commit 60010ce9 è un api_change significativo: cambia l'API per riflettere
+entrambe le possibili direzioni di layout (orizzontale e verticale). Nel 2023,
+ulteriori commit aggiungono layout "flow" (13d6b37e) e layout che allineano
+il nodo genitore al primo o all'ultimo figlio (c5a40916), sempre con nuovi
+file SVG che permettono all'utente di vedere visivamente il risultato prima di
+scegliere.
+
+--- Stili condizionali (2022-2023) ---
+
+I commit 61f92526 e 219f8aeb (ottobre 2022) aggiungono all'API la gestione degli
+stili condizionali: l'utente può ora interrogare e modificare programmaticamente
+le regole che determinano lo stile di un nodo in base a condizioni (es. "se il
+nodo ha un certo attributo, usa questo stile"). Il commit 9d3a5b8c aggiunge
+documentazione Javadoc estesa a queste interfacce.
+
+--- Il sistema di tag (2024) ---
+
+Nel 2024, con l'introduzione dei tag in Freeplane, l'API viene estesa in modo
+significativo. Il commit 53ca172d aggiunge i metodi per leggere e scrivere i
+tag di un nodo tramite script. Il commit 0f8d2842 rinomina i parametri per
+uniformità: il parametro si chiama keyword (la stringa che rappresenta un tag)
+invece di string o tag, per chiarire che si tratta della chiave testuale e non
+dell'oggetto Tag completo (che include anche il colore).
+
+Il commit b1ee9533 aggiunge i metodi API per le categorie di tag — un sistema
+gerarchico per organizzare i tag in gruppi — e i relativi filtri.
+
+--- Bookmark dei nodi (2025) ---
+
+Nel giugno 2025, una serie di commit aggiunge l'API per i segnalibri dei nodi.
+Il commit 0b3743d5 implementa la funzionalità di bookmark nel core; il commit
+5ac0a772 aggiunge metodi open() al NodeBookmark per navigare programmaticamente
+verso un nodo segnalibro; il commit c7cf203a (api_change) migliora e stabilizza
+l'API.
+
+--- Normalizzazione dei nomi (2025) ---
+
+Il commit 67ea65c1 rinomina underlined in underline nell'API del font, e il
+commit ee27a149 sostituisce strikedThrough (aggettivo grammaticalmente corretto
+ma incoerente) con strikethrough (sostantivo, come bold, italic, underline).
+Questi cambiamenti, documentati con attenzione nel messaggio di commit, mostrano
+quanto il team tenga alla coerenza e all'usabilità dell'API come linguaggio
+espressivo per gli script Groovy.
+
+--- Tag e AI (2026) ---
+
+I commit più recenti del 2026 (3ae0781b, b4726030) aggiungono l'API per le
+categorie di tag a livello di mappa — un'interfaccia condivisa tra UI, script
+e strumenti AI. Questo riflette la nuova architettura in cui l'AI può manipolare
+la mappa usando le stesse API degli script Groovy, garantendo coerenza e
+permettendo che le stesse operazioni siano accessibili da tutti i contesti.
+
+
+Riepilogo
+----------
+freeplane_api è il documento costituzionale del progetto: definisce cosa è
+pubblico e stabile, e cosa è interno e soggetto a cambiamento. La sua evoluzione
+mostra una progressiva maturazione del contratto: dall'estrazione come modulo
+separato nel 2018, all'aggiunta di sistemi sempre più ricchi (layout, stili
+condizionali, tag, bookmark) e alla costante attenzione alla coerenza dei nomi
+e delle convenzioni. Ogni api_change è una decisione architetturale che ha
+effetti su tutti gli script e i plugin esistenti, e il team la gestisce con
+attenzione deprecando i vecchi metodi prima di rimuoverli.

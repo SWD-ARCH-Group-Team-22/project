@@ -1,0 +1,100 @@
+FREEPLANE — MODULO: freeplane_plugin_jsyntaxpane
+=================================================
+
+Cos'è e a cosa serve
+----------------------
+Il plugin freeplane_plugin_jsyntaxpane fornisce l'evidenziazione della sintassi
+nell'editor di script e formule integrato in Freeplane. Quando un utente apre
+l'editor per scrivere uno script Groovy, una formula, o del codice LaTeX direttamente
+nell'interfaccia di Freeplane, è questo plugin che colora le parole chiave, i letterali,
+i commenti e gli operatori — rendendo il codice molto più leggibile rispetto a un
+semplice campo di testo monocromatico.
+
+Il plugin è costruito attorno a una libreria esterna di highlighting sintattico (in
+origine jsyntaxpane, poi sostituita) e la integra nell'architettura OSGi di Freeplane.
+
+
+Come funziona in dettaglio
+---------------------------
+
+--- Le origini: la libreria jsyntaxpane ---
+
+Il plugin nasce nel 2015 (commit 27d69c29, appartenente al modulo latex ma fondativo
+per questo) come wrapper attorno alla libreria jsyntaxpane, che fornisce un componente
+Swing con colorazione della sintassi. La libreria supportava diversi linguaggi tramite
+file di definizione lessicale (lexer), e per LaTeX era stato creato un lexer specifico
+(LaTeXLexer.java), la cui generazione è stata automatizzata con gradle nel 2015
+tramite il commit b5500710 ("add gradle task for latex.flex->LaTeXLexer.java").
+
+Il lexer LaTeX ha richiesto alcune correzioni nel corso degli anni: nel 2016 è stato
+sistemato un warning relativo a uno switch-case senza break (commit 475a8d27), e nel
+2017 altri warning minori (commit 4ba02411 e 77dd6fec). Questi fix, per quanto
+apparentemente banali, indicano che il lexer era generato da uno strumento automatico
+(flex) e che l'output veniva periodicamente raffinato.
+
+Nel 2018, il commit 5e72a474 ha portato una correzione critica proveniente da un fork
+Debian della libreria originale (nordfalk/jsyntaxpane), risolvendo il bug #2586.
+Sempre nel 2018, il commit 7b71ff09 ha corretto un memory leak nella classe
+NodeIdHighLighter — un componente che, evidentemente, manteneva riferimenti ai nodi
+della mappa più a lungo del necessario, impedendo al garbage collector di liberare
+memoria.
+
+--- La sostituzione della libreria (2021) ---
+
+Il cambiamento più significativo nella storia del plugin avviene all'inizio del 2021
+con il commit ba8adffd: la libreria jsyntaxpane originale — proprietaria e non più
+attivamente mantenuta — viene sostituita con de.sciss.syntaxpane, una versione più
+recente e open source con supporto aggiunto per il Markdown. Questo commit ha richiesto
+modifiche in molti file (almeno 14 elencati), perché cambiare la libreria sottostante
+implica adattare tutti i punti di integrazione: la registrazione dei content type,
+la configurazione dei temi, l'editor delle formule (FormulaEditor.java).
+
+La nuova libreria ha portato con sé però anche nuovi problemi da risolvere. Nel
+settembre 2022 una serie di tre commit ravvicinati (83230b8d, ddacf51b, 9c3e102d)
+ha corretto difetti specifici:
+
+- 83230b8d: correzione della funzione "go to line" (goto line), che non funzionava
+  correttamente a causa di un problema nel documento sintattico (SyntaxDocument).
+- ddacf51b: correzione della gestione degli insets nel righello dei numeri di riga
+  (LineNumbersRuler), che appariva posizionato in modo errato.
+- 9c3e102d: patch generale a SyntaxPane che incorpora una fix dal progetto upstream
+  (Sciss/SyntaxPane pull request #37), riguardante la visualizzazione del testo
+  a capo automatico (WrappedSyntaxView).
+
+--- Supporto ai temi scuri ---
+
+Nel gennaio 2022, il commit eb4166a7 ("support dark themes in syntax editor") ha
+aggiunto il supporto ai temi scuri nell'editor di sintassi. La classe introdotta,
+SourceTextEditorUIConfigurator, si occupa di adattare i colori dell'editor (sfondo,
+testo, evidenziazione) al tema corrente dell'applicazione. Questo era un problema
+reale: prima di questa fix, un utente con tema scuro vedeva l'editor di script con
+sfondo bianco — fastidioso visivamente e incoerente con il resto dell'interfaccia.
+
+--- Integrazione con il sistema di tag (2024) ---
+
+Nel 2024 il plugin ha ricevuto modifiche legate all'implementazione del nuovo sistema
+di tag di Freeplane. Il commit 10ac51da ("implement tags") e il successivo fd067897
+("Support sorting tags in tag editor") mostrano che l'editor di testo sintattico
+è stato adattato per gestire anche il componente TagEditor — l'interfaccia visiva
+per assegnare e ordinare i tag ai nodi. Il commit e41960cf dello stesso anno corregge
+un bug nella registrazione del content type LaTeX nell'Activator, che causava problemi
+di riconoscimento del formato.
+
+--- Il comando -R e gli script di avvio ---
+
+Il commit b0316941 del 2022 (comune a più moduli) aggiunge l'opzione da riga di
+comando -R per eseguire script Groovy all'avvio. Anche jsyntaxpane ne è coinvolto:
+l'editor di script deve essere pronto a ricevere e colorare il contenuto degli script
+passati in questo modo, e la relativa infrastruttura CommandLineParser è stata
+estesa di conseguenza.
+
+
+Riepilogo
+----------
+freeplane_plugin_jsyntaxpane ha percorso un'evoluzione in tre fasi: nascita come
+wrapper di una libreria esistente (2015), manutenzione e correzione della libreria
+originale (2016-2020), e poi sostituzione completa con una soluzione più moderna e
+open source (2021) che ha portato con sé nuovi affinamenti. Il plugin è piccolo ma
+fondamentale per la produttività degli utenti che usano Freeplane come ambiente di
+scripting: senza evidenziazione sintattica, scrivere script Groovy o formule LaTeX
+nell'editor integrato sarebbe decisamente più faticoso.

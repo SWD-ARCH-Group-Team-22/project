@@ -1,0 +1,128 @@
+FREEPLANE — MODULO: addons
+==========================
+
+Cos'è e a cosa serve
+----------------------
+Il modulo addons gestisce l'intero ciclo di vita degli add-on di terze parti in
+Freeplane: installazione, aggiornamento, disattivazione e rimozione. Gli add-on
+sono pacchetti creati dalla community che estendono Freeplane senza modificare
+il core: possono contenere script Groovy, librerie Java aggiuntive, file di
+risorse, icone, e scorciatoie da tastiera. Il modulo fornisce sia l'infrastruttura
+tecnica per gestire questi pacchetti sia l'interfaccia utente (dialogo di gestione)
+che l'utente usa per cercarli, installarli e tenerli aggiornati.
+
+La storia dei commit inizia nel settembre 2011 con un "Prototype of add-on
+management" (commit 39e3ac81) e nei mesi successivi vede una fase di sviluppo
+intensissima che costruisce il sistema praticamente da zero.
+
+
+Come funziona in dettaglio
+---------------------------
+
+--- Il formato degli add-on: la mappa come contenitore ---
+
+Un add-on di Freeplane è strutturato come una mappa mentale (.mm) speciale.
+Questa scelta non è casuale: sfrutta l'infrastruttura esistente di Freeplane per
+leggere, analizzare e installare i pacchetti, senza dover inventare un formato
+proprietario. Il file installScriptAddOn.groovy è il cuore dell'installer: è uno
+script Groovy che legge la mappa dell'add-on e ne estrae e installa i componenti.
+
+Nel 2013, il commit 62e125b3 aggiunge il supporto a un nodo "lib" all'interno
+della mappa dell'add-on: i file JAR o le classi Java incluse qui vengono
+installati nella directory <freeplaneuserdir>/addons/<addonname>/lib, e aggiunti
+automaticamente al classpath di tutti gli script. Questo rende possibile la
+distribuzione di add-on che dipendono da librerie esterne senza che l'utente
+debba installarle manualmente.
+
+Nel 2011, il commit 733e6efe aggiunge il supporto ai file ZIP all'interno degli
+add-on, permettendo di distribuire anche file di risorse più articolati.
+
+--- L'interfaccia utente: il dialogo di gestione ---
+
+L'interfaccia di gestione degli add-on è costruita nel corso del 2011 in una
+serie di commit ravvicinati. Il commit 2a29ca74 introduce il dialogo a schede
+(installazione + gestione). Il commit 8f9fa402 aggiunge una scheda dedicata
+ai "Themes" (add-on che sono temi grafici, identificati dal suffisso nel nome).
+Il commit 8e7b87de aggiunge la visualizzazione dei dettagli dell'add-on durante
+l'installazione: autore, descrizione, licenza, homepage.
+
+Nel 2011, il commit 17e44ef1 implementa il comportamento corretto per
+aggiornamento vs. prima installazione: quando si installa un add-on già presente,
+la versione vecchia viene prima rimossa prima di installare quella nuova.
+Il commit b6bc609a gestisce la distinzione tra installazione fresca e aggiornamento
+nell'interfaccia, mostrando messaggi diversi all'utente.
+
+I pulsanti "Disattiva" e "Disinstalla" sono stati corretti più volte: il commit
+b42811c1 li rimette a funzionare dopo una regressione, e il commit 17e44ef1
+implementa correttamente anche la logica di deinstallazione (rimozione dei file
+installati dalla directory utente).
+
+--- Metadati e aggiornamenti automatici ---
+
+Nel 2013, il sistema di metadati degli add-on viene significativamente esteso.
+Il commit 794432e1 aggiunge la proprietà updateUrl, che permette a un add-on di
+dichiarare dove controllare se esiste una versione più recente. Il commit
+21d6b2d6 aggiunge downloadUrl e changelogUrl — l'URL da cui scaricare
+l'aggiornamento e dove leggere le note di rilascio.
+
+Il commit 6325b562 (settembre 2013) stabilisce version.properties come file
+standard per dichiarare la versione di un add-on, e introduce la memorizzazione
+dell'ultima versione installata (commit ca2858d9) per confrontarla con quella
+disponibile online durante il controllo degli aggiornamenti.
+
+Nel 2014, il commit 40bb8a47 risolve un problema di ConcurrentModificationException
+nel controllo degli aggiornamenti: il check avveniva su un thread separato mentre
+la UI poteva modificare la stessa struttura dati contemporaneamente.
+
+--- La gestione delle scorciatoie da tastiera ---
+
+Il commit 89a63bc4 (ottobre 2011) aggiunge il supporto alla definizione di
+scorciatoie da tastiera per gli script contenuti negli add-on. Il commit
+9bcec98d (dicembre 2011) cura la visualizzazione di queste scorciatoie nel
+pannello dei dettagli dell'add-on. Il commit 8d3983c6 (luglio 2012) risolve
+un bug nell'assegnazione delle scorciatoie al momento dell'installazione.
+
+--- Localizzazione e caratteri speciali ---
+
+La traduzione degli add-on in lingue diverse dall'inglese ha creato problemi
+tecnici legati alla codifica dei caratteri. Il commit fa73d64d (gennaio 2013)
+introduce la possibilità di usare sequenze di escape Unicode (\uFFFF) nei file
+di configurazione degli add-on, per aggirare problemi di codifica che impedivano
+la corretta visualizzazione di caratteri non ASCII.
+
+Nel 2018, i commit c9b7a8a2 e d3fa8d97 (dicembre 2018) risolvono un problema
+più sottile: la funzione StringEscapeUtils.escapeJava veniva applicata due volte
+ai caratteri Unicode nelle traduzioni degli add-on, producendo sequenze di escape
+doppie come \\uXXXX invece di \uXXXX. La soluzione è stata implementare una
+funzione escapeUtf8 personalizzata che gestisce solo i caratteri non ASCII senza
+toccare backslash e virgolette.
+
+Nel 2016, il commit 6a3f1dd0 elimina i warning "[translate me]" che apparivano
+per le stringhe non tradotte degli add-on: se una traduzione manca, Freeplane usa
+silenziosamente la versione inglese senza avvisare con messaggi fastidiosi.
+
+--- Correzioni recenti ---
+
+Nel 2020, due commit correggono bug nell'operazione di aggiornamento degli add-on:
+il commit de3c82e8 risolve un problema per cui la disinstallazione falliva nel
+cancellare il file JAR dell'add-on, e il commit 3a0e0f2f risolve il caso in cui
+il JAR veniva rimosso anche durante un aggiornamento (quando avrebbe dovuto essere
+sostituito, non eliminato).
+
+Nel 2025, il commit 05c2e755 aggiunge un wrapper per JFileChooser che risolve
+un problema di sicurezza introdotto dal look & feel FlatLaf: quando uno script
+Groovy apriva un file chooser, il framework FlatLaf tentava di usare reflection
+per applicare il suo stile, ottenendo un AccessControlException. Il wrapper
+avvolge la chiamata critica in un blocco doPrivileged() per aggirare il controllo.
+
+
+Riepilogo
+----------
+Il modulo addons è l'ecosistema di estensibilità di Freeplane rivolto agli utenti
+finali. La sua evoluzione mostra come un sistema di pacchetti completo sia stato
+costruito in pochi mesi nel 2011 e poi raffinato nel corso degli anni: aggiunta
+di metadati, controllo degli aggiornamenti, gestione delle librerie, correzione
+dei problemi di codifica e sicurezza. La scelta di usare le mappe mentali stesse
+come formato di pacchettizzazione è elegante e pragmatica, e rispecchia la
+filosofia di Freeplane di usare sempre le proprie strutture dati come meccanismo
+universale.

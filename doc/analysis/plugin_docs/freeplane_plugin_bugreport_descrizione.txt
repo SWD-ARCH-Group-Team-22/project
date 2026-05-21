@@ -1,0 +1,107 @@
+FREEPLANE — MODULO: freeplane_plugin_bugreport
+===============================================
+
+Cos'è e a cosa serve
+----------------------
+Il plugin freeplane_plugin_bugreport è il sistema di segnalazione automatica degli errori
+integrato in Freeplane. Quando l'applicazione va in crash o incontra un'eccezione
+inattesa, questo plugin entra in azione: raccoglie informazioni di sistema, stack trace,
+versione del software e contesto della sessione, e — se l'utente lo consente — trasmette
+il tutto agli sviluppatori per facilitare la diagnosi e la correzione del problema.
+
+Il plugin ha una storia molto lunga, con commit che risalgono al 2009, e nel tempo ha
+subito evoluzioni significative sia nella logica di raccolta dei dati, sia nelle politiche
+su quando e come segnalare gli errori.
+
+
+Come funziona in dettaglio
+---------------------------
+
+--- La raccolta delle informazioni ---
+
+Il cuore del plugin è la classe ReportGenerator, che si occupa di costruire il report
+da inviare. Fin dalle origini (2009), il plugin raccoglieva lo stack trace del thread
+incriminato: il commit ba88361b del luglio 2009 ha aggiunto esplicitamente l'output
+dello stack trace nel report. Pochi giorni dopo, il commit b064f530 ha reso possibile
+attivare manualmente l'invio di un bug report anche senza che l'applicazione sia andata
+in crash, tramite la scorciatoia da tastiera ALT+SHIFT+CONTROL+B — utile per segnalare
+comportamenti anomali che non producono eccezioni.
+
+Nel 2009 è stato introdotto anche un dialogo di configurazione nelle preferenze
+(commit 9631078d), che permette all'utente di scegliere la propria politica di
+segnalazione: sempre, mai, o chiedere ogni volta.
+
+--- La formattazione e la trasmissione ---
+
+Il report viene formattato dalla classe BugFormatter e trasmesso tramite XmlRpcHandler.
+Un bug risolto nel 2010 (commit ef514caa, "do not send bug reports from bugreport plugin
+to avoid infinite loops") mostra un problema insidioso: se il plugin di bug reporting
+stesso generava un'eccezione durante l'invio, rischiava di innescare un nuovo report,
+in un ciclo potenzialmente infinito. La correzione ha escluso esplicitamente il plugin
+stesso dai trigger di segnalazione.
+
+Nel 2022 è stata aggiunta una tutela sulla privacy: il commit a16efaf5 ("remove file paths
+from submitted bug reports") garantisce che i percorsi del filesystem locale dell'utente
+non vengano inclusi nel report trasmesso — informazione che potrebbe rivelare dettagli
+sulla struttura del sistema o sul nome utente dell'account.
+
+--- Politiche di segnalazione: chi, quando, cosa ---
+
+Una parte importante dell'evoluzione del plugin riguarda le regole su quali errori
+meritino di essere segnalati e in quali circostanze.
+
+Nel 2012, il commit 40a488bc ha stabilito che nelle versioni "final" (release stabili)
+il plugin non debba chiedere di inviare report automatici: si assume che l'utente abbia
+rifiutato, riducendo il disturbo per chi usa versioni di produzione.
+
+Nel 2022, due commit ravvicinati (510b9eb9 e bc1ce11b) hanno affinato ulteriormente
+questa logica: gli errori generati dagli script Groovy scritti dall'utente non vengono
+più inviati come bug automatici, perché sono molto probabilmente errori nel codice
+dell'utente e non difetti di Freeplane. Il commit aggiunge anche un controllo null
+preventivo per evitare che il plugin stesso vada in crash nel tentativo di classificare
+un errore.
+
+Nel 2024, il commit d7534fad porta questo principio al suo completamento: il plugin ora
+genera report solo per gli errori provenienti dal codice proprio di Freeplane, filtrando
+tutto ciò che appartiene a librerie esterne o script utente.
+
+--- Modalità headless e ambienti speciali ---
+
+Freeplane può essere avviato in modalità "headless" — senza interfaccia grafica — per
+elaborazioni batch o da riga di comando. In questa modalità, mostrare un dialogo di
+errore non ha senso e causerebbe un blocco. Il commit 132c472a del 2018 ha introdotto
+il controllo esplicito: se l'applicazione è in modalità headless, il dialogo di
+segnalazione viene soppresso.
+
+Il commit 597493e7 del 2012 documenta la creazione di un'infrastruttura headless più
+generale per Freeplane (HeadlessWorker), di cui il plugin di bug report è parte
+integrante, garantendo che anche in ambienti privi di display il sistema rimanga stabile.
+
+--- Integrazione con il sistema di build e con gli script ---
+
+Nel 2022, il commit b0316941 ha introdotto l'opzione da riga di comando -R per eseguire
+script Groovy all'avvio di Freeplane. Questo commit appare in molti moduli perché
+ha richiesto modifiche trasversali, incluso il plugin di bug report che doveva essere
+consapevole di questa nuova modalità di esecuzione per non segnalare erroneamente
+gli errori degli script di avvio come bug dell'applicazione.
+
+--- Funzionalità per gli utenti: identificazione e storico ---
+
+Nel 2012, il commit 467eb5cc ha aggiunto la possibilità per l'utente di inserire una
+propria identificazione nei report automatici (opzionale), così che gli sviluppatori
+possano eventualmente contattarlo per ulteriori informazioni. Nello stesso periodo
+(commit e9cca8a0) è stato introdotto un meccanismo per collegare un nuovo report al
+precedente già inviato, creando una catena di segnalazioni utile per tracciare problemi
+ricorrenti.
+
+
+Riepilogo
+----------
+freeplane_plugin_bugreport è un sistema di telemetria leggero e rispettoso dell'utente.
+La sua evoluzione mostra un percorso chiaro: partire da un semplice meccanismo di
+trasmissione degli errori (2009) e affinarlo progressivamente per essere più preciso
+(filtrare solo gli errori reali di Freeplane), più discreto (non disturbare nelle
+release stabili, non mostrare dialoghi in headless), e più attento alla privacy
+(rimuovere i percorsi locali dai report). Ogni commit riflette il tentativo di bilanciare
+l'utilità per gli sviluppatori con il rispetto dell'esperienza e della riservatezza
+degli utenti.

@@ -1,0 +1,158 @@
+=========================================================
+ FREEPLANE — freeplane_framework
+ Descrizione funzionale basata sulla storia dei commit
+=========================================================
+
+PANORAMICA
+----------
+Il modulo freeplane_framework è la spina dorsale dell'intera applicazione:
+gestisce il ciclo di vita dei plugin tramite OSGi (usando Knopflerfish come
+implementazione), si occupa del packaging e della distribuzione per tutte
+le piattaforme (Windows, macOS, Linux), contiene i launcher eseguibili, e
+definisce la politica di sicurezza (Java Security Policy) che regola cosa
+possono e non possono fare gli script. Con 669 commit totali, è il modulo
+più longevo e trasversale del progetto.
+
+
+1. FRAMEWORK OSGi E AVVIO DELL'APPLICAZIONE
+--------------------------------------------
+Freeplane è costruita su OSGi, un sistema modulare per applicazioni Java
+che consente di caricare, aggiornare e disabilitare plugin (bundle) a
+runtime senza riavviare tutto. L'implementazione usata è Knopflerfish.
+
+La classe centrale per l'avvio è Launcher.java, che nel corso degli anni
+ha ricevuto numerosi fix: nel 2016 sono stati corretti problemi legati al
+nome dell'app nella taskbar di GNOME 3 (commit 1d49d962 e 7f591566), la
+posizione della directory di lavoro del framework (commit dbcfe3c2), e una
+serie di bug di sicurezza (commit 0ee6aef1). Sempre nel 2016 fu corretto
+un bug noto di Knopflerfish stesso (commit c54e57da): il runtime OSGi
+falliva se la working directory conteneva file con nomi speciali
+(https://github.com/knopflerfish/knopflerfish.org/issues/11).
+
+La sequenza di avvio fu sistemata più volte, tra cui nel 2019 (commit
+9b84c570) dove CommandLineParser e ActivatorImpl furono aggiustati per
+garantire il corretto ordine di inizializzazione dei componenti.
+
+Nel 2019 (commit 04b99850) fu introdotto un cambiamento importante all'API
+pubblica: l'interfaccia Map fu sostituita da MindMap e la vecchia
+deprecata. Poi nel 2019 (commit d0125d20) il metodo API loader fu
+rinominato in mapLoader per maggior chiarezza.
+
+Nel 2018 ci fu un importante ciclo di refactoring dell'API di caricamento
+delle mappe (commit d2c45816, b64c78d5, a76dc05a), durante il quale
+metodi come newMap, newMapFromTemplate e hiddenMap furono rinominati in
+openMap, openUntitledMap e loadedMap per rendere più chiara la semantica.
+
+Il framework fu inoltre isolato dalle sue dipendenze in modo più rigido
+nel 2018 (commit 42e21482): il package dell'API pubblica di Freeplane non
+può più dipendere da nessun altro package interno di Freeplane.
+
+
+2. DISTRIBUZIONE E LAUNCHER PER PIATTAFORMA
+--------------------------------------------
+Una porzione consistente della storia del modulo riguarda la creazione dei
+pacchetti distribuibili per le tre piattaforme.
+
+Windows — I launcher Windows sono gestiti da Launch4j (file .lj4.xml) e
+dall'installer Inno Setup (file .iss). Numerosi commit si sono occupati di
+aggiornare questi file al variare delle versioni di Java supportate: nel
+2024 (commit 8fe2aa54) fu aggiunto il supporto per Java 8 e Java 11 su
+Windows, con la necessaria correzione del numero di versione (commit
+0604b4ec). Nel 2024 fu anche creato un secondo pacchetto di distribuzione
+Windows (commit 9ca50c55). Nel 2022 (commit 07b76b95) fu introdotta una
+distribuzione Windows con Java runtime incluso, tramite uno script
+createJavaRuntimeImage.sh.
+
+macOS — Il supporto Mac evolvette nel tempo: nel 2010 furono implementate
+le file associations (commit 57bcd52e) e creata la struttura per il bundle
+.app con jarbundler. Nel 2012 fu dichiarato il supporto ai display Retina
+(commit 91fbe61a). Nel 2020 fu integrata la libreria Vaqua per il look &
+feel nativo di macOS (commit 063077bd). Nel 2021 il Mac deployment fu
+fissato a Java 15 per risolvere problemi con il look & feel predefinito
+(commit bd677400).
+
+Linux — Il principale file di avvio è freeplane.sh, che ha ricevuto
+numerose correzioni: gestione dei path con spazi nel 2015 (commit
+762a0710), supporto a $XDG_CONFIG_HOME per il file di configurazione nel
+2013 (commit 2a191af8), fix della rilevazione di OpenJDK nel 2017 (commit
+01417594), e configurazione di add-exports e add-opens per Java 11+ nel
+2021 (commit 6b420ee6).
+
+Il file freeplane.bat (launcher Windows da riga di comando) ha avuto
+storia simile: fix dell'inoltro degli argomenti da riga di comando nel
+2015 (commit 7371bed6), fix del passaggio dei parametri oltre il quinto
+nel 2013 (commit 03f5e8c6), e vari aggiornamenti per la compatibilità con
+le versioni di Knopflerfish (commit fd85dcde).
+
+
+3. POLITICA DI SICUREZZA (JAVA SECURITY POLICY)
+-------------------------------------------------
+Freeplane esegue script Groovy potenzialmente scritti da terzi, quindi
+gestisce attentamente i permessi Java tramite file freeplane.policy e
+ScriptingPolicy.java.
+
+Nel corso degli anni sono stati aggiunti progressivamente permessi
+specifici necessari per il funzionamento degli script: nel 2017 (commit
+442b0a49) furono aggiunti permessi di lettura file, nel 2018 (commit
+fe0b3d3c) le autorizzazioni per il wrapper java-atk (accessibilità su
+Linux), nel 2022 (commit c725f317) il permesso AWTPermission
+"watchMousePointer" richiesto da alcune funzionalità UI.
+
+Nel 2025 (commit 05c2e755) fu introdotto un wrapper per JFileChooser che
+risolve problemi di sicurezza specifici di FlatLaf negli script Groovy:
+FlatLaf usa reflection per applicare il suo stile ai componenti Swing, e
+questo causava AccessControlException nell'ambiente OSGi. La soluzione fu
+avvolgere la chiamata setUI() in un blocco doPrivileged().
+
+Il permission file viene aggiornato anche per le librerie di sistema:
+nel 2019 fu aggiornata la posizione del java-atk-wrapper su Linux (commit
+6759ef7e), che si trovava in una directory diversa nelle distribuzioni più
+recenti.
+
+
+4. SUPPORTO ALLE VERSIONI DI JAVA E COMPATIBILITÀ
+---------------------------------------------------
+Uno dei temi ricorrenti del modulo è il mantenimento della compatibilità
+con le versioni di Java nel tempo. Nel 2022 (commit 4b16c43d e 64bd241e)
+Freeplane 1.10.x fu aggiornato per supportare Java 17, con le necessarie
+modifiche ai launcher e al build system. Nello stesso anno (commit
+b7d1a428) fu specificato esplicitamente il parametro di architettura
+x86-64-bit nei file Launch4j.
+
+Nel 2025 (commit bad0e0cd) fu portata la compatibilità con Gradle 9.0.0,
+rimuovendo API deprecate (come PartialJar incompatibile con Gradle 9) e
+aggiornando la sintassi per i permessi di file. Questi due commit del
+2025 sono stati generati con l'assistenza di Claude Code, come
+documentato nel messaggio di commit.
+
+
+5. ICONE E IDENTITÀ VISIVA
+---------------------------
+Il framework ospita anche la storia delle icone dell'applicazione, che
+sono cambiate più volte nel corso degli anni. Nel 2009 (commit 808081fb)
+vennero introdotte nuove icone; nel 2011 (commit 052a2501 e 198bd07a)
+arrivò nuovo artwork; nel 2012 (commit fdad9c13) ancora nuove icone; nel
+2013 (commit 42ca2bea) nuove icone dell'app; e infine nel 2021 (commit
+1965cfa0) le icone attuali, create da Stuart Robertson, sostituirono le
+precedenti.
+
+
+6. DISTRIBUZIONE DELL'API DI SCRIPTING
+---------------------------------------
+Una responsabilità rilevante del framework è la distribuzione dello
+scripting API come file ZIP, in modo che gli sviluppatori di add-on e
+script possano consultare la documentazione Javadoc offline. Nel 2011
+(commit 79be0970 e b946317c) fu aggiunta la generazione e distribuzione
+dell'API ZIP nel processo di build. Nel 2011 (commit 57864d64) il file
+fu rinominato da api.zip a script-api.zip.
+
+
+SINTESI EVOLUTIVA
+-----------------
+freeplane_framework è il collante che tiene insieme tutto l'ecosistema di
+Freeplane. La sua storia riflette una maturazione graduale su tre fronti:
+l'architettura modulare OSGi (sempre più stabile ma da aggiornare ad ogni
+nuova major release di Java), la distribuzione multipiattaforma (gestita
+con strumenti specifici per ogni OS, ognuno con le sue asperità), e la
+sicurezza degli script (un problema aperto e continuamente aggiornato
+man mano che Freeplane supporta nuove librerie UI e versioni di Java).

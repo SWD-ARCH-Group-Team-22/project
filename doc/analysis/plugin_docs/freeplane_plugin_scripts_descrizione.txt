@@ -1,0 +1,202 @@
+===========================================================================
+FREEPLANE — Plugin: freeplane_plugin_script
+Descrizione funzionale basata sull'analisi dei commit (2009–2026)
+===========================================================================
+
+PANORAMICA GENERALE
+-------------------
+Il plugin freeplane_plugin_script è il motore di automazione di Freeplane.
+Permette di scrivere ed eseguire script in Groovy (e altri linguaggi JVM)
+direttamente all'interno delle mappe mentali. Attraverso questo plugin è
+possibile generare e modificare nodi programmaticamente, trasformare testo,
+applicare stili, interrogare API esterne, filtrare contenuti e costruire
+workflow personalizzati. Con 550 commit rilevanti su 1290 totali, è il
+componente più attivamente sviluppato dell'intero progetto Freeplane.
+
+L'architettura del plugin si fonda su tre pilastri principali:
+  1. Un'API Groovy pubblica e stabile (la "Scripting API"), che espone gli
+     oggetti di Freeplane (nodi, mappe, stili, connettori, ecc.) come proxy
+     manipolabili da script.
+  2. Un motore di esecuzione (basato su GroovyScript / ScriptingEngine) che
+     compila ed esegue gli script con un sistema di permessi configurabile.
+  3. Un editor visuale integrato (ScriptEditorPanel) che consente di scrivere
+     e testare script direttamente dall'interfaccia grafica.
+
+
+STORIA E EVOLUZIONE
+-------------------
+
+Origini (2009–2010): nascita della Scripting API
+-------------------------------------------------
+Il plugin nasce intorno al 2009 con una prima implementazione della Scripting
+API. I commit di quell'anno (es. "script API part 1", hash 9c1dac83, e
+"proxy API", hash 3bd96b9f) mostrano la costruzione dei fondamentali: i
+"proxy" — oggetti Groovy che avvolgono le strutture interne Java di Freeplane
+esponendole agli script.
+
+Nel 2010 avviene il primo grande riassetto dell'API (hash 40c1e149, agosto
+2010): vengono introdotti o rinnovati metodi fondamentali come
+  - Node.getNote() / Node.setNote()
+  - Node.getPlainText()
+  - Controller.undo() / redo()
+  - Map.close() / Map.save()
+  - Attribute.findFirst(name)
+  - Node.setAttributes(Map)
+
+Nello stesso anno (hash 2da72e95, agosto 2010) viene introdotta la distinzione
+tra interfacce "read-only" (suffisso RO, es. NodeRO) e interfacce di scrittura
+(es. Node), una scelta architetturale che persiste ancora oggi e che preparava
+il terreno per il futuro plugin delle formule.
+
+Anche la configurazione degli script viene formalizzata: il commit
+f91a4165 (gennaio 2010) aggiunge al pannello delle opzioni la possibilità di
+configurare le proprietà di ogni singolo script, con priorità superiore alle
+impostazioni dichiarate inline nello script stesso.
+
+
+Maturità e solidificazione (2011–2016)
+---------------------------------------
+In questo periodo il plugin raggiunge una stabilità funzionale. I commit più
+numerosi riguardano estensioni dell'API, miglioramenti all'editor e
+correzioni di bug legati all'integrazione con il sistema OSGi (Knopflerfish)
+usato da Freeplane per la gestione dei plugin.
+
+Un momento chiave è il 2018: vengono eseguiti profondi interventi su permessi
+e sicurezza (hash f3e4c293, agosto 2018: "Fix scripting permissions and
+prepare scripts for multithreading") e viene introdotta la possibilità di
+caricare e interrogare mappe in modo "headless" tramite una nuova API Loader
+(hash d2c45816, bb1e7869, b64c78d5 — luglio 2018). In questo stesso anno l'API
+pubblica viene spostata in un modulo separato (hash 4973e455, giugno 2018:
+"move api to core project and create api jar"), rendendola indipendente da
+qualunque altro package Freeplane. Questo significa che uno sviluppatore esterno
+può dipendere dall'API senza trascinare l'intera codebase.
+
+A luglio 2018 vengono anche rinominati diversi metodi della Controller API per
+dare coerenza ai nomi (hash a76dc05a: "rename API methods newMap -> openMap,
+newMapFromTemplate -> openUntitledMap"), una delle operazioni di pulizia
+dell'interfaccia pubblica più estese nella storia del plugin.
+
+
+Il sistema delle formule (2018)
+--------------------------------
+Un intero sotto-sistema nasce all'interno del plugin script: le "formule".
+I nodi di Freeplane possono contenere espressioni (simili a formule di un
+foglio di calcolo) che vengono valutate dinamicamente. L'ottobre 2018 vede
+una lunga serie di commit dedicati:
+  - gestione delle dipendenze tra formule (hash f273ade7: "getPrecedents() and
+    getDependents() API")
+  - rilevamento e segnalazione di dipendenze circolari (hash df4640e8: "Add
+    status message for cyclic dependencies")
+  - correzione del refresh delle formule su nodi clonati (hash 66effa94,
+    giugno 2024)
+  - metodo evaluateOutdatedFormulas via API (hash 60ecf8bf, ottobre 2018)
+
+
+Estensione del modello dati via API (2023–2024)
+------------------------------------------------
+Negli anni recenti l'API cresce per coprire aspetti sempre più fini del
+modello dati di Freeplane:
+
+- Bordi e connettori dei nodi: il commit 2a803599 (ottobre 2023) aggiunge
+  getter e setter per bordo e arco (edge) direttamente dalla Scripting API.
+- Allineamento orizzontale del testo: il commit c54d215e (ottobre 2023)
+  espone l'allineamento orizzontale del testo via API.
+- Tag e categorie: nel 2024 vengono introdotti prima i metodi di base per
+  leggere e impostare tag sui nodi (hash 53ca172d, aprile 2024), poi i
+  tag categorizzati (hash 0469cdfd, maggio 2024) e infine la rinomina
+  dei parametri per uniformità (hash 0f8d2842: il parametro "tag" diventa
+  "keyword" per chiarire che si lavora sulla rappresentazione stringa, non
+  sull'oggetto Tag completo di colore).
+- Template e mappe collegate: hash 574a4f2e (febbraio 2024) aggiunge
+  get/set per la mappa "followed" e il template associato.
+
+
+Convenzioni di naming dell'API (2025)
+--------------------------------------
+Il 2025 porta un intervento di rifinitura sulle convenzioni di naming delle
+proprietà di formattazione. Due commit ravvicinati (luglio 2025) sistemano la
+coerenza con le altre proprietà booleane dell'API:
+  - hash 67ea65c1: "underlined" viene rinominato in "underline" per uniformità
+    con "bold", "italic" (non "bolded", "italicized")
+  - hash ee27a149: "StrikedThrough" viene deprecato e sostituito con
+    "Strikethrough", per la stessa ragione grammaticale
+
+In questo modo tutte le proprietà di font nella Scripting API seguono la
+convenzione del sostantivo (bold, italic, underline, strikethrough) anziché
+del participio passato, coerente con l'uso di Groovy: `node.style.font.bold = true`.
+
+Sempre nel 2025 vengono aggiunte le API per i bookmark dei nodi: il commit
+0b3743d5 (giugno 2025) implementa la funzionalità di bookmarking nell'API dei
+nodi, seguita dal commit 5ac0a772 che aggiunge metodi open() a NodeBookmark per
+navigare programmaticamente verso i nodi preferiti.
+
+A maggio 2025 (hash 05c2e755) viene risolto un problema di sicurezza specifico
+di FlatLaf: gli script Groovy che usano dialog di selezione file ricevevano un
+AccessControlException quando FlatLaf tentava di usare reflection in ambienti
+con permessi ristretti. La soluzione è un wrapper JFileChooser che esegue
+setUI() dentro un doPrivileged().
+
+
+Integrazione con strumenti AI (2026)
+--------------------------------------
+I commit più recenti (2026) mostrano che il plugin script è ora il punto di
+integrazione con le funzionalità AI di Freeplane. Il commit b4726030 (marzo
+2026: "expose-node-tags-to-ai-tools: implement shared tag category access for
+UI, script, and AI") unifica l'accesso alle categorie di tag tra interfaccia
+grafica, script Groovy e strumenti AI. Il commit 5432e96f (febbraio 2026:
+"Expose styles in AI tools and unify list API") fa lo stesso per gli stili,
+con una revisione dell'API delle liste per garantire uniformità tra i diversi
+contesti di utilizzo.
+
+
+MECCANISMI TECNICI CHIAVE
+--------------------------
+
+Esecuzione degli script
+  Gli script vengono compilati da GroovyScript e eseguiti tramite
+  ExecuteScriptAction. Il sistema distingue script "embedded" (salvati nel
+  file .mm) e script "file" (file .groovy su disco). Dal 2018 esiste anche
+  l'esecuzione headless (senza interfaccia grafica) tramite HeadlessMapCreator,
+  utile per automazioni batch da riga di comando o da altri programmi.
+  Il commit del 2022 (hash b0316941) aggiunge l'opzione -R da riga di comando
+  per eseguire script Groovy all'avvio di Freeplane.
+
+Sicurezza e permessi
+  Il sistema di permessi ha avuto una storia travagliata: inizialmente gli
+  script avevano permessi molto ristretti (2009: "disable reading of local
+  files when running groovy scripts", hash 0aff8c4b), poi i permessi sono
+  stati progressivamente rilassati e gestiti in modo più granulare. Nel 2018
+  viene introdotta la distinzione tra script API (che girano con permessi
+  standard) e script file (con tutti i permessi), e nel 2025 viene risolto
+  l'ultimo problema noto legato a FlatLaf e reflection.
+
+Class loader e compilazione
+  Il plugin gestisce un proprio ScriptClassLoader e ScriptCompiler. I file
+  Groovy vengono precompilati e cachati in una directory dedicata
+  (compiledScriptsDir). Questo permette di ridurre il tempo di avvio degli
+  script usati frequentemente.
+
+GroovyStaticImports
+  Una classe di utilità (GroovyStaticImports) mette a disposizione degli
+  script metodi di comodo (null checking, arrotondamento numerico, parsing di
+  testo) importabili staticamente. Il commit 7d354270 (giugno 2025) ne espande
+  la documentazione e le funzionalità, e il generatore dell'API mind map viene
+  aggiornato (hash 7bb11c94) per includerla nella documentazione automatica.
+
+
+EDITOR INTEGRATO
+----------------
+L'editor visuale degli script (ScriptEditorPanel) viene continuamente
+migliorato. Un problema di usabilità segnalato come issue #2641 (hash
+4410f359, settembre 2025) riguardava la difficoltà di trovare l'azione "Nuovo
+script" all'interno dell'editor stesso: una piccola ma significativa miglioria
+all'esperienza d'uso quotidiana del plugin.
+
+
+CONCLUSIONE
+-----------
+Il plugin freeplane_plugin_script è un sistema maturo e in continua espansione.
+La sua evoluzione riflette quella di Freeplane nel suo complesso: da strumento
+di mind mapping con qualche capacità di automazione, a piattaforma
+programmabile dove script, formule e ora strumenti AI condividono la stessa
+API di accesso al modello dati delle mappe.

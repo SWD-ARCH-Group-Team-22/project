@@ -1,0 +1,114 @@
+FREEPLANE — MODULO: freeplane_plugin_markdown
+=============================================
+
+Cos'è e a cosa serve
+----------------------
+Il plugin freeplane_plugin_markdown aggiunge il supporto al linguaggio Markdown nei
+pannelli note dei nodi di Freeplane. Senza questo plugin, le note ai nodi possono
+essere scritte solo in HTML grezzo o testo semplice; con il plugin attivo, l'utente
+può scrivere note usando la sintassi Markdown standard — titoli con #, grassetto con
+**testo**, liste con -, codice con backtick, tabelle — e Freeplane le visualizzerà
+renderizzate come HTML ricco.
+
+Si tratta di un plugin relativamente giovane rispetto agli altri: i commit rilevanti
+risalgono al 2021 come anno di nascita sostanziale, con alcuni sviluppi successivi
+fino al 2025.
+
+
+Come funziona in dettaglio
+---------------------------
+
+--- La libreria di rendering: markedj ---
+
+Il plugin usa la libreria markedj come motore di conversione da Markdown a HTML.
+markedj è un porting Java della libreria JavaScript marked, nota per la sua velocità
+e la buona aderenza alla specifica CommonMark.
+
+Nel luglio 2023, il commit af979af4 aggiorna la versione di markedj alla 1.0.18.
+La ragione è specifica e documentata nel commit stesso: questa versione include
+una correzione per la gestione degli "hard line breaks" tramite backslash alla
+fine di riga — una funzionalità del Markdown standard (una riga che termina con \
+deve produrre un'interruzione di riga esplicita nel rendering HTML) che nelle versioni
+precedenti non veniva gestita correttamente.
+
+--- La nascita: il 2021 come anno fondativo ---
+
+La maggior parte dei commit significativi del plugin si concentra nel 2021, anno in
+cui il supporto Markdown è stato costruito e integrato nell'architettura di Freeplane.
+
+Il commit fc5bf434 (gennaio 2021) è particolarmente importante perché non riguarda
+solo il Markdown: abilita gli editor con dialogo per LaTeX, Markdown e Formula sia
+nei pannelli "details" che nelle "notes" dei nodi. Prima di questa modifica, l'editor
+Markdown era accessibile solo in certi contesti; dopo, diventa una modalità di editing
+di prima classe per tutte le annotazioni testuali dei nodi.
+
+Il commit 5edf77c9 (maggio 2021) aggiunge il supporto alle tabelle Markdown con bordi
+visibili (issue #2920). Le tabelle sono una delle estensioni più usate del Markdown
+standard, e renderle con bordi espliciti le rende molto più leggibili nel pannello
+note rispetto a una semplice griglia di testo allineato.
+
+Il commit 06fbf85f (febbraio 2021) aggiunge le traduzioni delle preferenze Markdown
+in spagnolo, francese e altre lingue (issue #2877). Questo indica che il plugin aveva
+raggiunto una maturità sufficiente da essere localizzato per la community internazionale
+di Freeplane.
+
+--- Correzioni di rendering ---
+
+Due commit del gennaio 2021 hanno corretto problemi di visualizzazione fondamentali.
+Il commit 0c305a86 ("fix rendering") interviene su FormatContentTransformer e MainView:
+probabilmente le note Markdown non venivano renderizzate correttamente nella vista
+principale della mappa, o il formato non veniva riconosciuto correttamente dal
+trasformatore di contenuto. Il commit b72ceda3 ("fix note views in maps") — condiviso
+con il plugin LaTeX — corregge come le note vengono visualizzate nella vista mappa
+in generale, un problema che affliggeva entrambi i tipi di contenuto ricco.
+
+Il commit b1cec127 (giugno 2021), anch'esso condiviso con LaTeX, corregge i colori
+di sfondo dell'editor su macOS con il tema VAqua. Come per LaTeX, anche l'editor
+Markdown in un tema scuro macOS mostrava colori incongruenti prima di questa fix.
+
+--- PlantUML: diagrammi nelle note ---
+
+Il commit più ambizioso in termini di funzionalità nuove è e602267e (gennaio 2025):
+aggiunge il supporto a PlantUML all'interno delle note Markdown (issue #2082). PlantUML
+è uno strumento che permette di descrivere diagrammi UML (sequence diagram, class
+diagram, flowchart, ecc.) in testo semplice e generarne una rappresentazione grafica.
+
+Con questa aggiunta, un utente può scrivere in una nota Markdown qualcosa del tipo:
+
+    ```plantuml
+    @startuml
+    Alice -> Bob : Hello
+    Bob --> Alice : Hi
+    @enduml
+    ```
+
+e Freeplane renderizzerà il diagramma come immagine direttamente nel pannello note.
+Questa integrazione trasforma il pannello note in un vero ambiente di documentazione
+tecnica, dove testo, codice e diagrammi possono coesistere.
+
+--- Supporto agli input method (2025) ---
+
+Il commit ddf41d1f (maggio 2025), condiviso con il plugin LaTeX, migliora il supporto
+agli "input method events" — i sistemi di composizione dei caratteri per lingue
+asiatiche (IME). Anche l'editor Markdown beneficia di questo miglioramento, rendendo
+il plugin utilizzabile da una platea internazionale più ampia.
+
+--- Il comando -R (2022) ---
+
+Il commit b0316941 (aprile 2022) aggiunge l'opzione da riga di comando -R per eseguire
+script Groovy all'avvio. Questo commit appare in molti moduli perché l'infrastruttura
+CommandLineParser è trasversale; il plugin Markdown ne è toccato indirettamente,
+in quanto il sistema di rendering dei contenuti deve essere correttamente inizializzato
+anche quando Freeplane viene avviato in modalità script.
+
+
+Riepilogo
+----------
+freeplane_plugin_markdown è un plugin giovane ma che ha avuto uno sviluppo intenso e
+coerente. Partendo dall'abilitazione di base del 2021, ha rapidamente acquisito
+funzionalità avanzate: tabelle con bordi, localizzazione multilingua, supporto ai
+temi scuri, e infine l'integrazione con PlantUML che lo trasforma da semplice
+formattatore di testo a un ambiente di documentazione tecnica completo. La scelta di
+costruirlo attorno a markedj — una libreria consolidata e ben mantenuta — ha garantito
+stabilità, mentre i pochi aggiornamenti necessari (come il bump di versione del 2023)
+dimostrano che la base tecnologica rimane solida nel tempo.

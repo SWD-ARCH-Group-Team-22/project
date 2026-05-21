@@ -1,0 +1,157 @@
+FREEPLANE — MODULO: other (commit trasversali)
+===============================================
+
+Cos'è e a cosa serve
+----------------------
+Il modulo "other" non corrisponde a un singolo plugin o componente funzionale: raccoglie
+tutti i commit che toccano aree trasversali del progetto Freeplane e che non appartengono
+a un modulo specifico. Questo include il sistema di build (Gradle, Ant), la CI/CD,
+le traduzioni, la documentazione, le distribuzioni per le varie piattaforme (Windows,
+macOS, Linux), le integrazioni con strumenti esterni, e — negli anni più recenti —
+lo sviluppo di funzionalità AI integrate nell'applicazione.
+
+Con 471 commit rilevanti su 1803 totali, è di gran lunga la categoria più estesa,
+e la sua storia rispecchia fedelmente l'intera evoluzione del progetto.
+
+
+Le aree tematiche principali
+------------------------------
+
+=== 1. SISTEMA DI BUILD (Gradle) ===
+
+Una porzione enorme dei commit in questa categoria riguarda il mantenimento e
+l'evoluzione del sistema di build basato su Gradle. Freeplane usa Gradle come strumento
+di costruzione principale, e tenere il build system aggiornato ha richiesto interventi
+continui nel tempo.
+
+Nel 2020, il commit bfef621d documenta un problema reale e urgente: Maven Central
+ha smesso di supportare il protocollo HTTP non cifrato a partire da gennaio 2020,
+richiedendo che tutte le richieste avvenissero via HTTPS. Senza questa fix, il build
+di Freeplane non riusciva a scaricare le dipendenze. Il commit ha aggiornato le URL
+dei repository di conseguenza.
+
+Nel 2022, un ciclo di aggiornamenti ha portato il supporto a Java 17, con il relativo
+adattamento delle configurazioni Gradle in tutti i moduli. Nel 2025, il commit ad629e70
+risolve una deprecazione introdotta in Gradle 9.0 (il parametro archivePath).
+
+L'utilizzo del plugin bnd per generare i manifest OSGi (necessari perché Freeplane
+è un'applicazione OSGi) ha richiesto a sua volta una serie di fix nel 2019
+(commit 81dc5749, 2772c0b4, 8e68abf3) quando il plugin è stato aggiornato a una
+versione incompatibile con le configurazioni precedenti.
+
+=== 2. DISTRIBUZIONI PER PIATTAFORMA ===
+
+Freeplane viene distribuito su Windows, macOS (Intel e Apple Silicon) e Linux,
+ognuno con configurazioni specifiche. La categoria "other" contiene tutti i commit
+che riguardano i pacchetti di distribuzione e i processi di rilascio.
+
+Su macOS, gli anni recenti hanno visto un lavoro intenso sulla firma e notarizzazione
+dei pacchetti — processo richiesto da Apple per permettere l'avvio delle applicazioni
+senza avvisi di sicurezza. I commit 3aebf23d, 93a12850 e 2da224b5 (novembre 2024)
+mostrano la fatica necessaria per far funzionare correttamente la notarizzazione, che
+richiede la firma di ogni singolo jar incluso nell'applicazione.
+
+Nel 2025, il commit 8c58c5cf ha abilitato il tema VAqua anche per i Mac con chip
+Apple Silicon — il tema che fa sembrare l'interfaccia Java più nativa su macOS.
+I commit d80f0bf5 e 7dc022e4 (agosto 2025) hanno automatizzato la pubblicazione
+delle release su SourceForge tramite GitHub Actions, con configurazione dei file
+predefiniti per piattaforma (DMG per macOS, EXE per Windows, ZIP per Linux).
+
+=== 3. CODE EXPLORER ===
+
+A partire dal 2024 emerge una funzionalità completamente nuova: il Code Explorer.
+Si tratta di uno strumento che permette di visualizzare le dipendenze tra classi
+e moduli di un progetto Java direttamente in Freeplane, come una mappa mentale
+delle dipendenze architetturali.
+
+Numerosi commit del 2024 mostrano la costruzione di questa funzionalità: il
+commit d1fd2d1a aggiunge il supporto per il matching di pacchetti o singole classi
+usando una nuova sintassi nelle regole di configurazione; il commit 72edea5c aggiunge
+il supporto per classi Scala (i cui nomi interni contengono il carattere $); il commit
+ae213846 corregge la visualizzazione delle annotazioni Java che venivano erroneamente
+mostrate come interfacce; i commit 9326ac7c e 507a50e7 correggono la selezione
+visiva dei connettori (frecce di dipendenza) quando si selezionano uno o più nodi.
+
+Il commit 7a29fe64 (marzo 2025) corregge il pulsante "delete violations" nel pannello
+di visualizzazione delle violazioni architetturali — un componente che permette di
+identificare e gestire dipendenze che violano le regole architetturali definite
+dall'utente.
+
+=== 4. INTERNAZIONALIZZAZIONE E TRADUZIONI ===
+
+Freeplane è usato in tutto il mondo e ha una comunità di traduttori attiva. Mantenere
+la corretta codifica dei file di traduzione è un problema tecnico non banale: i file
+Java .properties devono usare la codifica ISO-8859-1 con escape Unicode, ma se un
+traduttore salva il file in UTF-8 direttamente, i caratteri vengono corrotti.
+
+Nel luglio 2025, una serie di commit al file CLAUDE.md (0cc1623e, c24e4863, e9a1cfd1)
+documenta esattamente questo problema: il 28 luglio 2025 si è verificato un episodio
+di corruzione sistematica dei file di traduzione causato da doppia codifica UTF-8,
+null byte injection e dati binari che hanno compromesso l'integrazione con Weblate
+(il sistema di traduzione collaborativa usato dal progetto). I commit introducono
+requisiti obbligatori per l'uso di native2ascii e procedure di validazione per
+prevenire il ripetersi del problema.
+
+=== 5. INTEGRAZIONE CON L'AI (2025-2026) ===
+
+La novità più radicale degli ultimi anni è l'integrazione di un pannello AI
+direttamente in Freeplane. I commit del 2026 mostrano un sistema articolato che
+permette a un modello linguistico di interagire con la mappa mentale aperta,
+leggendo nodi, creandone di nuovi, spostandoli, assegnando tag e modificandone
+il contenuto.
+
+Il commit 7f8d656d (dicembre 2025) aggiunge il selettore del modello AI come
+menu a tendina nell'interfaccia, con il supporto a più provider (tra cui Gemini,
+come mostrato dal commit 959bf789 di gennaio 2026 che abilita le "thinking signatures"
+di Gemini 3).
+
+I commit di gennaio 2026 mostrano la costruzione degli strumenti (tools) che l'AI
+può usare: il commit 202608fc aggiunge gli strumenti per creare, spostare e
+raggruppare nodi; il commit d78fd3fc definisce le API degli strumenti di editing;
+il commit 4ba27cf7 implementa strumenti di ricerca e lettura con accesso agli
+attributi dei nodi.
+
+Il commit 90e69ebd (febbraio 2026) aggiunge la possibilità di eliminare più sessioni
+di chat contemporaneamente dalla cronologia. Il commit 4cdfbcc7 risolve un problema
+nella gestione della finestra di contesto: garantisce che l'intera trascrizione della
+conversazione sia conservata anche quando supera la finestra di contesto del modello,
+evitando la perdita di storia della conversazione.
+
+A marzo e aprile 2026, i commit mostrano l'esposizione dei tag dei nodi agli strumenti
+AI (e8e66c8b, 998bc8c6), con un'API che permette al modello di leggere e modificare
+le categorie di tag a livello di mappa — non solo i tag dei singoli nodi.
+
+=== 6. COLLABORAZIONE CON CLAUDE CODE ===
+
+Un aspetto notevole del periodo 2025-2026 è la presenza di numerosi commit
+contrassegnati come "🤖 Generated with Claude Code" con co-autore "Claude
+<noreply@anthropic.com>". Questo indica che il team di Freeplane ha adottato
+Claude Code come strumento di sviluppo collaborativo, con un AI che contribuisce
+direttamente al codice del progetto.
+
+Il commit bc81f155 (agosto 2025) aggiunge il file AGENTS.md, che documenta i
+pattern di utilizzo degli agenti AI per il lavoro di sviluppo. Il file CLAUDE.md,
+introdotto con 0cc1623e e raffinato in più commit successivi, stabilisce standard
+di codice e linee guida specificamente per guidare l'AI durante le sessioni di
+sviluppo — incluse convenzioni su test, import, codifica dei file e gestione dei
+pattern ricorrenti nell'architettura di Freeplane.
+
+=== 7. LIBRERIE ESTERNE E DIPENDENZE ===
+
+Nel 2020, il commit 4f411362 aggiunge TwelveMonkeys, una libreria che estende il
+supporto JPEG di Java (gestendo varianti del formato non supportate dalla libreria
+standard). Nel 2019, le API proprietarie di Apple per Java (com.apple.eawt) vengono
+incluse direttamente come jar nel repository (commit 91421936), perché il repository
+Maven pubblico che le ospitava non era più disponibile.
+
+
+Riepilogo
+----------
+Il modulo "other" è lo specchio più fedele della storia e della salute dell'intero
+progetto Freeplane. Attraverso di esso si vede l'evoluzione del sistema di build
+(da Ant a Gradle, da Java 8 a Java 17), la crescente attenzione alla distribuzione
+multipiattaforma (con la complessità della firma e notarizzazione macOS), la nascita
+di funzionalità trasversali come il Code Explorer, e l'apertura più recente verso
+l'integrazione con i modelli linguistici. È anche il luogo dove si manifesta la
+collaborazione umano-AI nel processo di sviluppo stesso, con Claude Code che partecipa
+attivamente alla costruzione del software.

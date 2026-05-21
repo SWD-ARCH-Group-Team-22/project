@@ -1,0 +1,246 @@
+===========================================================================
+FREEPLANE — Modulo: other (commit trasversali)
+Descrizione funzionale basata sull'analisi dei commit (2009–2026)
+===========================================================================
+
+PANORAMICA GENERALE
+-------------------
+Il modulo "other" raccoglie i commit che non appartengono a un singolo plugin
+identificabile, ma toccano aree trasversali del progetto: il build system,
+la CI/CD, le traduzioni e la localizzazione, la documentazione, le icone,
+i template di mappa, e — in modo sempre più prominente — la nuova funzionalità
+AI integrata di Freeplane. Con 471 commit rilevanti su 1803 totali, è il
+modulo quantitativamente più grande, specchio della vastità delle preoccupazioni
+orizzontali di un progetto open source maturo.
+
+
+I GRANDI TEMI TRASVERSALI
+--------------------------
+
+1. INFRASTRUTTURA DI BUILD E CI/CD
+-----------------------------------
+La storia di Freeplane è anche una storia di evoluzione degli strumenti di
+build. I commit di questo modulo coprono tutto il percorso: da Ant (le prime
+configurazioni in build.xml del 2009–2010) a Gradle, fino alla pipeline CI
+moderna su GitHub Actions.
+
+Tra i momenti salienti, il 2025 vede l'automazione completa del processo
+di rilascio:
+  - agosto 2025 (hash 278dad15): aggiunta di uno script Bash per il deploy
+    automatico delle release su GitHub, con supporto al caricamento parallelo
+    degli artefatti e push dei tag.
+  - agosto 2025 (hash bd7312d3): miglioramento dello stesso script con upload
+    parallelo.
+  - agosto 2025 (hash d80f0bf5 e 7dc022e4): aggiunta di una GitHub Action
+    per pubblicare le release anche su SourceForge, con configurazione del
+    download predefinito.
+
+Il build system Gradle viene continuamente aggiornato per stare al passo con
+le versioni deprecate. Un esempio recente è il commit del 10 agosto 2025
+(hash ad629e70): "Fix archivePath deprecation in Gradle 9.0" — un fix banale
+ma necessario per mantenere la compatibilità con Gradle 9.
+
+Anche la generazione della documentazione API rientra nella build: il commit
+70858b84 (gennaio 2024) risolve un problema per cui l'API Javadoc veniva
+generata in tedesco invece che in inglese a causa del locale di sistema
+(issue #1632).
+
+
+2. INTERNAZIONALIZZAZIONE E TRADUZIONI
+---------------------------------------
+Freeplane è tradotto in decine di lingue. I commit di questo modulo
+riflettono il lavoro continuo di aggiornamento dei file .properties per ogni
+nuova funzionalità o messaggio aggiunto.
+
+Una categoria specifica di commit riguarda la validazione delle traduzioni.
+Nel dicembre 2010 vengono aggiunti controlli automatici sulla correttezza
+delle stringhe localizzate:
+  - hash ab027632: "added new check for use of $1 instead of {0}" — verifica
+    che i traduttori non usino la sintassi Bash/Perl al posto di quella Java.
+  - hash 57607876: "added new check for correct usage of {0} and {1}" —
+    verifica che i placeholder numerici siano usati correttamente.
+
+Nel 2025, il commit del 7 dicembre (hash 7cd2304b) corregge un bug nel
+sistema di traduzione dei formati: caratteri misti escaped e non-escaped
+nelle stringhe causavano errori di formattazione (FormatTranslation.java).
+
+
+3. DOCUMENTAZIONE E MAPPE DI RIFERIMENTO
+-----------------------------------------
+Freeplane usa sé stesso come strumento di documentazione: i file .mm
+(le mappe mentali) sono usati per il manuale utente e per le note di rilascio.
+
+I commit di questo modulo mostrano la manutenzione di questi file:
+  - "freeplane.mm" è il file del manuale principale. Riceve aggiornamenti
+    frequenti: nel 2010 (hash e7b3072b, 2f9372a6) vengono corretti link
+    rotti e aggiunta la documentazione del menu Mac.
+  - "latestFreeplaneFeatures.mm" registra le funzionalità più recenti.
+    Il commit del 31 gennaio 2026 (hash 963c008e) aggiunge la voce "AI panel"
+    tra le ultime funzionalità, segnando ufficialmente l'ingresso dell'AI
+    nella documentazione del prodotto.
+  - "history_en.txt" è il changelog testuale. Viene aggiornato ad ogni
+    rilascio significativo.
+
+Nel 2011 (hash ccafdb3b) viene aggiunta la documentazione in olandese:
+"add doc/FP_Key_Mappings_Quick_Guide_nl.odt" — una guida rapida alle
+scorciatoie da tastiera, accompagnata da un'immagine (freeplane_nl.jpg).
+
+
+4. ICONE E RISORSE GRAFICHE
+-----------------------------
+Una parte significativa dei commit del 2009 riguarda l'aggiornamento delle
+icone dell'applicazione. In settembre 2009 vengono committate in sequenza
+numerose icone nuove o sostituite:
+  - hash 3637c391 / 9f5cccc3: icone generali (back, editcopy, ecc.)
+  - hash 3b1a9103: icone per i nodi cifrati e decifrati
+  - hash 5e0e1184: nuova icona per gli attributi (showAttributes.gif)
+  - hash 7d97c696: nuova icona per le note (knotes.png)
+  - hash 72109698: nuova icona per i promemoria (clock2.png)
+  - hash cdc043c0 / 554036f4: icone e percorsi per la toolbar di SimplyHTML,
+    l'editor di testo ricco integrato in Freeplane
+
+Questi commit mostrano che nel 2009 Freeplane era in una fase di rinnovamento
+visuale, aggiornando l'interfaccia grafica per modernizzarla.
+
+
+5. CODE EXPLORER (2023–2024)
+-----------------------------
+Una funzionalità relativamente recente e interamente contenuta nei commit di
+questo modulo è il Code Explorer: una modalità speciale di Freeplane che
+permette di visualizzare la struttura di un progetto software Java come mappa
+mentale, mostrando pacchetti, classi e dipendenze.
+
+Il Code Explorer emerge come area di sviluppo intensa nel 2023–2024, con
+decine di commit dedicati:
+  - costruzione del modello dati: ClassNode, PackageNode, ClassesNode,
+    con vari fix sulla corretta navigazione della gerarchia dei package
+    (hash 21e2d7ab: "fix package child node calculation"; hash c30070ae:
+    "fix counting child nodes of package node")
+  - pannello delle dipendenze: CodeDependenciesPanel riceve numerosi
+    miglioramenti tra dicembre 2023 e febbraio 2024, inclusi tooltip,
+    filtri separati per colonna (hash 6bca8489: "support separate search
+    in 'description' column") e correzione della selezione dei connettori
+    quando si selezionano nodi padre/figlio (hash 507a50e7, 9326ac7c)
+  - gestione delle configurazioni: i file di configurazione del Code Explorer
+    vengono serializzati in JSON tramite Jackson (hash 38a334d1); vengono
+    corretti NPE alla creazione di nuovi file di configurazione (hash 6455ef19)
+  - esportazione PDF del Code Explorer: il commit 0e97fb58 (marzo 2024) nel
+    plugin SVG aggiunge l'esportazione PDF anche dalla modalità Code Explorer
+
+Nel 2025 il Code Explorer viene ulteriormente esteso per supportare classi
+top-level mancanti nel modello (hash 7f1b6225: "Support missing top level
+classes") e viene aggiunta una libreria companion (freeplane-archunit-extension)
+menzionata nelle note di rilascio (hash a7bd7abf, febbraio 2024).
+
+
+6. IL PANNELLO AI (2025–2026)
+------------------------------
+La novità più rilevante degli ultimi due anni è l'integrazione di un pannello
+AI direttamente in Freeplane. I commit di questo modulo tracciano l'intera
+costruzione di questa funzionalità.
+
+Architettura del pannello (fine 2025)
+L'AI panel nasce come interfaccia chat (AIChatPanel.java) collegata a uno o
+più provider LLM configurabili. Il commit del 28 dicembre 2025 (hash 7f8d656d)
+aggiunge un menu a tendina per selezionare il modello AI direttamente
+dall'interfaccia: AIChatModelFactory gestisce la creazione del client per il
+modello scelto.
+
+Strumenti AI per la manipolazione delle mappe (gennaio 2026)
+La parte più ambiziosa è la costruzione di un set di "tool" che il modello AI
+può invocare per leggere e modificare la mappa mentale attiva. Tra gennaio e
+marzo 2026 vengono committati:
+  - hash 4ba27cf7 (gennaio 2026): "Implement new tools for search and reading"
+    — strumenti per cercare e leggere nodi con contesto, incluso un
+    AttributesContentReader
+  - hash 2fc51936 (gennaio 2026): "refactor and implement getBreadcrumbs AI
+    tool" — uno strumento che permette all'AI di capire dove si trova
+    nell'albero della mappa attraverso il "percorso di briciole"
+  - hash 202608fc e 408eac4d (gennaio 2026): strumenti per creare, spostare e
+    raggruppare nodi, con supporto ai "summary node" (i nodi riassuntivi che
+    Freeplane usa per raggruppare visivamente sottoinsiemi di rami)
+  - hash d78fd3fc, d69c8c0b, cd33d9cf (gennaio 2026): strumenti di editing
+    con supporto all'undo, distinguendo tipi di contenuto diversi
+    (testo semplice, HTML, note)
+  - hash d151f8cb (gennaio 2026): "Enable bulk edit requests with per-item
+    node identifiers" — l'AI può modificare più nodi in una singola richiesta
+  - hash 0510736a (gennaio 2026): "Add icon catalog tool and normalize emoji
+    icons" — l'AI può assegnare icone ai nodi
+  - hash 3a443ae8 (gennaio 2026): "Add delete nodes tool with subtree-root
+    filtering" — l'AI può eliminare nodi, con protezione per evitare di
+    cancellare l'intera mappa
+  - hash 3fd5d90c (gennaio 2026): "Add selection tools with selection modes
+    and single-node selection" — l'AI può selezionare nodi programmaticamente
+
+Memoria e storico delle conversazioni (febbraio 2026)
+I commit di febbraio 2026 costruiscono un sistema di memoria per le
+conversazioni AI:
+  - hash 95642042 e 2b73b0e8: struttura dello stato della conversazione e
+    gestione dei "draft" (bozze interrotte)
+  - hash f8cef994: un ConversationProjector che mantiene una vista coerente
+    dello stato della chat
+  - hash 4cdfbcc7 (hash 2026-02-08): "preserve full transcript and fix context
+    boundary handling" — il transcript completo della conversazione viene
+    preservato anche quando supera la finestra di contesto del modello
+  - hash 90e69ebd: "Enable multi-row chat deletion in chat list dialog" —
+    l'utente può eliminare più sessioni di chat contemporaneamente
+
+Profili assistente e integrazione con tag e stili (feb–marzo 2026)
+  - hash eec8e09c (febbraio 2026): profili assistente con memoria della chat:
+    ogni profilo può iniettare messaggi di sistema personalizzati
+  - hash e8e66c8b (febbraio 2026): strumenti AI per leggere e impostare
+    categorie di tag a livello di mappa
+  - hash 998bc8c6 (marzo 2026): allineamento del naming degli strumenti AI
+    con la MapTag API (coerenza tra come gli strumenti si chiamano e come
+    si chiama l'API corrispondente in Groovy)
+
+Supporto ai provider multipli (gennaio–marzo 2026)
+  - hash b16f9427 (gennaio 2026): allowlist di modelli per provider — l'utente
+    può limitare quali modelli sono disponibili per ogni provider
+  - hash 959bf789 (gennaio 2026): supporto a Gemini con "thinking signatures"
+    (la funzione di ragionamento esteso di Google)
+  - hash 8cc17ad3 (marzo 2026): "add model list fallback" — se il provider
+    non riesce a restituire la lista dei modelli disponibili, viene usata una
+    lista di default
+
+Qualità e documentazione del processo AI
+L'intero sviluppo AI è accompagnato da una documentazione insolita: ogni
+funzionalità è descritta in file Markdown nella repository stessa (backlog.md,
+constitution.md, sprint-001.md, sprint-002.md, AGENTS.md). Questa struttura
+sembra pensata per guidare agenti AI che lavorano sul codice: il commit
+173c8f14 (gennaio 2026) aggiunge esplicitamente "Add hint for LLM where to
+find tasks" — un suggerimento per l'LLM su dove trovare i task da svolgere.
+Il commit 6fedc207 (febbraio 2026) aggiunge una "harmonization statement" che
+presumibilmente definisce linee guida di comportamento per gli agenti AI che
+contribuiscono al codice.
+
+
+ALTRI COMMIT DI INTERESSE STORICO
+-----------------------------------
+
+Template di mappa (2011)
+Il commit ef42f702 (maggio 2011) abilita l'opzione "BranchesOverlap" nei
+template standard di Freeplane (conceptMap.mm e standard.mm). Questa opzione
+controlla se i rami della mappa possono sovrapporsi graficamente, e la sua
+abilitazione nei template predefiniti indica una scelta di stile visivo che
+tutti gli utenti avrebbero visto nelle nuove mappe.
+
+Editor di testo ricco SimplyHTML (2010–2011)
+SimplyHTML è l'editor HTML integrato usato per le note e il testo ricco in
+Freeplane. Diversi commit di questo modulo riguardano il suo aggiornamento e
+la correzione di bug:
+  - hash eb249712 (marzo 2011): "Enable printing from rich text editor"
+  - hash 50f748fe (ottobre 2010): "Bug fix in remove format action of simply html"
+
+
+CONCLUSIONE
+-----------
+Il modulo "other" è il territorio dove si vede Freeplane come progetto nella
+sua interezza: la fatica quotidiana del mantenimento (fix ai file build,
+correzioni typo nei file di localizzazione, aggiornamento dei link rotti nella
+documentazione), ma anche i momenti di svolta strategica, come la costruzione
+del Code Explorer e soprattutto l'integrazione di un agente AI capace di
+leggere e modificare le mappe in modo autonomo. La presenza di file come
+AGENTS.md e constitution.md suggerisce che lo sviluppo di Freeplane sta
+sperimentando una forma di collaborazione uomo-AI anche nella produzione del
+codice stesso.
