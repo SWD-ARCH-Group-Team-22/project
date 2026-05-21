@@ -200,6 +200,7 @@ Code analysis reveals that most classes in the package have dependencies on the 
 
 
 
+
     note right of UIFeatures
     **COMPLIANT:**
     This set of dependencies is compliant 
@@ -219,6 +220,7 @@ Code analysis reveals that most classes in the package have dependencies on the 
 
 
 There are other crucial violations of the Clean Architecture pattern: there is no clear definition of _entities_, _use cases_ and other layers. Some classes may look similar to one of these concepts: `MapModel` could be classified as an _entity_, `MapController` as a _use case_, `Controller` from `org.freeplane.features.mode` as an _adapter_. Most critical violations of the Clean Architecture pattern can be found in the dependency among these three classes: `MapModel` and `MapController` depend on the `Controller`; the flow of dependencies is broken and therefore inner business logic cannot be tested in isolation. 
+
 
 
 ```plantuml
