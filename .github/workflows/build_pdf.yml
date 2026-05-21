@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install System Dependencies (Pandoc, LaTeX, PlantUML)
+      - name: Install System Dependencies (Pandoc, LaTeX, Graphviz, Java)
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -32,9 +32,17 @@ jobs:
             texlive-latex-extra \
             lmodern \
             librsvg2-bin \
-            plantuml \
             graphviz \
             default-jre
+
+      - name: Install Latest PlantUML
+        run: |
+          # Scarica una release stabile e recente di PlantUML
+          wget https://github.com/plantuml/plantuml/releases/download/v1.2024.4/plantuml-1.2024.4.jar -O /tmp/plantuml.jar
+          # Crea l'eseguibile globale "plantuml" affinché pandoc-plantuml-filter lo trovi
+          echo '#!/bin/bash' | sudo tee /usr/local/bin/plantuml
+          echo 'java -jar /tmp/plantuml.jar "$@"' | sudo tee -a /usr/local/bin/plantuml
+          sudo chmod +x /usr/local/bin/plantuml
 
       - name: Install Pandoc PlantUML Filter
         run: pipx install pandoc-plantuml-filter
@@ -52,7 +60,7 @@ jobs:
             name=$(basename "$file" .md)
             echo "Converting $file to doc/deliverables/${name}.pdf..."
             
-            # Modificato: aggiunto --filter pandoc-plantuml
+            # Utilizzo del filtro per PlantUML
             pandoc --filter pandoc-plantuml "$file" -o "doc/deliverables/${name}.pdf"
           done
 
