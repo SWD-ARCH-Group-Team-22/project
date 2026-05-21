@@ -343,12 +343,188 @@ These violations have an explanation: as reported in the Official Documentation,
 However, Extensible Object theory does not justify the direct implementation of UI elements in core entities. This remains a pure violation of the Separation of Concerns at an architectural level.
 
 #### 5. Zooming into the Engine: C4 Component Model of the Core (Target: ~600 words)
-*   **Objective:** Detail the internal design of the Core and showcase the extension points.
-*   **Action:** *[Insert C4 Level 3 Diagram: Component for the main Controller and Plugin Management]*
-*   **Questions to answer:**
-    *   How is the typical MVC (Model-View-Controller) pattern of Freeplane (e.g., `MapModel`, `NodeModel`, `ModeController`) structured at the component level?
-    *   What is the anatomy of the internal Plugin Manager? How does it discover, load, and register a plugin within the application's lifecycle?
-    *   Which architectural components are responsible for event dispatching (e.g., model changes that need to update the UI and notify plugins)?
+
+The Component Model offers the deepest view of Freeplane's internal structure, detailing how the single container introduced in Section 3 decomposes into individually deployable OSGi bundles and the external libraries they depend upon.
+
+```plantuml
+@startuml Freeplane_C4_Container_Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Freeplane Software Container Diagram
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+skinparam wrapWidth 200
+skinparam maxMessageSize 200
+
+Container_Boundary(freeplane_app, "Freeplane") {
+
+    ' === Tier 1: Framework ===
+    Container(framework,   "Freeplane Framework Plugin", "Java Application", "Backbone of the software application")
+
+    ' === Tier 2: Core ===
+    Container(freeplane,   "Freeplane Core",             "Java Application", "Central core of the system, owns the inner business logic")
+
+    ' === Tier 3: API + lateral plugins ===
+    Container(api,         "Freeplane API",              "Java Application", "Provides encapsulation for basic Freeplane features to be implemented by user-defined scripts")
+    Container(ai,          "Freeplane AI",               "Java Application", "Plugin that enables communication between user and LLM tools within the software workstation")
+    Container(openmaps,    "Freeplane OpenMaps Plugin",  "Java Application", "Geographical data and visualization support")
+    Container(bug,         "Freeplane Bug Report",       "Java Application", "Bug report system")
+    Container(codeexplorer,"Freeplane CodeExplorer Plugin","Java Application","Provides advanced code analysis features as a distinct application mode")
+
+    ' === Tier 4: Script engine ===
+    Container(script,      "Freeplane Plugin Script",   "Java Application", "Manages the Groovy scripting engine")
+
+    ' === Tier 5: Script-dependent plugins ===
+    Container(formula,     "Freeplane Plugin Formula",  "Java Application", "Handles user-defined formulas, rendered via Groovy Script")
+    Container(markdown,    "Freeplane Markdown Plugin", "Java Application", "Support for markdown format")
+    Container(latex,       "Freeplane LaTeX Plugin",    "Java Application", "Provides support for LaTeX within the workstation")
+    Container(syntax,      "Freeplane JSyntaxPane Plugin","Java Application","Enhanced text readability features")
+
+    ' === Tier 6: SVG ===
+    Container(svg,         "Freeplane SVG Plugin",      "Java Application", "Graphic support for non-raster images")
+
+    ' === Bottom: Debug helper ===
+    Container(debughelper, "Freeplane Plugin Debughelper","Java Application","Sets the debugging environment up")
+}
+
+' === External systems ===
+System_Ext(markdj,      "Markdj",       "Java library for rendering markdown")
+System_Ext(jsyntaxpane, "JSyntaxPane",  "Java library for graphic UI settings over text")
+System_Ext(latexmath,   "JLatexMath",   "Java library for rendering LaTeX")
+System_Ext(llm,         "LangChain4j",  "Java library for adding LLM support")
+System_Ext(groovy,      "Groovy",       "Groovy scripting engine")
+System_Ext(ivy,         "Apache Ivy",   "Supports script dependency resolution")
+System_Ext(batik,       "Apache Batik", "SVG rendering")
+System_Ext(fop,         "Apache FOP",   "SVG to PDF transcoding")
+System_Ext(mapviewer,   "JMapViewer",   "Java library supporting OpenStreetMap visualization")
+System_Ext(archunit,    "ArchUnit",     "Java library to test architecture")
+System_Ext(jgrapht,     "JGraphT",      "Java library to explore graphs")
+System_Ext(assertjcore, "AssertJCore",  "Java library for testing assertions")
+
+' === Vertical layout hints (top-down tiers) ===
+Lay_D(framework,   freeplane)
+Lay_D(freeplane,   api)
+Lay_D(api,         script)
+Lay_D(script,      svg)
+Lay_D(svg,         debughelper)
+
+' === Horizontal layout hints ===
+Lay_R(api,    ai)
+Lay_R(api,    codeexplorer)
+Lay_R(api,    openmaps)
+Lay_R(api,    bug)
+Lay_R(script, formula)
+Lay_R(script, markdown)
+Lay_R(script, latex)
+Lay_R(script, syntax)
+
+' === Framework → API ===
+Rel_D(framework, api,       "Loads to make its instances globally available", "Java Method Call")
+
+' === Core → API ===
+Rel_D(freeplane, api,       "Loads", "Java Method Call")
+
+' === Core → Plugins ===
+Rel_D(freeplane, script,    "Delegates script execution",                       "Java Method Call")
+Rel_D(freeplane, markdown,  "Sends markdown text to be rendered",               "Java Method Call")
+Rel_D(freeplane, latex,     "Delegates LaTeX rendering",                        "Java Method Call")
+Rel_D(freeplane, svg,       "Delegates SVG rendering and exporting",            "Java Method Call")
+Rel_D(freeplane, bug,       "Sends error data",                                 "Java Method Call")
+
+' === Plugins → Core (UI registration) ===
+Rel_U(ai,          freeplane, "Registers in the UI and manipulates nodes",                           "Java Method Call")
+Rel_U(openmaps,    freeplane, "Registers in the UI and manipulates nodes for geographical data",     "Java Method Call")
+Rel_U(codeexplorer,freeplane, "Registers a new application mode within the core",                   "Java Method Call")
+
+' === Scripting ===
+Rel_D(formula, script,   "Sends formula to be executed",         "Java Method Call")
+
+' === Syntax → rendering ===
+Rel(syntax, script,   "Renders graphical features for text", "Java Method Call")
+Rel(syntax, markdown, "Renders graphical features for text", "Java Method Call")
+Rel(syntax, latex,    "Renders graphical features for text", "Java Method Call")
+
+' === External dependencies ===
+Rel_D(markdown,    markdj,      "Relies on")
+Rel_D(ai,          markdj,      "Relies on")
+Rel_D(ai,          llm,         "Relies on")
+Rel_D(syntax,      jsyntaxpane, "Relies on")
+Rel_D(latex,       latexmath,   "Relies on")
+Rel_D(script,      groovy,      "Runs scripts on")
+Rel_D(script,      ivy,         "Resolves dependencies via")
+Rel_D(svg,         batik,       "Renders SVG images via")
+Rel_D(svg,         fop,         "Exports files via")
+Rel_D(openmaps,    mapviewer,   "Renders maps via")
+Rel_D(codeexplorer,archunit,    "Tests architectural flaws via")
+Rel_D(codeexplorer,jgrapht,     "Resolves class dependencies via")
+Rel_D(codeexplorer,assertjcore, "Improves testing via")
+
+' === Debug Helper → all components ===
+Rel(debughelper, framework,  "Injects debug environment variables", "Java Method Call")
+Rel(debughelper, freeplane,  "Injects debug environment variables", "Java Method Call")
+Rel(debughelper, api,        "Injects debug environment variables", "Java Method Call")
+Rel(debughelper, ai,         "Injects debug environment variables", "Java Method Call")
+Rel(debughelper, script,     "Injects debug environment variables", "Java Method Call")
+Rel(debughelper, formula,    "Injects debug environment variables", "Java Method Call")
+Rel(debughelper, syntax,     "Injects debug environment variables", "Java Method Call")
+Rel(debughelper, markdown,   "Injects debug environment variables", "Java Method Call")
+Rel(debughelper, svg,        "Injects debug environment variables", "Java Method Call")
+Rel(debughelper, latex,      "Injects debug environment variables", "Java Method Call")
+Rel(debughelper, openmaps,   "Injects debug environment variables", "Java Method Call")
+
+@enduml
+```
+
+The diagram reveals a layered hierarchy that governs how the system bootstraps and how data flows between components.
+
+**Framework Plugin.**
+The Freeplane Framework Plugin sits at the top of the dependency tree. It initializes the OSGi runtime environment and loads the API plugin, making its instances globally available to every downstream bundle. It acts as the entry point through which the entire component graph is wired together.
+
+**Freeplane Core.**
+Directly below the framework resides the Freeplane Core, the central component that owns the inner business logic: map models, node structures, mode controllers, and event dispatching. The Core loads the API and delegates specialist work downward — script execution, markdown and LaTeX rendering, SVG export, and error reporting — to the appropriate plugins via standard Java method calls.
+
+This is where the MVC triad lives: `MapModel` and `NodeModel` define the domain entities, while `MapController` and `ModeController` orchestrate user actions and propagate model changes to the UI.
+
+However, as discussed in Section 4, this orchestration layer suffers from significant design flaws. Controllers such as `MapController` are _God Objects_ that aggregate I/O setup, action registration, navigation, folding, and event orchestration in a single class — a systemic **Single Responsibility Principle (SRP)** violation.
+
+
+The same pattern recurs in `FilterController` (1,179 lines) and `ModeController` (491 lines, 10+ distinct responsibilities).
+
+Furthermore, the pervasive use of `Controller.getCurrentController()` — a concrete global singleton called hundreds of times across the `features` layer — constitutes the most widespread **Dependency Inversion Principle (DIP)** violation in the codebase.
+
+`MapWriter` similarly instantiates concrete dependencies rather than receiving abstractions.
+
+These patterns couple nearly every component to concrete implementations rather than abstractions.
+
+**API and Lateral Plugins.**
+The Freeplane API provides an encapsulation layer that exposes core features for user-defined Groovy scripts, shielding script authors from internal implementation details. Sitting alongside the API are four lateral plugins: the AI plugin (LLM integration via LangChain4j), OpenMaps (geographical visualization via JMapViewer), CodeExplorer (architectural analysis via ArchUnit and JGraphT), and the Bug Report module.
+
+An important architectural observation emerges here: while the Core pushes data downward to these plugins, three of them — AI, OpenMaps, and CodeExplorer — also call _upward_ into the Core to register UI elements and manipulate nodes. This bidirectional dependency is managed at runtime through the OSGi service layer, but it reveals tension in the component hierarchy.
+
+Notably, `NodeLevelConditionController.createASelectableCondition()` uses `if`-chains to select condition types — adding a new condition requires modifying existing code, which violates the **Open/Closed Principle (OCP)**.
+
+
+In contrast, the `filter.condition` subpackage demonstrates OCP _compliance_ through a Strategy/Decorator pattern (`ASelectableCondition`, `DecoratedCondition`), showing that developers have applied the principle inconsistently.
+
+**Script Engine.**
+The Plugin Script component manages the Groovy scripting engine and resolves script dependencies via Apache Ivy. It serves as the execution substrate for the script-dependent plugins described below.
+
+**Script-Dependent Plugins.**
+Formula, Markdown, LaTeX, and JSyntaxPane all require the scripting infrastructure. Formula sends expressions to the script engine for evaluation; Markdown and LaTeX delegate to external rendering libraries (Markdj and JLatexMath respectively); JSyntaxPane enhances text readability and cross-cuts across Script, Markdown, and LaTeX components.
+
+A **Liskov Substitution Principle (LSP)** concern surfaces at this level: `SingleCopySource` extends `NodeModel` but throws `RuntimeException` for inherited methods, breaking the substitutability contract.
+
+Similarly, `IMapSelection` bundles selection, navigation, scrolling, filtering, and visibility into a single fat interface — an **Interface Segregation Principle (ISP)** violation — whereas `INodeChangeListener`, with its single `nodeChanged` method, represents a clean, minimal counterexample.
+
+**SVG Plugin.**
+The SVG component handles non-raster image rendering via Apache Batik and PDF transcoding via Apache FOP.
+
+**Cross-Cutting: Debug Helper.**
+The Debug Helper plugin stands apart from the main hierarchy: it injects debug environment variables into every other component, from the Framework down to OpenMaps. This cross-cutting nature means it touches all layers without belonging to any single one.
+
+The SOLID violations catalogued above are not isolated incidents confined to `org.freeplane.features.map`. They are **systemic architectural patterns** that repeat across the entire Core, reinforcing the assessment from Section 4 that business logic, application logic, and UI concerns are insufficiently separated throughout the codebase.
 
 ### Boundaries: Core-Plugin interaction and Internal Business Logic Boundaries analysis
 #### Core-Plugin Interaction
@@ -446,72 +622,7 @@ Many Common Closure Principle violations can be found: it means that classes oft
 Within the package, classes that host the most important business logic features rarely change together: for instance, `MapModel` and `NodeModel` never change in the same commit. They do not have static dependencies on each other either. That is proof that at business level core components are well separated. That is evidence that the `freeplane.org.features.map` acts as a generic container, where different logic coexists. This is an architectural flaw that can reduce testability and isolation.
 Even though in clear violation of Clean Architecture principle, a lower, looser level of component separation has been put in place.
 
-### SOLID Analysis
 
-The analysis starts from `org.freeplane.features.map` and is broadened to the entire `features` layer to verify whether violations are systemic.
-
-**Single Responsibility Principle (SRP):**
-Controllers are God Objects. `MapController` aggregates IO setup, action registration, navigation, folding, and event orchestration:
-
-
-```java
-public MapController(ModeController modeController) {
-    mapWriter = new MapWriter(this);
-    mapReader = new MapReader(readManager);
-    createActions(modeController);
-}
-```
-
-`FilterController` (1,179 lines) similarly aggregates filter logic, toolbar construction, and XML persistence. `ModeController` (491 lines) handles 10+ distinct responsibilities. This pattern repeats across the codebase.
-
-**Open/Closed Principle (OCP):**
-`NodeLevelConditionController.createASelectableCondition()` uses `if`-chains — adding a new condition type requires modifying existing code:
-
-```java
-if (simpleCondition.objectEquals(ConditionFactory.FILTER_IS_EQUAL_TO))
-    return new NodeLevelCompareCondition(...);
-if (simpleCondition.objectEquals(FILTER_LEAF))
-    return new LeafCondition();
-```
-
-However, the `filter.condition` subpackage shows OCP **compliance** through a Strategy/Decorator pattern (`ASelectableCondition`, `DecoratedCondition`).
-
-**Liskov Substitution Principle (LSP):**
-`SingleCopySource` extends `NodeModel` but breaks the base class contract:
-
-```java
-class SingleCopySource extends NodeModel {
-    @Override
-    public void acceptViewVisitor(INodeViewVisitor visitor) {
-       throw new RuntimeException("method not supported");
-    }
-    @Override
-    public IExtension putExtension(IExtension extension) {
-       throw new RuntimeException("method not supported");
-    }
-}
-```
-
-**Interface Segregation Principle (ISP):**
-`IMapSelection` bundles selection, navigation, scrolling, filtering, and visibility into one fat interface. In contrast, `INodeChangeListener` (single method: `nodeChanged`) is a clean, minimal interface.
-
-**Dependency Inversion Principle (DIP):**
-This is the most pervasive violation. `Controller.getCurrentController()` — a concrete global singleton — is called hundreds of times across the `features` layer:
-
-```java
-Filter filter = Controller.getCurrentController().getSelection().getFilter();
-```
-
-`MapWriter` directly instantiates concrete dependencies rather than receiving abstractions:
-
-```java
-TreeXmlWriter createTreeWriter(final Writer writer) {
-    return new TreeXmlWriter(writeManager, writer,
-        ResourceController.getResourceController().getBooleanProperty("useAsciiCharset"));
-}
-```
-
-**Conclusion:** The violations found in `features.map` are not isolated — they are **systemic architectural patterns** that repeat across the entire core.
 
 #### 7. Architectural Evaluation and Conclusions (Target: ~100 words)
 *   **Objective:** Summarize your analysis with a critical eye.
