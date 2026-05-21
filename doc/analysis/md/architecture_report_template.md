@@ -15,7 +15,7 @@ The C4 notation will help in detailing better software functionalities and how t
 Freeplane was born as a fork of the well-known Freemind software. The official documentation reports that the decision was taken to improve software's design and to speed up its development and maintenance cycles. 
 
 ```plantuml
-    @startuml Freeplane C4 Context Diagram
+    @startuml
     !include <C4/C4_Context.puml>  
     title Freeplane Software Context Diagram
 
@@ -67,7 +67,7 @@ The Container Model aims at showing how the software is built, from a lower, mor
 
 ```plantuml
 
-    @startuml Freeplane_Container_Diagram
+    @startuml
     !include <C4/C4_Container.puml>
     title Freeplane Container Diagram
 
