@@ -3,9 +3,8 @@ name: Build PDFs from Markdown
 on:
   push:
     branches:
-      - main
+      - '**'  
     paths:
-      # Fa partire la action se modifichi un .md in questa cartella (o sottocartelle)
       - "doc/analysis/md/**/*.md"
       - ".github/workflows/build-pdf.yml"
   workflow_dispatch:
@@ -22,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Pandoc and LaTeX
+      - name: Install System Dependencies (Pandoc, LaTeX, Graphviz, Java)
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -32,7 +31,21 @@ jobs:
             texlive-latex-recommended \
             texlive-latex-extra \
             lmodern \
-            librsvg2-bin
+            librsvg2-bin \
+            graphviz \
+            default-jre
+
+      - name: Install Latest PlantUML
+        run: |
+          # Scarica una release stabile e recente di PlantUML
+          wget https://github.com/plantuml/plantuml/releases/download/v1.2024.4/plantuml-1.2024.4.jar -O /tmp/plantuml.jar
+          # Crea l'eseguibile globale "plantuml" affinché pandoc-plantuml-filter lo trovi
+          echo '#!/bin/bash' | sudo tee /usr/local/bin/plantuml
+          echo 'java -jar /tmp/plantuml.jar "$@"' | sudo tee -a /usr/local/bin/plantuml
+          sudo chmod +x /usr/local/bin/plantuml
+
+      - name: Install Pandoc PlantUML Filter
+        run: pipx install pandoc-plantuml-filter
 
       - name: Create output directories
         run: |
@@ -41,16 +54,14 @@ jobs:
 
       - name: Convert deliverables Markdown files to PDF
         run: |
-          # Abilita la ricerca sicura anche nelle sottocartelle
           shopt -s nullglob globstar
           
-          # Cerca tutti i file .md (anche nelle sottocartelle grazie ai **)
           for file in doc/analysis/md/**/*.md; do
             name=$(basename "$file" .md)
             echo "Converting $file to doc/deliverables/${name}.pdf..."
             
-            # COMANDO RIPRISTINATO: Questo è quello che crea materialmente il PDF nudo e crudo
-            pandoc "$file" -o "doc/deliverables/${name}.pdf"
+            # Utilizzo del filtro per PlantUML
+            pandoc --filter pandoc-plantuml "$file" -o "doc/deliverables/${name}.pdf"
           done
 
       - name: Commit generated PDFs
