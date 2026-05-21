@@ -16,7 +16,7 @@ Freeplane was born as a fork of the well-known Freemind software. The official d
 
 ```plantuml
     @startuml Freeplane C4 Context Diagram
-    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.4.0/C4_Context.puml
+    !include <C4/C4_Context.puml>  
     title Freeplane Software Context Diagram
 
 
@@ -68,7 +68,7 @@ The Container Model aims at showing how the software is built, from a lower, mor
 ```plantuml
 
     @startuml Freeplane_Container_Diagram
-    !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.4.0/C4_Container.puml
+    !include <C4/C4_Container.puml>
     title Freeplane Container Diagram
 
     LAYOUT_WITH_LEGEND()
