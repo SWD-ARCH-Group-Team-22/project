@@ -453,6 +453,7 @@ The analysis starts from `org.freeplane.features.map` and is broadened to the en
 **Single Responsibility Principle (SRP):**
 Controllers are God Objects. `MapController` aggregates IO setup, action registration, navigation, folding, and event orchestration:
 
+
 ```java
 public MapController(ModeController modeController) {
     mapWriter = new MapWriter(this);
