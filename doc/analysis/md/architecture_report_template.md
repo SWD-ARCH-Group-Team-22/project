@@ -624,9 +624,25 @@ Even though in clear violation of Clean Architecture principle, a lower, looser 
 
 
 
-#### 7. Architectural Evaluation and Conclusions (Target: ~100 words)
-*   **Objective:** Summarize your analysis with a critical eye.
-*   **Questions to answer:**
-    *   In light of your analysis, how robust, maintainable, and extensible is Freeplane's architecture?
-    *   If you had to propose an architectural refactoring based on Clean Architecture principles, which part would you isolate first (e.g., stronger decoupling between the Swing UI and the map logic)?
+#### 7. Architectural Characteristics and Conclusions
+
+ **Extensibility**  (Strong)  Two-level: OSGi plugin isolation (macro) + Extension Object Pattern on nodes (micro). 10 official plugins developed independently. 
+ **Maintainability**  (Weak)  God Object controllers with too many responsibilities. Pervasive global singleton calls create invisible state dependencies.    
+ **Modularity**  (Mixed)  Strong between plugins (OSGi, no cross-bundle change correlation). Weak within core: nearly half of core commits co-change with UI components. 
+ **Testability**  (Weak)  No dependency injection. Over half the domain layer depends on GUI frameworks. Global singletons cannot be replaced with test doubles. 
+
+### Coupling and Cohesion Metrics
+
+Derived from `git log` clusterization (threshold: 10 shared commits):
+
+- **Low entity coupling (positive):** `MapModel` and `NodeModel` never co-change — well-separated domain classes.
+- **High domain-UI coupling (negative):** `MapController` frequently co-changes with Swing components.
+- **Strong plugin isolation (positive):** OSGi bundles show no cross-bundle change correlation.
+
+### Conclusion
+
+Freeplane balances extensibility and legacy constraints. Its OSGi plugin system and Extension Object Pattern provide robust, two-level extensibility. However, the core suffers from systemic architectural debt: God Object controllers, pervasive singleton dependencies, and over half the business logic layer coupled to AWT/Swing. These issues, rooted in the software's 2009 origins, make the core untestable in isolation and resistant to UI migration.
+
+If an architectural refactoring were to be proposed based on Clean Architecture principles, the priority would be introducing abstraction interfaces for GUI dependencies (`Color`, `Font`, `Component`) in the domain layer, enabling independent testability without breaking existing functionality.
+
 
