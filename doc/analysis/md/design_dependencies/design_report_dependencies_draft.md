@@ -1,4 +1,4 @@
-### Knowledge dependencies from co-change analysis
+### Knowledge dependencies 
 
 As a first step of the dependency analysis, we focused on the knowledge dependencies of Freeplane. Since the project is large, we did not start directly from the source code. Instead, we used the Git history to understand which parts of the system usually changed together.
 
@@ -20,7 +20,8 @@ Finally, the text rendering plugins show another useful case. `FormulaTextTransf
 
 This first analysis does not prove design problems by itself. It gives us a set of meaningful areas to inspect next in the code dependencies analysis.
 
-### Code dependencies in the Swing map view
+### Code dependencies 
+## 2. Swing map view cluster 
 
 The code inspection confirms that the Swing map view cluster is not only a historical relation. `MapView`, `NodeView` and `MainView` form the main visual structure of the map: `MapView` manages the overall graphical view, `NodeView` represents a single node linked to its `NodeModel`, and `MainView` shows the visible content of the node, such as text, icons, borders and link indicators.
 
@@ -30,8 +31,78 @@ At the same time, to display nodes correctly, the map view needs information fro
 
 The code also shows one useful choice to keep these dependencies more organised: `NodeViewFactory`. When `MapView` displays nodes, the program must create visual objects such as `NodeView`, `MainView` and other components. This is an example of construction dependency, because the dependency is not only about using an object, but also about where that object is created. Freeplane does not remove this dependency, but concentrates the creation logic in `NodeViewFactory` instead of spreading it inside `MapView`. In this way, the dependency remains, but it is clearer where it is managed.
 
-## 2. Outline subsystem — code dependency analysis, working version
+```plantuml
+@startuml
+title Swing map view cluster - code dependencies
 
+left to right direction
+set namespaceSeparator none
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 140
+skinparam ranksep 110
+skinparam ArrowFontSize 12
+
+hide empty members
+
+package "org.freeplane" as Freeplane {
+
+  package "view/swing/map" as MapPkg {
+    class MapView
+    class NodeView
+    class NodeViewFactory
+    class MainView
+
+    MapView -[hidden]right- NodeView
+    MapView -[hidden]down- NodeViewFactory
+    NodeViewFactory -[hidden]right- MainView
+    NodeView -[hidden]down- MainView
+  }
+
+  package "features/map" as FeaturesPkg {
+    class NodeModel
+  }
+
+  NodeView -[hidden]down- NodeModel
+}
+
+class "External concerns\nstyles, filters, text,\nlinks, icons, UI listeners" as ExternalConcerns
+
+NodeView -[hidden]right- ExternalConcerns
+
+MapView --> NodeView : manages
+NodeView --> MainView : contains
+NodeView --> NodeModel : represents
+
+MapView ..> NodeViewFactory : uses for\ncreation
+NodeViewFactory ..> MainView : creates
+NodeViewFactory ..> NodeView : creates
+
+NodeView -[#gray,dashed]-> ExternalConcerns : uses
+MapView -[#gray,dashed]-> ExternalConcerns : uses
+
+note right of ExternalConcerns
+External concerns are grouped here to keep
+the diagram readable. They show that the map
+view depends on several surrounding subsystems,
+which contributes to its high fan-out and
+higher cognitive load.
+end note
+
+legend bottom right
+  <b>Line styles</b>
+  Solid black line: main structural dependency
+  Dashed black line: creation / construction dependency
+  Dashed gray line: secondary dependency
+endlegend
+@enduml
+
+```
+
+## 2. Outline subsystem cluster 
 After the Swing map view, we analysed another visualisation cluster: the outline subsystem. While the Swing map view shows the mind map in its main graphical form, the outline shows the same nodes in a more linear structure, similar to a tree. So it is not a separate content area, but another way of representing the same map.
 
 Starting from the co-change report, the main class to check was `ScrollableTreePanel`, because many outline pairs were centered around it. The code confirms this role: `ScrollableTreePanel` manages the tree-like list shown in the outline. It handles which nodes are visible, which node is selected, how the user moves between nodes and how the view is updated during scrolling. This explains why it often changes together with other classes in the same package.
