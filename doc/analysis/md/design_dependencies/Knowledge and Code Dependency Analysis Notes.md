@@ -251,6 +251,9 @@ Main classes:
 
 This looks like a cohesive feature area. Model/data classes, editors and controllers change together. This is probably expected: if the structure of tags changes, the editor and controller may need updates.
 
+
+
+
 #### Code Explorer plugin
 
 Main classes:
@@ -323,3 +326,19 @@ The code also shows some choices that make these dependencies more organised. A 
 This is where the concept of construction dependency appears. A construction dependency means that a class does not only use another class, but is also responsible for creating its objects. In Freeplane this dependency does not disappear completely, because `NodeView`, `MainView` and the other components still have to be created somewhere. However, it is handled better: the creation logic is concentrated in `NodeViewFactory` instead of being spread inside `MapView`. In this way, `MapView` can stay more focused on managing the map, while `NodeViewFactory` collects the construction of the visual node components. This makes the relation more ordered and easier to control.
 
 In conclusion, the Swing map view cluster confirms what we had already seen in the historical analysis. The co-change analysis showed that these files often change together; the code explains why this happens: they really work on the same part of the system, the visualisation of the map. So the dependency does not seem random or negative by itself. It is an expected and motivated dependency. At the same time, it is a heavy area of the code: understanding it requires following how several UI elements and connected subsystems work together, not just reading one isolated class.
+
+## 2. Outline subsystem — code dependency analysis, working version
+
+After the Swing map view, which represents the mind map in its main graphical form, we analysed another cluster related to visualisation: the outline subsystem. The outline shows the same nodes of the map, but in a different way: not as nodes placed in space, but as a more linear structure, similar to a tree.
+
+Starting from the co-change report, the main point to check was the role of `ScrollableTreePanel`, because many pairs in the outline cluster were centered around this class. The code confirms this intuition: `ScrollableTreePanel` is the class that manages the tree-like list shown in the outline. It handles which nodes are visible, which node is selected, how the user moves between nodes and how the view is updated when the user scrolls. For this reason, it is reasonable that it often changes together with other classes in the same package.
+
+`OutlinePane` has a more external role. We can see it as the container of the outline view: it creates the `BreadcrumbPanel`, the `ScrollableTreePanel`, the `OutlineController`, the toolbar and the menu. It also places the node list inside a Swing component that supports scrolling, so the user can scroll when there are too many nodes to show at once. Therefore, `OutlinePane` prepares the outline area, while `ScrollableTreePanel` manages the main content shown inside that area.
+
+The other classes complete specific parts of the same view. `BlockPanel` shows a portion of the visible nodes and sends user actions back to `ScrollableTreePanel`, such as selecting a node or opening/closing a branch. `BreadcrumbPanel` shows the path of the current node and uses `OutlineController` to manage actions such as selection and expansion. `OutlineViewport`, instead, helps determine which part of the list should be shown while the user scrolls.
+
+This cluster seems well managed with respect to the Common Closure Principle. The classes that often changed together in the reports are grouped in the same package, `org.freeplane.view.swing.map.outline`, and work on the same functionality. In this case, the co-change mainly indicates internal cohesion: not a hidden dependency between distant parts, but a group of classes collaborating on the same view.
+
+The additional point that emerges from the code concerns `MapAwareOutlinePane`. In the co-change reports, there was no strong relation between the outline cluster and the Swing map view cluster. However, by reading the code, we can see that the connection exists: `MapAwareOutlinePane` uses `MapView`, `NodeView`, `NodeModel` and listeners related to map and node changes.
+
+This dependency is normal, because the outline has to show the same map represented in the Swing map view, only in a tree-like form. However, it increases cognitive load: to modify this part correctly, it is not enough to understand only the classes in the `outline` package. A developer also needs to understand how the outline stays synchronized with the main map view and with the node model.
