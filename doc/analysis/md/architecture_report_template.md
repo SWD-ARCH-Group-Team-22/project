@@ -25,7 +25,6 @@ Freeplane was born as a fork of the well-known Freemind software. The official d
 
     System(freeplane, "Freeplane\n[Software System]", "Open-source mind map design software")
 
-    System_Ext(fs, "File System", "[Software System]\nProvides persistent storage for files and application resources")
     System_Ext(browser, "Web Browser", "[Software System]\nDisplays web pages and external hyperlinks")
     System_Ext(llm, "LLM Software Tools", "[Software System]\nProvides external AI and language model services")
     System_Ext(smtp, "Email Tool", "[Software System]\nProvides email composition and delivery services")
@@ -36,7 +35,6 @@ Freeplane was born as a fork of the well-known Freemind software. The official d
 
     Rel(freeplane, fs, "Reads/Writes files to")
     Rel(freeplane, llm, "Sends prompts and retrieves data from")
-    Rel(freeplane, smtp, "redirects to")
     Rel(freeplane, taskjuggler, "Exports mindmaps to be tasks of")
     Rel(freeplane, browser, "Opens URLs in")
 
@@ -50,7 +48,7 @@ Freeplane was born as a fork of the well-known Freemind software. The official d
 The context diagram illustrates how Freeplane operates within its external environment and interacts with both users and supporting systems. Two main user roles are identified. Beginner users interact with the system to create and manage mind maps using basic functionality, while advanced users extend the system through scripting and plugins, enabling automation and customization.
 
 The software presents itself as a mind-mapping tool, and it features a proprietary file format `.mm`. The software stores such files in the computer File System, in a user-defined directory. The file system, and more generally the OS, represent the software's persistence layer. 
-UI personalization, such as themes, font, are saved in a dedicated repository within the computer filesystem. This interaction reflects the system’s reliance on local persistence rather than external databases.
+UI personalization, such as themes, font, are saved in a dedicated repository within the computer filesystem. This interaction reflects the system’s reliance on local persistence rather than external databases. *motivate why it is internal*
 
 To enhance its mind-mapping toolset, web browsers are invoked to open hyperlinks embedded within maps. Users can add them to nodes. When clicked, a browser instance is opened to show the webpage the URL points to. This can be mostly useful to include sources or images directly from the internet in the mind-map. 
 
