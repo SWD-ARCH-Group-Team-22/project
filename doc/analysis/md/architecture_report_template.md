@@ -19,7 +19,6 @@ Freeplane was born as a fork of the well-known Freemind software. The official d
     !include <C4/C4_Context.puml>  
     title Freeplane Software Context Diagram
 
-
     Person(beginner, "User\n[Person]", "Someone who uses basic mind-mapping building tools to support its workflow or its learning project")
     Person(advanced, "Advanced User\n[Person]", "Someone who deeply understand underlying features of the software and who can enhance and automate its workflow through script writing and plugin exploitation")
 
@@ -32,8 +31,10 @@ Freeplane was born as a fork of the well-known Freemind software. The official d
 
     Rel(beginner, freeplane, "Uses for basic mapping")
     Rel(advanced, freeplane, "uses and customizes its experience through scripts")
+        
+    Rel_R(freeplane, smtp, "Redirects users for email sharing")
 
-    Rel(freeplane, fs, "Reads/Writes files to")
+
     Rel(freeplane, llm, "Sends prompts and retrieves data from")
     Rel(freeplane, taskjuggler, "Exports mindmaps to be tasks of")
     Rel(freeplane, browser, "Opens URLs in")
@@ -345,134 +346,117 @@ However, Extensible Object theory does not justify the direct implementation of 
 The Component Model offers the deepest view of Freeplane's internal structure, detailing how the single container introduced in Section 3 decomposes into individually deployable OSGi bundles and the external libraries they depend upon.
 
 ```plantuml
-@startuml Freeplane_C4_Container_Diagram
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+    @startuml 
 
-title Freeplane Software Container Diagram
+    !include <C4/C4_Component.puml>
 
-LAYOUT_TOP_DOWN()
-LAYOUT_WITH_LEGEND()
+    title Freeplane Software Component Diagram
 
-skinparam wrapWidth 200
-skinparam maxMessageSize 200
+    LAYOUT_TOP_DOWN()
+    LAYOUT_WITH_LEGEND()
 
-Container_Boundary(freeplane_app, "Freeplane") {
+    skinparam wrapWidth 200
+    skinparam maxMessageSize 200
 
-    ' === Tier 1: Framework ===
-    Container(framework,   "Freeplane Framework Plugin", "Java Application", "Backbone of the software application")
+    Person(beginner, "Beginner User", "Uses Freeplane for creating and organizing mind maps")
+    Person(advanced, "Advanced User", "Uses scripting and plugins to automate and extend functionality")
 
-    ' === Tier 2: Core ===
-    Container(freeplane,   "Freeplane Core",             "Java Application", "Central core of the system, owns the inner business logic")
+    Container_Boundary(freeplane_app, "Freeplane") {
 
-    ' === Tier 3: API + lateral plugins ===
-    Container(api,         "Freeplane API",              "Java Application", "Provides encapsulation for basic Freeplane features to be implemented by user-defined scripts")
-    Container(ai,          "Freeplane AI",               "Java Application", "Plugin that enables communication between user and LLM tools within the software workstation")
-    Container(openmaps,    "Freeplane OpenMaps Plugin",  "Java Application", "Geographical data and visualization support")
-    Container(bug,         "Freeplane Bug Report",       "Java Application", "Bug report system")
-    Container(codeexplorer,"Freeplane CodeExplorer Plugin","Java Application","Provides advanced code analysis features as a distinct application mode")
+        ' === Tier 1: Framework ===
+        Component(framework, "Freeplane Framework Plugin", "Java Application", "Backbone of the software application")
 
-    ' === Tier 4: Script engine ===
-    Container(script,      "Freeplane Plugin Script",   "Java Application", "Manages the Groovy scripting engine")
+        ' === Tier 2: Core ===
+        Component(freeplane, "Freeplane Core", "Java Application", "Central core of the system, owns the inner business logic")
 
-    ' === Tier 5: Script-dependent plugins ===
-    Container(formula,     "Freeplane Plugin Formula",  "Java Application", "Handles user-defined formulas, rendered via Groovy Script")
-    Container(markdown,    "Freeplane Markdown Plugin", "Java Application", "Support for markdown format")
-    Container(latex,       "Freeplane LaTeX Plugin",    "Java Application", "Provides support for LaTeX within the workstation")
-    Container(syntax,      "Freeplane JSyntaxPane Plugin","Java Application","Enhanced text readability features")
+        ' === Tier 3: API + lateral plugins ===
+        Component(api, "Freeplane API", "Java Application", "Provides encapsulation for basic Freeplane features to be implemented by user-defined scripts")
+        Component(ai, "Freeplane AI", "Java Application", "Plugin that enables communication between user and LLM tools within the software workstation")
+        Component(openmaps, "Freeplane OpenMaps Plugin", "Java Application", "Geographical data and visualization support")
+        Component(bug, "Freeplane Bug Report", "Java Application", "Bug report system")
+        Component(codeexplorer, "Freeplane CodeExplorer Plugin", "Java Application", "Provides advanced code analysis features as a distinct application mode")
 
-    ' === Tier 6: SVG ===
-    Container(svg,         "Freeplane SVG Plugin",      "Java Application", "Graphic support for non-raster images")
+        ' === Tier 4: Script engine ===
+        Component(script, "Freeplane Plugin Script", "Java Application", "Manages the Groovy scripting engine")
 
-    ' === Bottom: Debug helper ===
-    Container(debughelper, "Freeplane Plugin Debughelper","Java Application","Sets the debugging environment up")
-}
+        ' === Tier 5: Script-dependent plugins ===
+        Component(formula, "Freeplane Plugin Formula", "Java Application", "Handles user-defined formulas, rendered via Groovy Script")
+        Component(markdown, "Freeplane Markdown Plugin", "Java Application", "Support for markdown format")
+        Component(latex, "Freeplane LaTeX Plugin", "Java Application", "Provides support for LaTeX within the workstation")
+        Component(syntax, "Freeplane JSyntaxPane Plugin", "Java Application", "Enhanced text readability features")
 
-' === External systems ===
-System_Ext(markdj,      "Markdj",       "Java library for rendering markdown")
-System_Ext(jsyntaxpane, "JSyntaxPane",  "Java library for graphic UI settings over text")
-System_Ext(latexmath,   "JLatexMath",   "Java library for rendering LaTeX")
-System_Ext(llm,         "LangChain4j",  "Java library for adding LLM support")
-System_Ext(groovy,      "Groovy",       "Groovy scripting engine")
-System_Ext(ivy,         "Apache Ivy",   "Supports script dependency resolution")
-System_Ext(batik,       "Apache Batik", "SVG rendering")
-System_Ext(fop,         "Apache FOP",   "SVG to PDF transcoding")
-System_Ext(mapviewer,   "JMapViewer",   "Java library supporting OpenStreetMap visualization")
-System_Ext(archunit,    "ArchUnit",     "Java library to test architecture")
-System_Ext(jgrapht,     "JGraphT",      "Java library to explore graphs")
-System_Ext(assertjcore, "AssertJCore",  "Java library for testing assertions")
+        ' === Tier 6: SVG ===
+        Component(svg, "Freeplane SVG Plugin", "Java Application", "Graphic support for non-raster images")
+        
+        ' === Bottom: Debug helper ===
+        Component(debughelper, "Freeplane Plugin Debughelper", "Java Application", "Sets the debugging environment up")
+    }
 
-' === Vertical layout hints (top-down tiers) ===
-Lay_D(framework,   freeplane)
-Lay_D(freeplane,   api)
-Lay_D(api,         script)
-Lay_D(script,      svg)
-Lay_D(svg,         debughelper)
+    Rel_D(beginner, freeplane, "Creates and manages mind maps", "GUI Interaction")
+    Rel_D(advanced, freeplane, "Uses plugins and scripting", "GUI Interaction")
 
-' === Horizontal layout hints ===
-Lay_R(api,    ai)
-Lay_R(api,    codeexplorer)
-Lay_R(api,    openmaps)
-Lay_R(api,    bug)
-Lay_R(script, formula)
-Lay_R(script, markdown)
-Lay_R(script, latex)
-Lay_R(script, syntax)
+    ' === Vertical layout hints (top-down tiers) ===
+    Lay_D(framework, freeplane)
+    Lay_D(freeplane, api)
+    Lay_D(api, script)
+    Lay_D(script, svg)
+    Lay_D(svg, debughelper)
 
-' === Framework → API ===
-Rel_D(framework, api,       "Loads to make its instances globally available", "Java Method Call")
+    ' === Horizontal layout hints ===
+    Lay_R(api, ai)
+    Lay_R(api, codeexplorer)
+    Lay_R(api, openmaps)
+    Lay_R(api, bug)
+    Lay_R(script, formula)
+    Lay_R(script, markdown)
+    Lay_R(script, latex)
+    Lay_R(script, syntax)
 
-' === Core → API ===
-Rel_D(freeplane, api,       "Loads", "Java Method Call")
+    Rel_D(framework, api, "Loads to make its instances globally available", "Java Method Call")
 
-' === Core → Plugins ===
-Rel_D(freeplane, script,    "Delegates script execution",                       "Java Method Call")
-Rel_D(freeplane, markdown,  "Sends markdown text to be rendered",               "Java Method Call")
-Rel_D(freeplane, latex,     "Delegates LaTeX rendering",                        "Java Method Call")
-Rel_D(freeplane, svg,       "Delegates SVG rendering and exporting",            "Java Method Call")
-Rel_D(freeplane, bug,       "Sends error data",                                 "Java Method Call")
+    Rel_D(freeplane, api, "Loads", "Java Method Call")
 
-' === Plugins → Core (UI registration) ===
-Rel_U(ai,          freeplane, "Registers in the UI and manipulates nodes",                           "Java Method Call")
-Rel_U(openmaps,    freeplane, "Registers in the UI and manipulates nodes for geographical data",     "Java Method Call")
-Rel_U(codeexplorer,freeplane, "Registers a new application mode within the core",                   "Java Method Call")
+    Rel_D(freeplane, script, "Delegates script execution", "Java Method Call")
+    Rel_D(freeplane, markdown, "Sends markdown text to be rendered", "Java Method Call")
+    Rel_D(freeplane, latex, "Delegates LaTeX rendering", "Java Method Call")
+    Rel_D(freeplane, svg, "Delegates SVG rendering and exporting", "Java Method Call")
+    Rel_D(freeplane, bug, "Sends error data", "Java Method Call")
 
-' === Scripting ===
-Rel_D(formula, script,   "Sends formula to be executed",         "Java Method Call")
+    Rel_U(ai, freeplane, "Registers in the UI and manipulates nodes", "Java Method Call")
+    Rel_U(openmaps, freeplane, "Registers in the UI and manipulates nodes for geographical data", "Java Method Call")
+    Rel_U(codeexplorer, freeplane, "Registers a new application mode within the core", "Java Method Call")
 
-' === Syntax → rendering ===
-Rel(syntax, script,   "Renders graphical features for text", "Java Method Call")
-Rel(syntax, markdown, "Renders graphical features for text", "Java Method Call")
-Rel(syntax, latex,    "Renders graphical features for text", "Java Method Call")
+    Rel_D(formula, script, "Sends formula to be executed", "Java Method Call")
 
-' === External dependencies ===
-Rel_D(markdown,    markdj,      "Relies on")
-Rel_D(ai,          markdj,      "Relies on")
-Rel_D(ai,          llm,         "Relies on")
-Rel_D(syntax,      jsyntaxpane, "Relies on")
-Rel_D(latex,       latexmath,   "Relies on")
-Rel_D(script,      groovy,      "Runs scripts on")
-Rel_D(script,      ivy,         "Resolves dependencies via")
-Rel_D(svg,         batik,       "Renders SVG images via")
-Rel_D(svg,         fop,         "Exports files via")
-Rel_D(openmaps,    mapviewer,   "Renders maps via")
-Rel_D(codeexplorer,archunit,    "Tests architectural flaws via")
-Rel_D(codeexplorer,jgrapht,     "Resolves class dependencies via")
-Rel_D(codeexplorer,assertjcore, "Improves testing via")
+    Rel(syntax, script, "Renders graphical features for text", "Java Method Call")
+    Rel(syntax, markdown, "Renders graphical features for text", "Java Method Call")
+    Rel(syntax, latex, "Renders graphical features for text", "Java Method Call")
 
-' === Debug Helper → all components ===
-Rel(debughelper, framework,  "Injects debug environment variables", "Java Method Call")
-Rel(debughelper, freeplane,  "Injects debug environment variables", "Java Method Call")
-Rel(debughelper, api,        "Injects debug environment variables", "Java Method Call")
-Rel(debughelper, ai,         "Injects debug environment variables", "Java Method Call")
-Rel(debughelper, script,     "Injects debug environment variables", "Java Method Call")
-Rel(debughelper, formula,    "Injects debug environment variables", "Java Method Call")
-Rel(debughelper, syntax,     "Injects debug environment variables", "Java Method Call")
-Rel(debughelper, markdown,   "Injects debug environment variables", "Java Method Call")
-Rel(debughelper, svg,        "Injects debug environment variables", "Java Method Call")
-Rel(debughelper, latex,      "Injects debug environment variables", "Java Method Call")
-Rel(debughelper, openmaps,   "Injects debug environment variables", "Java Method Call")
+    System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
+    System_Ext(llm, "LLM Software Tools", "Provides external AI and language model services")
+    System_Ext(smtp, "Email Tool", "Provides email composition and delivery services")
+    System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
 
-@enduml
+    Rel_D(freeplane, smtp, "Redirects to")
+
+    Rel_D(ai, llm, "Sends prompts and retrieves responses", "API")
+    Rel_D(freeplane, browser, "Opens external links in")
+    Rel_D(freeplane, taskjuggler, "Exports tasks to")
+
+    Rel(debughelper, framework, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, freeplane, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, api, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, ai, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, script, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, formula, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, syntax, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, markdown, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, svg, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, latex, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, openmaps, "Injects debug environment variables", "Java Method Call")
+
+
+    @enduml
 ```
 
 The diagram reveals a layered hierarchy that governs how the system bootstraps and how data flows between components.
