@@ -301,7 +301,7 @@ The following sections analyse the main clusters found in the co-change reports,
 
 ### 1. Swing map view
 
-![Map view dependency diagram](../../../img/design/map_view_dependencies.png)
+![Map view dependency diagram](../../../deliverables/img/design/map_view_dependencies.png)
 
 *Figure: simplified relation between `MapView`, `NodeView`, `MainView`, `NodeViewFactory` and `NodeModel`.*
 
