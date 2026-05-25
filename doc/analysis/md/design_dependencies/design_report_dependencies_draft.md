@@ -1,50 +1,75 @@
-### Knowledge dependencies 
+## Design dependencies
 
-As a first step of the dependency analysis, we focused on the knowledge dependencies of Freeplane. Since the project is large, we did not start directly from the source code. Instead, we used the Git history to understand which parts of the system usually changed together.
+In this section, we analyse two kinds of dependencies in Freeplane. **Knowledge dependencies** are estimated from the Git history and show which files tend to change together during maintenance. **Code dependencies** are observed directly in the source code, through packages, class references, construction points and structural relations.
 
-We generated co-change reports from the commit history. These reports show which pairs of files were modified in the same commits, and how many times this happened. This does not automatically prove that there is a direct code dependency. However, it tells us something useful about maintenance work: if two files often change together, then a change in one file probably requires developers to check or understand the other one too.
+The goal is not to list dependencies mechanically, but to compare these two views. The interesting point is to understand whether the historical relations found in the commits are also visible in the current code, and whether they represent good cohesion or more delicate coupling.
 
-This is connected to what we discussed in class about software complexity. Dependencies are not always wrong, but they become dangerous when they increase cognitive load, because developers need to know too many parts of the system, or when they cause change amplification, because a small change spreads to many files. In our case, the co-change analysis was used as a first map of the system and helped us choose the areas to inspect in the code.
+### Knowledge dependencies
 
-The reports were generated for three time windows: the last 5 years, the last 10 years, and the full repository history. This helped us distinguish recent co-change from more stable relations. We read the full-history report more carefully, because it also includes older paths and older project structures.
+To study knowledge dependencies, we generated co-change reports from the Git history. These reports list pairs of files modified in the same commits, together with the number of times this happened. This does not mean that the two files necessarily import each other. However, if two files often change in the same commit, there may be a maintenance relation between them: developers probably need to understand both when modifying that part of the system.
 
-Instead of reporting all the pairs one by one, we grouped them into functional areas. This follows the same reasoning behind the Common Closure Principle: if classes tend to change together, they may belong to the same responsibility or at least to the same maintenance concern. This does not mean that every co-change is a problem. Sometimes it simply shows good cohesion: files change together because they are part of the same feature; in other cases, especially when the files are in different modules, it may suggest a stronger hidden dependency.
+Since Freeplane is large, we used these reports as a first map of the codebase. Instead of analysing isolated file pairs, we grouped them into functional domains. A domain is a group of files that seem to evolve together because they belong to the same feature, responsibility or integration point.
 
-The clearest cluster is the Swing map view. Classes such as `MapView`, `NodeView`, `MainView`, `NodeViewFactory` and the layout classes appear together in all three reports. (mettere una spuegazione sulla swing map view, come viene mostrata? cosi si capsice meglio dopo l'outilne view)This is not surprising: Freeplane is mainly a mind-mapping application, so the way maps and nodes are shown on screen is a central part of the system. Our first interpretation is that this is probably normal cohesion inside the main UI subsystem. Still, because this area is so central, the code analysis must check whether this cohesion remains local to the map view or whether it forces the map view to interact with many other parts of the application.
+This idea is connected to the **Common Closure Principle** discussed in class: classes that tend to change for the same reason should usually be grouped together. For this reason, co-change is not automatically a problem. Sometimes it shows good cohesion. In other cases, especially when files belong to different modules, it may suggest a hidden dependency that is worth checking in the code.
 
-Another important cluster is the outline subsystem, with classes such as ScrollableTreePanel, BreadcrumbPanel, BlockPanel, OutlinePane, MapAwareOutlinePane, OutlineController and OutlineViewport. In the co-change reports, many pairs are centered around ScrollableTreePanel, suggesting that this class plays a central role in the outline view. The outline is another way of looking at the same map content, but in a more tree-like structure. For this reason, its panels, controller and viewport logic may naturally change together when the way the outline is displayed, navigated or synchronized with the map changes.
+The main domains found from the co-change reports are:
 
-The most interesting case is the relation between the public API and the scripting plugin. The repository has a separate `freeplane_api` module and a separate `freeplane_plugin_script` module, but classes such as `Node`, `NodeRO` and `NodeProxy` still appear together in the co-change reports. In simple terms, scripts need a way to access Freeplane concepts such as nodes and maps. If the public node API changes, the proxy used by scripts may also need to change. This could be a good and controlled dependency if the scripting plugin uses only public interfaces. It would be more problematic if it also depended on internal implementation details.
+1. **Swing map view domain**  
+   This domain includes `MapView`, `NodeView`, `MainView`, `NodeViewFactory` and the layout classes. It represents the main graphical view of Freeplane: the part responsible for showing the mind map, drawing nodes, arranging them on screen and updating their visual state. Since these classes appear together in all reports (anche le altre apparigano togheder, ma quetse sono quelle con piu commit assieme, quindi l'accoppiamenti + forti!), this was the first domain we inspected in the source code.
 
-Finally, the text rendering plugins show another useful case. `FormulaTextTransformer`, `LatexRenderer` and `MarkdownRenderer` belong to different plugin areas, but they all deal with the same general concern: transforming or rendering text inside nodes. Their co-change may therefore mean that, when Freeplane changes how node text is handled, more than one text-related plugin has to be updated.
+2. **Outline subsystem domain**  
+   This domain includes `ScrollableTreePanel`, `BreadcrumbPanel`, `BlockPanel`, `OutlinePane`, `MapAwareOutlinePane`, `OutlineController` and `OutlineViewport`. Many co-change pairs are centered around `ScrollableTreePanel`, suggesting that it plays a central role. This domain is still related to map visualisation, but it represents the same map content in a tree-like structure instead of the normal graphical map view.
 
-This first analysis does not prove design problems by itself. It gives us a set of meaningful areas to inspect next in the code dependencies analysis.
+3. **API and scripting domain**  
+   This domain includes `Node`, `NodeRO` and `NodeProxy`. It is interesting because it crosses module boundaries: `Node` and `NodeRO` belong to `freeplane_api`, while `NodeProxy` belongs to `freeplane_plugin_script`. This suggests that the scripting plugin must stay aligned with the public API.
 
-### Code dependencies 
-## 1. Swing map view cluster 
+4. **Text rendering plugins domain**  
+   This domain includes `FormulaTextTransformer`, `LatexRenderer` and `MarkdownRenderer`. These classes belong to different plugin modules (non capisco cosa significhi... puoi essere + chiaro????? o e se èe cpme l'api domaina anche qui metti i path), related to formula, LaTeX and Markdown support. However, they all work on the same general concern: rendering or transforming text inside nodes. Their co-change may indicate that changes in node text handling can affect multiple plugins at the same time.
 
-The code inspection confirms that the Swing map view cluster is not only a historical relation. `MapView`, `NodeView` and `MainView` form the main visual structure of the map: `MapView` manages the overall graphical view, `NodeView` represents a single node linked to its `NodeModel`, and `MainView` shows the visible content of the node, such as text, icons, borders and link indicators.
+This first analysis gives us a set of relevant domains to inspect in the code, so that we can compare knowledge dependencies with actual code dependencies.
 
-This explains why these classes often changed together in the co-change reports. A change in how nodes are displayed, selected, folded, styled or updated can affect more than one level of the visual structure. For this reason, the dependency seems mostly justified: it is strong, but linked to the same responsibility, namely showing and updating the visual map. This is consistent with the Common Closure Principle, because classes that change for the same reason are kept in the same subsystem.
+### Code dependencies
+
+#### 1. Swing map view domain
+
+The code inspection confirms that the Swing map view domain is not only a historical relation. `MapView`, `NodeView` and `MainView` form the main visual structure of the map: `MapView` manages the overall graphical view, `NodeView` represents a single node linked to its `NodeModel`, and `MainView` shows the visible content of the node.
+
+<p align="center">
+  <img src="../../../deliverables/img/design/SwingMapView.png" alt="Example of the Swing map view" width="700"/>
+</p>
+
+<p align="center"><em>Figure 1: example of the Swing map view in Freeplane.</em></p>
+
+This explains why these classes often changed together. A change in how nodes are displayed, selected, folded, styled or updated can affect more than one level of the visual structure. The dependency seems mostly justified: it is strong, but linked to the same responsibility, showing and updating the visual map. This also fits the Common Closure Principle: the main classes belong to the same package area, `org.freeplane.view.swing.map`, so the code keeps together classes that tend to change for the same reason.
 
 At the same time, to display nodes correctly, the map view needs information from many other parts of the system, such as styles, filters, text, links, icons, UI listeners and the map model. This creates high fan-out, meaning many outgoing links to other packages. This is understandable, because a visual node contains many different elements, but it also increases cognitive load: modifying this area requires understanding several connected classes and subsystems.
 
-The code also shows one useful choice to keep these dependencies more organised: `NodeViewFactory`. When `MapView` displays nodes, the program must create visual objects such as `NodeView`, `MainView` and other components. This is an example of construction dependency, because the dependency is not only about using an object, but also about where that object is created. Freeplane does not remove this dependency, but concentrates the creation logic in `NodeViewFactory` instead of spreading it inside `MapView`. In this way, the dependency remains, but it is clearer where it is managed.
+The code also shows one useful choice: `NodeViewFactory`. When `MapView` displays nodes, the program must create visual objects such as `NodeView`, `MainView` and other components. This is a construction dependency: the issue is not only using an object, but also where it is created. Freeplane concentrates this creation logic in `NodeViewFactory` instead of spreading it inside `MapView`, so the dependency is easier to locate.
 
-![Swing map view dependency diagram](../../../deliverables/puml/swing_map_view_dependencies.svg)
+<p align="center">
+  <img src="../../../deliverables/puml/swing_map_view_dependencies.svg" alt="Swing map view dependency diagram" width="700"/>
+</p>
 
-*Figure 1: simplified code dependencies in the Swing map view cluster. The diagram shows the main structural relations between `MapView`, `NodeView`, `MainView`, `NodeModel` and `NodeViewFactory`. Secondary dependencies are grouped as external concerns because they explain the high fan-out of this area.*
+<p align="center"><em>Figure 2: simplified code dependencies in the Swing map view domain.</em></p>
 
-## 2. Outline subsystem cluster 
-After the Swing map view, we analysed another visualisation cluster: the outline subsystem. While the Swing map view shows the mind map in its main graphical form, the outline shows the same nodes in a more linear structure, similar to a tree.
+#### 2. Outline subsystem domain
 
-Starting from the co-change report, the main class to check was `ScrollableTreePanel`, because many outline pairs were centered around it. The code confirms this role: `ScrollableTreePanel` manages the tree-like list shown in the outline. It handles which nodes are visible, which node is selected, how the user moves between nodes and how the view is updated during scrolling. This explains why it often changes together with other classes in the same package.
+After the Swing map view, we analysed another visualisation domain: the outline subsystem. While the Swing map view shows the mind map graphically, the outline shows the same nodes in a more linear structure, similar to a tree.
 
-`OutlinePane` has a more external role. It builds the outline area by creating the `BreadcrumbPanel`, the `ScrollableTreePanel`, the `OutlineController`, the toolbar and the menu. In simple terms, `OutlinePane` prepares the outline view, while `ScrollableTreePanel` manages the main tree displayed inside it.
+<p align="center">
+  <img src="../../../deliverables/img/design/outlineView.png" alt="Example of the outline view" width="700"/>
+</p>
 
-The other classes manage smaller parts of the same view. `BlockPanel` shows groups of visible nodes and sends user actions back to `ScrollableTreePanel`, such as selecting a node or opening/closing a branch. `BreadcrumbPanel` shows the path of the current node and uses `OutlineController` for actions such as selection and expansion. `OutlineViewport` helps decide which part of the outline should be visible while scrolling.
+<p align="center"><em>Figure 3: example of the outline view in Freeplane.</em></p>
 
-This cluster fits the Common Closure Principle quite well: the classes that often changed together are grouped in the same package, `org.freeplane.view.swing.map.outline`, and work on the same feature. Therefore, the co-change mainly indicates internal cohesion.
+Starting from the co-change report, the main class to check was `ScrollableTreePanel`, because many outline pairs were centered around it. The code confirms this role: `ScrollableTreePanel` manages the tree-like list shown in the outline, including visible nodes, selection, navigation and scrolling. This explains why it often changes together with other classes in the same package.
 
-The most interesting point is MapAwareOutlinePane. The co-change reports mainly showed internal relations in the outline cluster; no direct pair with the Swing map view cluster appeared. However, the code inspection shows something more: the outline is also strongly connected to the main map view, and this connection is handled by a specific class: MapAwareOutlinePane.
-This dependency is expected, because the outline shows the same map in a tree-like form and must stay aligned with MapView, NodeView, NodeModel and map/node listeners. Still, it increases cognitive load: modifying the outline also requires understanding how it interacts with the map view and the node model.
+`OutlinePane` has a more external role: it builds the outline area by creating `BreadcrumbPanel`, `ScrollableTreePanel`, `OutlineController`, the toolbar and the menu. In simple terms, `OutlinePane` prepares the outline view, while `ScrollableTreePanel` manages the tree displayed inside it.
+
+The other classes manage smaller parts of the same view. `BlockPanel` shows groups of visible nodes and sends user actions back to `ScrollableTreePanel`, such as selecting a node or opening/closing a branch. `BreadcrumbPanel` shows the path of the current node and uses `OutlineController` for selection and expansion. `OutlineViewport` helps decide which part of the outline should be visible while scrolling.
+
+This domain also fits the Common Closure Principle: the classes that often changed together are grouped in the same package, `org.freeplane.view.swing.map.outline`, and work on the same feature. Therefore, the co-change mainly indicates internal cohesion.
+
+The most interesting point is `MapAwareOutlinePane`. The co-change reports mainly showed internal relations in the outline domain; no direct pair with the Swing map view domain appeared. However, the code inspection shows something more: the outline is also connected to the main map view, and this connection is handled by `MapAwareOutlinePane`.
+
+This dependency is expected, because the outline shows the same map in a tree-like form and must stay aligned with `MapView`, `NodeView`, `NodeModel` and map/node listeners. Still, it increases cognitive load: modifying the outline also requires understanding how it interacts with the map view and the node model.
