@@ -21,7 +21,7 @@ Finally, the text rendering plugins show another useful case. `FormulaTextTransf
 This first analysis does not prove design problems by itself. It gives us a set of meaningful areas to inspect next in the code dependencies analysis.
 
 ### Code dependencies 
-## 2. Swing map view cluster 
+## 1. Swing map view cluster 
 
 The code inspection confirms that the Swing map view cluster is not only a historical relation. `MapView`, `NodeView` and `MainView` form the main visual structure of the map: `MapView` manages the overall graphical view, `NodeView` represents a single node linked to its `NodeModel`, and `MainView` shows the visible content of the node, such as text, icons, borders and link indicators.
 
@@ -31,79 +31,12 @@ At the same time, to display nodes correctly, the map view needs information fro
 
 The code also shows one useful choice to keep these dependencies more organised: `NodeViewFactory`. When `MapView` displays nodes, the program must create visual objects such as `NodeView`, `MainView` and other components. This is an example of construction dependency, because the dependency is not only about using an object, but also about where that object is created. Freeplane does not remove this dependency, but concentrates the creation logic in `NodeViewFactory` instead of spreading it inside `MapView`. In this way, the dependency remains, but it is clearer where it is managed.
 
-```plantuml
-@startuml
-title Swing map view cluster - code dependencies
+![Swing map view dependency diagram](../../../deliverables/puml/swing_map_view_dependencies.svg)
 
-left to right direction
-set namespaceSeparator none
-
-skinparam classAttributeIconSize 0
-skinparam shadowing false
-skinparam packageStyle rectangle
-skinparam linetype ortho
-skinparam nodesep 140
-skinparam ranksep 110
-skinparam ArrowFontSize 12
-
-hide empty members
-
-package "org.freeplane" as Freeplane {
-
-  package "view/swing/map" as MapPkg {
-    class MapView
-    class NodeView
-    class NodeViewFactory
-    class MainView
-
-    MapView -[hidden]right- NodeView
-    MapView -[hidden]down- NodeViewFactory
-    NodeViewFactory -[hidden]right- MainView
-    NodeView -[hidden]down- MainView
-  }
-
-  package "features/map" as FeaturesPkg {
-    class NodeModel
-  }
-
-  NodeView -[hidden]down- NodeModel
-}
-
-class "External concerns\nstyles, filters, text,\nlinks, icons, UI listeners" as ExternalConcerns
-
-NodeView -[hidden]right- ExternalConcerns
-
-MapView --> NodeView : manages
-NodeView --> MainView : contains
-NodeView --> NodeModel : represents
-
-MapView ..> NodeViewFactory : uses for\ncreation
-NodeViewFactory ..> MainView : creates
-NodeViewFactory ..> NodeView : creates
-
-NodeView -[#gray,dashed]-> ExternalConcerns : uses
-MapView -[#gray,dashed]-> ExternalConcerns : uses
-
-note right of ExternalConcerns
-External concerns are grouped here to keep
-the diagram readable. They show that the map
-view depends on several surrounding subsystems,
-which contributes to its high fan-out and
-higher cognitive load.
-end note
-
-legend bottom right
-  <b>Line styles</b>
-  Solid black line: main structural dependency
-  Dashed black line: creation / construction dependency
-  Dashed gray line: secondary dependency
-endlegend
-@enduml
-
-```
+*Figure 1: simplified code dependencies in the Swing map view cluster. The diagram shows the main structural relations between `MapView`, `NodeView`, `MainView`, `NodeModel` and `NodeViewFactory`. Secondary dependencies are grouped as external concerns because they explain the high fan-out of this area.*
 
 ## 2. Outline subsystem cluster 
-After the Swing map view, we analysed another visualisation cluster: the outline subsystem. While the Swing map view shows the mind map in its main graphical form, the outline shows the same nodes in a more linear structure, similar to a tree. So it is not a separate content area, but another way of representing the same map.
+After the Swing map view, we analysed another visualisation cluster: the outline subsystem. While the Swing map view shows the mind map in its main graphical form, the outline shows the same nodes in a more linear structure, similar to a tree.
 
 Starting from the co-change report, the main class to check was `ScrollableTreePanel`, because many outline pairs were centered around it. The code confirms this role: `ScrollableTreePanel` manages the tree-like list shown in the outline. It handles which nodes are visible, which node is selected, how the user moves between nodes and how the view is updated during scrolling. This explains why it often changes together with other classes in the same package.
 
@@ -113,4 +46,5 @@ The other classes manage smaller parts of the same view. `BlockPanel` shows grou
 
 This cluster fits the Common Closure Principle quite well: the classes that often changed together are grouped in the same package, `org.freeplane.view.swing.map.outline`, and work on the same feature. Therefore, the co-change mainly indicates internal cohesion.
 
-The extra point emerging from the code is `MapAwareOutlinePane`. The co-change report mainly showed internal outline relations, but this class connects the outline to `MapView`, `NodeView`, `NodeModel` and map/node listeners. This dependency is expected, because the outline must stay synchronized with the main map view. However, it increases cognitive load, since modifying the outline also requires understanding how it interacts with the map view and the node model.
+The most interesting point is MapAwareOutlinePane. The co-change reports mainly showed internal relations in the outline cluster; no direct pair with the Swing map view cluster appeared. However, the code inspection shows something more: the outline is also strongly connected to the main map view, and this connection is handled by a specific class: MapAwareOutlinePane.
+This dependency is expected, because the outline shows the same map in a tree-like form and must stay aligned with MapView, NodeView, NodeModel and map/node listeners. Still, it increases cognitive load: modifying the outline also requires understanding how it interacts with the map view and the node model.
