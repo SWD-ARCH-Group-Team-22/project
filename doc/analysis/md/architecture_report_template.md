@@ -19,8 +19,7 @@ Freeplane was born as a fork of the well-known Freemind software. The official d
     !include <C4/C4_Context.puml>  
     title Freeplane Software Context Diagram
 
-    Person(beginner, "User\n[Person]", "Someone who uses basic mind-mapping building tools to support its workflow or its learning project")
-    Person(advanced, "Advanced User\n[Person]", "Someone who deeply understand underlying features of the software and who can enhance and automate its workflow through script writing and plugin exploitation")
+    Person(beginner, "User\n[Person]", "Accesses Freeplane to manage mindmaps")
 
     System(freeplane, "Freeplane\n[Software System]", "Open-source mind map design software")
 
@@ -29,8 +28,7 @@ Freeplane was born as a fork of the well-known Freemind software. The official d
     System_Ext(smtp, "Email Tool", "[Software System]\nProvides email composition and delivery services")
     System_Ext(taskjuggler, "TaskJuggler", "[Software System]\nProject and task management application")
 
-    Rel(beginner, freeplane, "Uses for basic mapping")
-    Rel(advanced, freeplane, "uses and customizes its experience through scripts")
+    Rel_D(beginner, freeplane, "Manage mindmaps, sometimes it can automate it")
         
     Rel_R(freeplane, smtp, "Redirects users for email sharing")
 
@@ -46,17 +44,19 @@ Freeplane was born as a fork of the well-known Freemind software. The official d
 
 ```
 
-The context diagram illustrates how Freeplane operates within its external environment and interacts with both users and supporting systems. Two main user roles are identified. Beginner users interact with the system to create and manage mind maps using basic functionality, while advanced users extend the system through scripting and plugins, enabling automation and customization.
+Although being represented as a single person, users can be distinguished in two groups: basic users, that exploit the software for basic mindmapping tools, and advanced, computer literate users that can write custom scripts to enhance Freeplane features. These groups have been merged in a single Actor since they share the same GUI and potentially all basic users can also use advanced features.
 
-The software presents itself as a mind-mapping tool, and it features a proprietary file format `.mm`. The software stores such files in the computer File System, in a user-defined directory. The file system, and more generally the OS, represent the software's persistence layer. 
-UI personalization, such as themes, font, are saved in a dedicated repository within the computer filesystem. This interaction reflects the system’s reliance on local persistence rather than external databases. *motivate why it is internal*
+The persistence layer is managed internally by the software: users can define their preferred path and the software interacts with the Operating System to save it with the desired format.
 
-To enhance its mind-mapping toolset, web browsers are invoked to open hyperlinks embedded within maps. Users can add them to nodes. When clicked, a browser instance is opened to show the webpage the URL points to. This can be mostly useful to include sources or images directly from the internet in the mind-map. 
+Two types of interaction with external systems can be identified:
 
-Freeplane grew to become a more and more comprehensive tool, to help students, professors, and professionals from various fields requiring productivity tools: to do so, Freeplane supports built-in Email support; with a single click users can be directly redirected to their main Email provider. It also provides native support for TaskJuggler, a project-management tool: mindmaps can be transformed in tasks within the external software; this features enhance productivity for busy professionals such as Project Managers. Whereas the interaction with the email system is just a redirect, the software actively transfer data to TaskJuggler, making the transition to the new software smooth and fast.
-Freeplane supports built-in LLM interaction. Through a dedicated plugin, users can link the software to their favorite LLM system. The software allows AI tools to directly interact with mindmaps. 
+- Task delegation: the system depends on external tools that are responsible for handling operations outside its own scope. The relationships with the Browser or with the Email tool fall into this category — clicking a URL or clicking an email address triggers actions that Freeplane delegates entirely to the appropriate external system.
+- Data delegation: the dependency involves an active exchange of information. The integration with TaskJuggler requires Freeplane to transform and adapt the content of a mind map into a structured set of tasks before transferring it to the external system. This is a unidirectional relationship  
+The interaction with LLM systems also falls into this category, but the relationship is bidirectional: sending a prompt transfers data to the LLM API, which in turn sends information back through its response.  
 
-All these features show how the software is more than just a mind-mapping tool, but it can described as a productivity software: mindmaps can be useful for a large variety of users, and productivity features make the software more appealing to highly professional users looking for ways to speed up their workflow.
+The tension between different kinds of dependencies reveals that the software has grown over the years to support different features to meet requirements that can be very different among users.
+
+
 
 
 #### 3. Decomposition and Runtime: C4 Container Model 
@@ -65,7 +65,6 @@ The Container Model aims at showing how the software is built, from a lower, mor
 
 
 ```plantuml
-
     @startuml
     !include <C4/C4_Container.puml>
     title Freeplane Container Diagram
@@ -73,50 +72,41 @@ The Container Model aims at showing how the software is built, from a lower, mor
     LAYOUT_WITH_LEGEND()
     LAYOUT_TOP_DOWN()
 
-    Person(beginner, "Beginner User", "Uses Freeplane for creating and organizing mind maps")
-    Person(advanced, "Advanced User", "Uses scripting and plugins to automate and extend functionality")
-
-    System_Boundary(app, "Freeplane Desktop Application") {
-
-    Container(freeplane, "Freeplane Application", "Java Desktop Application", "Provides mind map editing, visualization, plugin management, scripting, and export functionalities")
-
-    ContainerDb(file_system, "Local File System", "XML / .mm Files", "Stores mind maps, settings, images, and application resources")
-    }
+    Person(user, "User\n[Person]", "Uses Freeplane to create and manage mind maps")
 
     System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
+    System_Ext(email, "Email Tool", "Email composition and delivery service")
+    browser -[hidden]down-> email
+
+    System_Boundary(app, "Freeplane Desktop Application") {
+        Container(freeplane, "Freeplane Application", "Java Desktop Application", "Provides mind map editing, visualization, plugin management, scripting, and export functionalities")
+        ContainerDb(file_system, "Local File System", "XML / .mm Files", "Stores mind maps, settings, images, and application resources")
+    }
 
     System_Ext(ai, "AI/LLM Services", "External AI and language model services")
-
     System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
-
-    System_Ext(email, "Email Tool", "Email composition and delivery service")
-    
     ai -[hidden]down-> taskjuggler
 
-    Rel_D(beginner, freeplane, "Creates and manages mind maps", "GUI Interaction")
-
-    Rel_D(advanced, freeplane, "Uses plugins and scripting", "GUI Interaction")
-
+    Rel_D(user, freeplane, "Creates and manages mind maps", "GUI Interaction")
     Rel_D(freeplane, file_system, "Reads and writes mind map data", "XML File I/O")
 
-    Rel_R(freeplane, browser, "Opens external hyperlinks", "HTTP/HTTPS")
-
-    Rel_R(freeplane, ai, "Sends prompts and retrieves responses", "HTTPS/API")
+    Rel_L(freeplane, browser, "Delegates URL opening", "OS Call")
+    Rel_L(freeplane, email, "Delegates email composition", "OS Call")
 
     Rel_R(freeplane, taskjuggler, "Exports task structures", "File Export")
+    BiRel_R(freeplane, ai, "Sends prompts / receives responses", "HTTPS/API")
 
-    Rel_R(freeplane, email, "Redirects users for email sharing", "OS")
-
+    @enduml
 
     @enduml
 ```
 
-Freeplane is represented as a single Container software. This choice can be explained by the nature of its technology stack. Freeplane has multiple plugins, that are connected to the core through the OSGi framework. This implementation ensures separation among plugins, making them independent from one another; theoretically, Freeplane plugins can be autonomously developed, tested and integrated in the environment. Moreover, they do not extend core software functionalities: plugins bring advanced features, both graphical and functional. The core software alone would work well without plugins.  
+Freeplane is represented as a single Container software. This choice can be explained by the nature of its technology stack. Freeplane has multiple plugins, that are connected to the core through the OSGi framework. This implementation ensures separation among plugins, making them independent from one another; theoretically, Freeplane plugins can be autonomously developed, tested and integrated in the environment. Moreover, they do not extend core software functionalities: plugins bring advanced features, both graphical and functional. The core software alone would work without plugins.  
 However, the software has been represented as a single Component unit because OSGi bundles have not independent life. Even though they are developed externally, they require the OSGi engine to be executed. Plugins such as `freeplane script` or `freeplane latex` cannot exist outside the Freeplane environment. That is because all plugins plugins are designed to extend features in the core Freeplane application. 
 Furthermore, they cannot be even run outside the launcher defined in the core `freeplane` package: the OSGi implementation require the framework to start plugins with a sequential process, managed by a kernel that is instantiated in the launcher implemented in the core package.
 These consideration have led the analysis to consider the software as composed of a single container. In this situation, independent deployability cannot justify the definition of plugins as independent units.
 
-The persistence layer is managed by the Operating System. Freeplane stores information related to the single mind-map in a proprietary file format, that is the `.mm`. This is an XML-derived format that fits the definition of mindmaps as nested blocks of nodes. Users can independentely decide which area of their File System save data to. 
+The persistence layer is managed with the Operating System. Freeplane stores information related to the single mind-map in a proprietary file format, that is the `.mm`. This is an XML-derived format that fits the definition of mindmaps as nested blocks of nodes. Users can independentely decide which area of their File System save data to. 
 
 
 #### 4. Mapping to Clean Architecture: Theory vs. Reality (Target: ~500 words)
@@ -358,8 +348,9 @@ The Component Model offers the deepest view of Freeplane's internal structure, d
     skinparam wrapWidth 200
     skinparam maxMessageSize 200
 
-    Person(beginner, "Beginner User", "Uses Freeplane for creating and organizing mind maps")
-    Person(advanced, "Advanced User", "Uses scripting and plugins to automate and extend functionality")
+    Person(user, "User\n[Person]", "Uses Freeplane to create and manage mind maps")
+
+
 
     Container_Boundary(freeplane_app, "Freeplane") {
 
@@ -392,8 +383,8 @@ The Component Model offers the deepest view of Freeplane's internal structure, d
         Component(debughelper, "Freeplane Plugin Debughelper", "Java Application", "Sets the debugging environment up")
     }
 
-    Rel_D(beginner, freeplane, "Creates and manages mind maps", "GUI Interaction")
-    Rel_D(advanced, freeplane, "Uses plugins and scripting", "GUI Interaction")
+    Rel_D(user, freeplane, "Manage mindmaps, sometimes it can automate it")
+
 
     ' === Vertical layout hints (top-down tiers) ===
     Lay_D(framework, freeplane)
