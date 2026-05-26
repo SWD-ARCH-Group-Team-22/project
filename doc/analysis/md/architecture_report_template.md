@@ -104,11 +104,8 @@ The persistence layer is managed with the Operating System. Freeplane stores inf
 
 
 #### 4. Mapping to Clean Architecture: Theory vs. Reality (Target: ~500 words)
-This section aims to clarify the architectural choices made to build the software, and to define if Clean Architecture principles are respected. 
-The first step is to define _entities_, _use cases_ and _external layers_, and where to find them. The package `org.freeplane.features.map` is the perfect candidate: its classes define core software logic, such as how nodes are defined and organized within the map.  
-
-To double check, data from the official repository was analyzed. Particularly, we tried to estimate package stability from the number of commits directly involving the package. The first result seemed to contradict the thesis: `org.freeplane.features.map` is a very unstable package, with hundreds of commits during the software lifecycle.
-This can be explained by the high coupling between the package and UI components. A deeper analysis reveals that almost 43% of commits share changes with freeplane UI components, and this number grows if we look at subpackages such as `org.freeplane.features.map.filemode` or `org.freeplane.features.map.clipboard` (both at almost 61% of shared commit number with ui components). This data suggests that the Clean Architecture patterns are not well-respected in the software: core business logic should have almost no co-change with UI and graphical features.  
+This section evaluates Freeplane's compliance with Clean Architecture principles by analyzing its core package, org.freeplane.features.map.
+Repository mining reveals this package is highly unstable due to tight coupling with UI components. Specifically, almost 43% of its commits involve co-changes with the frontend—peaking at 61% for subpackages like `org.freeplane.features.map.filemode` and `org.freeplane.features.map.clipboard`.
 
 Code analysis reveals that most classes in the package have dependencies on the frontend, involving both custom Freeplane UI classes and standard Java AWT ones. There is a mixed approach: in many cases classes import Interfaces from the `org.freeplane.features.ui` package, that represent the abstraction for the User Interface management. However, sometimes there is direct interaction with frontend classes: for instance, class `MapController` manages map view through the `IMapViewManager` interface, but it implements a concrete method for managing an external peripheral (the mouse, through `MouseEventActor`). Many concrete standard Java UI classes are imported as well. This mixed approach results in high-coupling between the business logic and external layers in the architecture, making it less isolated and more difficult to be tested and extended or modified.
 
@@ -316,8 +313,6 @@ There are other crucial violations of the Clean Architecture pattern: there is n
 
     @enduml
 ```
-This situation leverages the Dependency Inversion Principle to decouple the three classes, and it introduces a Boundary Interface that exposes signatures which outer components must adhere to. This way, the set of involved classes is compliant with the Clean Architecture pattern.
-
 Compliance with the principles from the Clean Architecture pattern can be found in the _persistence layer_: classes such as `MapReader` and `MapWriter` are at the outer layer of the architecture, and there are no dependency violations. They perform operations to save or read data from the mindmap directly in the `.mm` file. 
 The `org.freeplane.features.filter` package suffers from the same set of problems: its `FilterController` has the same mixed approach at User Interface import dependencies, and it mixes business logic, application logic, and frontend concerns in the same class.. That's why architectural flaws from `org.freeplane.features.map` package can be fairly extended to the whole software structure.
 
@@ -583,11 +578,11 @@ This structure provides both freedom and constraints to developers: new features
 
 #### Code Analysis: Boundaries in Freeplane Core
 
-The object of this short analysis is to understand how boundaries are respected at the core level. The analysis is carried on the `org.freeplane.features.map` package. This package is representative of the overall architecture, since it includes classes that manage core software logic, such as Nodes and MindMap models. 
-Data was extracted from the main repository, exploiting `git log`, and analysis is carried out through the logical coupling analysis method, where groups that change together frequently have been put in the same cluster. The co-change threshold (minimun number of git commits classes must share to be included in the analysis) is 10.  
-Many Common Closure Principle violations can be found: it means that classes often change together, even if they shouldn't. Most of them are related to changes that affect the `MapController` class and many visual components that are related to `Swing` library. This data suggest loose boundaries, at least between entities and UI features.
-Within the package, classes that host the most important business logic features rarely change together: for instance, `MapModel` and `NodeModel` never change in the same commit. They do not have static dependencies on each other either. That is proof that at business level core components are well separated. That is evidence that the `freeplane.org.features.map` acts as a generic container, where different logic coexists. This is an architectural flaw that can reduce testability and isolation.
-Even though in clear violation of Clean Architecture principle, a lower, looser level of component separation has been put in place.
+This analysis evaluates boundary enforcement within the core, focusing on the representative `org.freeplane.features.map package`, which manages fundamental models like Nodes and MindMaps.
+
+Frequent Common Closure Principle (CCP) violations are evident. Classes often co-change unnecessarily, primarily involving `MapController` and the `Swing` library. This indicates loose boundaries and problematic coupling between business entities and UI components.
+
+Conversely, core business classes like `MapModel` and `NodeModel` lack static dependencies and rarely co-change, showing good isolation at the entity level. Consequently, `org.freeplane.features.map` acts as a generic, low-cohesion container. While violating strict Clean Architecture principles, a looser, pragmatic separation of concerns still exists within the package.
 
 
 
