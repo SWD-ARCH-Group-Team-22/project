@@ -1,10 +1,10 @@
 # Architectural Analysis of Freeplane – Reverse Engineering and Evaluation
 
-#### 1. Introduction and Analysis Methodology
+## Introduction and Analysis Methodology
 This report presents an architectural analysis of the Freeplane mind-mapping software, reverse-engineered via static code analysis, documentation review, and repository statistics.
 Architecturally, it is an imperfect micro-kernel monolith based on the OSGi framework. The core module implements business logic, while plugins extend functionalities. This design breaks strict micro-kernel principles, hence the imperfect definition.
 
-#### 2. The System in its Ecosystem: C4 Context Model 
+## The System in its Ecosystem: C4 Context Model 
 
 Freeplane was born as a fork of the well-known Freemind software. The official documentation reports that the decision was taken to improve software's design and to speed up its development and maintenance cycles. 
 
@@ -50,10 +50,7 @@ The interaction with LLM systems also falls into this category, but the relation
 
 The tension between different kinds of dependencies reveals that the software has grown over the years to support different features to meet requirements that can be very different among users.
 
-
-
-
-#### 3. Decomposition and Runtime: C4 Container Model 
+## Decomposition and Runtime: C4 Container Model 
 
 The Container Model aims at showing how the software is built, from a lower, more detailed standpoint. 
 
@@ -103,7 +100,7 @@ These considerations have led the analysis to consider the software as composed 
 The persistence layer is delegated to the Operating System. Freeplane stores information related to the single mind-map in a proprietary file format, that is the `.mm`. This is an XML-derived format that fits the definition of mindmaps as nested blocks of nodes. Users can independently decide which area of their File System save data to. The software leverages standard Java API to retrieve data from files. This choice avoids the overhead of an external database, simplifying the persistence model at the cost of limited query capabilities and concurrent access.
 
 
-#### 4. Mapping to Clean Architecture: Theory vs. Reality (Target: ~500 words)
+### Mapping to Clean Architecture: Theory vs. Reality
 This section evaluates Freeplane's compliance with Clean Architecture principles by analyzing its core package, org.freeplane.features.map.
 Repository mining reveals this package is highly unstable due to tight coupling with UI components. Specifically, almost 43% of its commits involve co-changes with the frontend—peaking at 61% for subpackages like `org.freeplane.features.map.filemode` and `org.freeplane.features.map.clipboard`.
 
@@ -316,11 +313,14 @@ There are other crucial violations of the Clean Architecture pattern: there is n
 Compliance with the principles from the Clean Architecture pattern can be found in the _persistence layer_: classes such as `MapReader` and `MapWriter` are at the outer layer of the architecture, and there are no dependency violations. They perform operations to save or read data from the mindmap directly in the `.mm` file. 
 The `org.freeplane.features.filter` package suffers from the same set of problems: its `FilterController` has the same mixed approach at User Interface import dependencies, and it mixes business logic, application logic, and frontend concerns in the same class.. That's why architectural flaws from `org.freeplane.features.map` package can be fairly extended to the whole software structure.
 
+Boundary analysis on the same packages confirm these architectural flaws: frequent Common Closure Principle (CCP) violations are evident. Classes often co-change unnecessarily, primarily involving `MapController` and the `Swing` library. This indicates loose boundaries and problematic coupling between business entities and UI components.
+Conversely, core business classes like `MapModel` and `NodeModel` lack static dependencies and rarely co-change, showing good isolation at the entity level. Consequently, `org.freeplane.features.map` acts as a generic, low-cohesion container. While violating strict Clean Architecture principles, a looser, pragmatic separation of concerns still exists within the package.
+
 To sum up, the software does not fully comply with Clean Architecture principles. There are many violations that mainly concern architectural boundaries: the most serious violation is the lack of clear division between entities and use cases, and the broken dependency flow. Dependency on concrete User Interface methods makes the software more difficult to be tested in isolation.
 These violations have an explanation: as reported in the Official Documentation, core classes were designed to be extensible, and to follow the Extension-Object Design Pattern defined by Erich Gamma. This architectural choice aims at building extensions to well-defined objects. The lack of compliance with the Clean Architecture can be explained by the need to have both entities and use cases in the same set of classes to make them easily extensible.
 However, Extensible Object theory does not justify the direct implementation of UI elements in core entities. This remains a pure violation of the Separation of Concerns at an architectural level.
 
-#### 5. Zooming into the Engine: C4 Component Model of the Core (Target: ~600 words)
+## Zooming into the Engine: C4 Component Model of the Core
 
 The Component Model offers the deepest view of Freeplane's internal structure, detailing how the single container introduced in Section 3 decomposes into individually deployable OSGi bundles and the external libraries they depend upon.
 
@@ -488,8 +488,10 @@ The Debug Helper plugin stands apart from the main hierarchy: it injects debug e
 
 The SOLID violations catalogued above are not isolated incidents confined to `org.freeplane.features.map`. They are **systemic architectural patterns** that repeat across the entire Core, reinforcing the assessment from Section 4 that business logic, application logic, and UI concerns are insufficiently separated throughout the codebase.
 
-### Boundaries: Core-Plugin interaction and Internal Business Logic Boundaries analysis
-#### Core-Plugin Interaction
+
+## Architectural Characteristics and Conclusions
+
+### Boundaries: Core-Plugin interaction analysis
 Freeplane is built on top of the OSGi framework, in the Knopflerfish implementation. This technology stack allowed developers to build a modular software, where different plugins can be attached to the core easily. The framework generates a three-layer hierarchy:
 1. Module Layer: it is the declarative layer: it defines bundles identity and static dependencies. In Freeplane, the `org.freeplane.core` package plays this role. This piece of information can be easily undestood by reading its `MANIFEST.MF` file when compiled: it stores all settings and dependencies for building the application.
 2. Activator: it is responsible for building the infrastructure to make plugins communicate. In Freeplane, it is the ActivatorImpl class in `org.freeplane.main.osgi`. It can be identified since it implements the `org.osgi.framework.BundleActivator` class.
@@ -576,33 +578,7 @@ On the other hand, on the Service Layer, a clear dependency tree cannot be drawn
 ```
 This structure provides both freedom and constraints to developers: new features can be added by creating a new dedicated plugin. Moreover, since bundles are independent and well separated, deployment and maintenance does not affect the overall system. Caveats of this architectural choice are the programming language and the complete compliance to the framework: developers must write all plugins in Java (the OSGi framework doesn't support other programming languages), and they must write plugins that implement the logic described above.
 
-#### Code Analysis: Boundaries in Freeplane Core
-
-This analysis evaluates boundary enforcement within the core, focusing on the representative `org.freeplane.features.map package`, which manages fundamental models like Nodes and MindMaps.
-
-Frequent Common Closure Principle (CCP) violations are evident. Classes often co-change unnecessarily, primarily involving `MapController` and the `Swing` library. This indicates loose boundaries and problematic coupling between business entities and UI components.
-
-Conversely, core business classes like `MapModel` and `NodeModel` lack static dependencies and rarely co-change, showing good isolation at the entity level. Consequently, `org.freeplane.features.map` acts as a generic, low-cohesion container. While violating strict Clean Architecture principles, a looser, pragmatic separation of concerns still exists within the package.
-
-
-
-#### 7. Architectural Characteristics and Conclusions
-
- **Extensibility**  (Strong)  Two-level: OSGi plugin isolation (macro) + Extension Object Pattern on nodes (micro). 10 official plugins developed independently. 
- **Maintainability**  (Weak)  God Object controllers with too many responsibilities. Pervasive global singleton calls create invisible state dependencies.    
- **Modularity**  (Mixed)  Strong between plugins (OSGi, no cross-bundle change correlation). Weak within core: nearly half of core commits co-change with UI components. 
- **Testability**  (Weak)  No dependency injection. Over half the domain layer depends on GUI frameworks. Global singletons cannot be replaced with test doubles. 
-
-### Coupling and Cohesion Metrics
-
-Derived from `git log` clusterization (threshold: 10 shared commits):
-
-- **Low entity coupling (positive):** `MapModel` and `NodeModel` never co-change — well-separated domain classes.
-- **High domain-UI coupling (negative):** `MapController` frequently co-changes with Swing components.
-- **Strong plugin isolation (positive):** OSGi bundles show no cross-bundle change correlation.
-
-### Conclusion
-
+#### Conclusions
 Freeplane balances extensibility and legacy constraints. Its OSGi plugin system and Extension Object Pattern provide robust, two-level extensibility. However, the core suffers from systemic architectural debt: God Object controllers, pervasive singleton dependencies, and over half the business logic layer coupled to AWT/Swing. These issues, rooted in the software's 2009 origins, make the core untestable in isolation and resistant to UI migration.
 
 If an architectural refactoring were to be proposed based on Clean Architecture principles, the priority would be introducing abstraction interfaces for GUI dependencies (`Color`, `Font`, `Component`) in the domain layer, enabling independent testability without breaking existing functionality.
