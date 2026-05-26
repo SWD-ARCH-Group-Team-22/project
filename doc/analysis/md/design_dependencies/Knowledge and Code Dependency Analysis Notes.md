@@ -342,3 +342,59 @@ This cluster seems well managed with respect to the Common Closure Principle. Th
 The additional point that emerges from the code concerns `MapAwareOutlinePane`. In the co-change reports, there was no strong relation between the outline cluster and the Swing map view cluster. However, by reading the code, we can see that the connection exists: `MapAwareOutlinePane` uses `MapView`, `NodeView`, `NodeModel` and listeners related to map and node changes.
 
 This dependency is normal, because the outline has to show the same map represented in the Swing map view, only in a tree-like form. However, it increases cognitive load: to modify this part correctly, it is not enough to understand only the classes in the `outline` package. A developer also needs to understand how the outline stays synchronized with the main map view and with the node model.
+
+## 3. API and scripting domain — explanation for oral discussion
+
+The API and scripting domain is useful to explain because it is different from the UI clusters. In the Swing map view and outline subsystem, the classes mostly belong to the same visual area. They change together because they collaborate to show the map on screen.
+
+Here the situation is different. The API and scripting cluster connects different layers of Freeplane: the public API, the scripting plugin and the internal model.
+
+In simple words, scripts are small pieces of code that a user can write to automate actions in Freeplane. For example, instead of manually creating many nodes, changing text, searching nodes or applying filters, the user can write a script that performs these operations automatically.
+
+However, scripts should not directly access the internal classes of Freeplane. If they did, every internal change in the application could easily break user scripts. For this reason, Freeplane exposes a public API. The API is like a safe public menu: it tells scripts which operations they are allowed to use.
+
+In this cluster, the main API classes are `NodeRO`, `Node` and `MindMap`.
+
+`NodeRO` means “read-only node”. It allows a script to read information from a node, such as its text, parent, children, notes or visibility. `Node` extends `NodeRO` and adds operations that can modify the node, such as creating children, moving nodes or changing text. `MindMap` represents the map that the script can access and work on.
+
+The important point is that these API classes are not the real internal objects used by Freeplane. The real internal node is `NodeModel`, and the real internal map is `MapModel`. These are the objects used by the core of Freeplane to store and manage the actual data of the map.
+
+This is where the proxy classes become important. `NodeProxy` is the class that stands between the script and the real node. From the script point of view, it exposes the node API, so the script can work with something that behaves like a `Node`. Internally, however, `NodeProxy` works with `NodeModel`. In the same way, `MapProxy` exposes `MindMap` to scripts, but internally works with `MapModel`.
+
+So, when a script asks Freeplane to do something, the request does not go directly to the internal model. It passes through the API and then through the proxy classes. The proxy classes translate the script request into real operations on the internal model.
+
+This explains the co-change relation found in the Git history. The public API and the scripting plugin often changed together because they belong to the same access path. If the API changes what scripts can do, the proxy classes may also need to change, because they are responsible for making those API operations work on the real Freeplane model.
+
+From a design point of view, this is a real dependency, but it is not an uncontrolled one. At a general level, the design is well organised because the API remains a stable access layer. Scripts do not directly touch `NodeModel` or `MapModel`, and this protects the internal model.
+
+The delicate point is the proxy layer. The proxies protect the internal model, but they also need to know both sides: the public API used by scripts and the internal model used by Freeplane. This means that if the API changes, or if the internal model changes significantly, the proxy layer may need to be updated.
+
+For this reason, the API and scripting cluster is not just internal cohesion. It is a controlled integration dependency between scripting and the Freeplane core. This makes the feature powerful and well structured, but also important to maintain carefully.
+<p align="center">
+  <img src="../../../deliverables/img/design/API_and_scripting_schema.png" alt="API and scripting" width="700"/>
+</p>
+
+<p align="center"><em>API and scripting access path.</em></p>
+<p align="center">
+  <img src="../../../deliverables/img/design/API_and_scripting_schema.png" alt="API and scripting" width="700"/>
+</p>
+
+<p align="center"><em>API and scripting access path.</em></p>
+
+## 4. Text rendering plugins — code dependency analysis, working version
+
+After the API and scripting cluster, we analysed the text rendering plugins cluster. This case is smaller, but useful because it shows another type of dependency.
+
+In the co-change reports, `FormulaTextTransformer`, `LatexRenderer` and `MarkdownRenderer` often change together. At first this may look strange, because they belong to three different plugins. `FormulaTextTransformer` handles formulas, `LatexRenderer` handles LaTeX, and `MarkdownRenderer` handles Markdown.
+
+The first thing we checked in the code was whether these three classes directly depend on each other. They do not. There is no direct import or usage relation between them. So the co-change is not explained by direct coupling between the plugins.
+
+The real connection is more indirect. All three classes work on the same kind of problem: special text inside nodes. In Freeplane, a node can contain normal text, but also text that needs to be interpreted in a special way before it is displayed or edited. For example, a node text can represent a formula, a LaTeX expression or Markdown content.
+
+This is why the three plugins are connected from a maintenance point of view. If Freeplane changes the way node text is recognised, transformed, edited or displayed, more than one of these plugins may need to be adapted. In other words, they do not depend on each other directly, but they depend on the same text-handling mechanism.
+
+The code confirms this interpretation. The three classes follow the same transformation idea: they extend `AbstractContentTransformer` and are based on the `IContentTransformer` mechanism. This mechanism defines how a piece of node content can be transformed before being shown or used. `MTextController` is the central class that uses these transformers when Freeplane needs a content-specific transformation or editor.
+
+So, compared to the co-change report, the dependency is only partially confirmed. The co-change suggested that the three plugins were related. The code shows that they are related, but not through direct plugin-to-plugin calls. The relation is a shared maintenance concern around the text transformation pipeline.
+
+From a design point of view, this is mostly positive. The plugins remain separated, so Markdown, LaTeX and formulas are not mixed together in one large class. However, the central text mechanism is still a sensitive point: if it changes, several plugins may need to change together. This explains why the cluster appears in the co-change analysis.
