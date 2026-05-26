@@ -1,34 +1,41 @@
 ## Design dependencies
 
-In this section, we analyse two kinds of dependencies in Freeplane. **Knowledge dependencies** are estimated from the Git history and show which files tend to change together during maintenance. **Code dependencies** are observed directly in the source code, through packages, class references, construction points and structural relations.
+In this section, we analyse two types of design dependencies in Freeplane:
 
-The goal is not to list dependencies mechanically, but to compare these two views. The interesting point is to understand whether the historical relations found in the commits are also visible in the current code, and whether they represent good cohesion or more delicate coupling.
+- **Knowledge dependencies**
+- **Code dependencies**
+
+The idea is to look at the system from two different points of view. First, we use the Git history to understand which files tend to change together during maintenance. Then, we inspect the source code to see whether these historical relations are also visible in the current code structure.
 
 ### Knowledge dependencies
 
-To study knowledge dependencies, we generated co-change reports from the Git history. These reports list pairs of files modified in the same commits, together with the number of times this happened. This does not mean that the two files necessarily import each other. However, if two files often change in the same commit, there may be a maintenance relation between them: developers probably need to understand both when modifying that part of the system.
+Knowledge dependencies are related to maintenance work. Two files may not directly depend on each other in the code, but they can still be connected because they are often modified together.
 
-Since Freeplane is large, we used these reports as a first map of the codebase. Instead of analysing isolated file pairs, we grouped them into functional domains. A domain is a group of files that seem to evolve together because they belong to the same feature, responsibility or integration point.
+To estimate these dependencies, we generated co-change reports from the Git commit history. These reports show which pairs of files were modified in the same commits, and how many times this happened. If two files often change together, they may be affected by the same kind of modification. This does not prove a direct code dependency, but it gives us a useful signal about possible maintenance relations.
 
-This idea is connected to the **Common Closure Principle** discussed in class: classes that tend to change for the same reason should usually be grouped together. For this reason, co-change is not automatically a problem. Sometimes it shows good cohesion. In other cases, especially when files belong to different modules, it may suggest a hidden dependency that is worth checking in the code.
+Starting from the co-change reports, we grouped related file pairs into functional domains instead of analysing isolated pairs. A domain is a group of files that seem to evolve together because they belong to the same feature, responsibility or integration point.
+
+This is related to the **Common Closure Principle** discussed in class: classes that tend to change for the same reason should usually be grouped together. Therefore, co-change is not automatically a problem. It may show good cohesion, or, especially across modules, a hidden dependency worth checking in the code.
 
 The main domains found from the co-change reports are:
 
 1. **Swing map view domain**  
-   This domain includes `MapView`, `NodeView`, `MainView`, `NodeViewFactory` and the layout classes. It represents the main graphical view of Freeplane: the part responsible for showing the mind map, drawing nodes, arranging them on screen and updating their visual state. Since these classes appear together in all reports (anche le altre apparigano togheder, ma quetse sono quelle con piu commit assieme, quindi l'accoppiamenti + forti!), this was the first domain we inspected in the source code.
+   This domain includes `MapView`, `NodeView`, `MainView`, `NodeViewFactory` and the layout classes. It represents the main graphical view of Freeplane: the part responsible for showing the mind map, drawing nodes, arranging them on screen and updating their visual state. This domain contains the strongest repeated co-change pairs, so it was the first one we inspected in the source code.
 
 2. **Outline subsystem domain**  
-   This domain includes `ScrollableTreePanel`, `BreadcrumbPanel`, `BlockPanel`, `OutlinePane`, `MapAwareOutlinePane`, `OutlineController` and `OutlineViewport`. Many co-change pairs are centered around `ScrollableTreePanel`, suggesting that it plays a central role. This domain is still related to map visualisation, but it represents the same map content in a tree-like structure instead of the normal graphical map view.
+   This domain includes `ScrollableTreePanel`, `BreadcrumbPanel`, `BlockPanel`, `OutlinePane`, `MapAwareOutlinePane`, `OutlineController` and `OutlineViewport`. Many co-change pairs are centered around `ScrollableTreePanel`, suggesting that it plays a central role. This domain is still related to map visualisation, but it represents the same map content in a tree-like structure.
 
 3. **API and scripting domain**  
    This domain includes `Node`, `NodeRO` and `NodeProxy`. It is interesting because it crosses module boundaries: `Node` and `NodeRO` belong to `freeplane_api`, while `NodeProxy` belongs to `freeplane_plugin_script`. This suggests that the scripting plugin must stay aligned with the public API.
 
 4. **Text rendering plugins domain**  
-   This domain includes `FormulaTextTransformer`, `LatexRenderer` and `MarkdownRenderer`. These classes belong to different plugin modules (non capisco cosa significhi... puoi essere + chiaro????? o e se èe cpme l'api domaina anche qui metti i path), related to formula, LaTeX and Markdown support. However, they all work on the same general concern: rendering or transforming text inside nodes. Their co-change may indicate that changes in node text handling can affect multiple plugins at the same time.
-
-This first analysis gives us a set of relevant domains to inspect in the code, so that we can compare knowledge dependencies with actual code dependencies.
+   This domain includes `FormulaTextTransformer`, `LatexRenderer` and `MarkdownRenderer`. These classes are in different plugin modules: `freeplane_plugin_formula`, `freeplane_plugin_latex` and `freeplane_plugin_markdown`. Even if they are separated, they all work on rendering or transforming text inside nodes. Their co-change may indicate that changes in node text handling can affect multiple plugins.
 
 ### Code dependencies
+
+Code dependencies are the dependencies that can be observed directly in the source code. They appear when classes or modules are structurally connected, for example because one class uses another one, creates its objects, implements an interface, or belongs to the same package structure.
+
+After identifying the main domains from the co-change analysis, we inspected the code to understand whether those historical relations are also present in the current implementation. The goal is not to list every import, but to interpret the dependencies: whether they show expected cohesion inside one domain, or stronger coupling between different parts of the system.
 
 #### 1. Swing map view domain
 
