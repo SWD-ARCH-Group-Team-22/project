@@ -61,7 +61,11 @@ This also fits the Common Closure Principle: the classes that often changed toge
 
 The most interesting point is `MapAwareOutlinePane`. The co-change reports mainly showed internal relations in the outline domain; no direct pair with the Swing map view domain was very evident. However, the code shows that the outline is also connected to the main map view through `MapAwareOutlinePane`. This dependency is expected, because the outline shows the same map and must stay aligned with `MapView`, `NodeView`, `NodeModel` and map/node listeners. Still, it increases cognitive load, because modifying the outline also requires understanding its interaction with the main map view.
 
-<!-- Add outline PlantUML dependency diagram here when export is fixed. -->
+<p align="center">
+  <img src="../../../deliverables/puml/swing_map_view_dependencies.svg" alt="Outline sebsystem dependencies" width="700"/>
+</p>
+
+<p align="center"><em>Figure 4: Outline sebsystem dependencies.</em></p>
 
 #### 3. API and scripting domain
 
@@ -71,7 +75,7 @@ The API and scripting domain is different from the UI domains because it connect
   <img src="../../../deliverables/img/design/API_and_scripting_schema.png" alt="API and scripting" width="700"/>
 </p>
 
-<p align="center"><em>Figure 4: API and scripting access path.</em></p>
+<p align="center"><em>Figure 5: API and scripting access path.</em></p>
 
 Scripts automate actions on mind maps. To support them, Freeplane exposes a public API: `NodeRO` gives read-only access to a node, `Node` adds modification operations, and `MindMap` represents the map available to scripts.
 
