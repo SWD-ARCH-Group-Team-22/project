@@ -20,6 +20,9 @@ Boundaries analysis. My analysis is about inner Freeplane characteristic. Provid
 the analysis delves into how the OSGi framework (that builds the software) works, and what are boundaries in the code, if they are
 respected. The analysis is supported by UML diagrams
 
-### 15/05/2026 - 20/05/2020
+### 15/05/2026 - 20/05/2026
 Architecture report writing: I have put the diagrams from C4 notation and described them, trying to show the overall analysis of the software starting from an upper level inwards.
 Design pattern document review
+
+### 21/05/2026 - 26/05/2026
+Architecture report document review and refatoring: my work has involved shortening paragraphs, restructuring the report to make it more coherent and correcting C4 diagrams. I have also restrucutred the GitHub Actions flow to make converting pipelines available for all branches in the repository. Pipeline activities was monitored
