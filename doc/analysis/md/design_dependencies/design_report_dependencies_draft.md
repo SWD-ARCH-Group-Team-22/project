@@ -81,6 +81,12 @@ The co-change relation suggested that the public API and the scripting plugin ev
 
 Therefore, this is not just internal cohesion. It is a real dependency between scripting and the Freeplane core, but the proxy layer keeps it organised. The design is good because the API remains a stable access layer. However, the proxies are still delicate: they protect the internal model, but they must know both the public API and the internal model.
 
+<p align="center">
+  <img src="../../../deliverables/puml/api_scripting_dependencies.svg" alt="API and scripting dependencies" width="700"/>
+</p>
+
+<p align="center"><em>Figure 6: API and scripting dependencies.</em></p>
+
 #### 4. Text rendering plugins domain
 
 This smaller case shows a different kind of dependency. `FormulaTextTransformer`, `LatexRenderer` and `MarkdownRenderer` belong to three different plugins: formulas, LaTeX and Markdown.

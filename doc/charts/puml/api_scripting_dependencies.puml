@@ -1,0 +1,92 @@
+@startuml
+title API and scripting domain - code dependencies
+
+left to right direction
+set namespaceSeparator none
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 160
+skinparam ranksep 65
+skinparam ArrowFontSize 11
+skinparam NoteFontSize 11
+skinparam LegendFontSize 11
+
+hide empty members
+
+class "User scripts" as Scripts
+
+package "org.freeplane" as Freeplane {
+
+  package "freeplane_api\npublic API" as ApiPkg {
+    interface NodeRO
+    interface Node
+    interface MindMap
+
+    ' Force API elements on the same horizontal line
+    NodeRO -[hidden]right- Node
+    Node -[hidden]right- MindMap
+  }
+
+  package "freeplane_plugin_script\nproxy layer" as ProxyPkg {
+    class NodeProxy
+    class MapProxy
+
+    ' Force proxy classes on the same horizontal line
+    NodeProxy -[hidden]right- MapProxy
+  }
+
+  package "features/map\ninternal model" as ModelPkg {
+    class NodeModel
+    class MapModel
+
+    ' Force model classes on the same horizontal line
+    NodeModel -[hidden]right- MapModel
+  }
+
+  ' Force the three domains to stay in one horizontal flow
+  ApiPkg -[hidden]right- ProxyPkg
+  ProxyPkg -[hidden]right- ModelPkg
+}
+
+' Force scripts to stay on the left of the API package
+Scripts -[hidden]right- ApiPkg
+
+' Public API relation
+Node --|> NodeRO : extends
+
+' Script access
+Scripts -[#gray,dashed]-> Node : uses
+Scripts -[#gray,dashed]-> MindMap : uses
+
+' Proxy layer exposes public API
+NodeProxy --> Node : exposes\nnode API
+MapProxy --> MindMap : exposes\nmap API
+
+' Proxy layer wraps internal model
+NodeProxy --> NodeModel : wraps
+MapProxy --> MapModel : wraps
+
+' Internal model relation
+MapModel --> NodeModel : contains\nnodes
+NodeModel --> MapModel : belongs\nto
+
+' Secondary navigation between proxies
+NodeProxy -[#gray,dashed]-> MapProxy : map\naccess
+MapProxy -[#gray,dashed]-> NodeProxy : node\naccess
+
+note bottom of ProxyPkg
+The proxy layer keeps scripts separated from the internal model.
+Scripts use the public API, while proxies access NodeModel and MapModel.
+end note
+
+legend bottom right
+  <b>Line styles</b>
+  Hollow triangle arrow: API inheritance / extension
+  Solid black line: main structural dependency
+  Dashed gray line: secondary dependency
+endlegend
+
+@enduml
