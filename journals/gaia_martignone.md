@@ -207,3 +207,43 @@ I wrote the first observations in the dependency analysis document, keeping the 
 ### Next steps
 
 The next steps are to create the PlantUML diagram for this cluster and then move the most important observations into the Design report draft.
+
+## 26/05/2026  
+### API/scripting domain in the report draft
+
+I added the API/scripting domain to the Design report draft.
+
+The main point is that this domain connects the public API with the scripting plugin, but the dependency is kept more controlled through proxy classes. I also created the diagram for this domain.
+
+I used the word “domain” instead of “cluster”, since this is the term preferred by the professor.
+
+### Next steps
+
+The next step is to continue with the text rendering domain.
+
+
+## 27/05/2026  
+### Start of the text rendering domain analysis
+
+I started analysing the text rendering domain.
+
+The main point is that the related classes often changed together, but they do not directly depend on each other in the code. This seems more like a shared maintenance concern around text rendering inside nodes. 
+
+I wrote the first observations in the dependency analysis document, comparing what appeared in the co-change report with what is visible in the code.
+
+
+### Next steps
+
+The next steps are to create the diagram for this domain and add it to the Design report draft. I still have to add the general domain graph.
+
+
+## 28/05/2026  
+### Text rendering domain in the report draft
+
+I added the text rendering domain to the Design report draft.
+
+I also created the diagram for this domain. After that, I started reorganizing the whole Design report and met with my teammate to start putting together the two parts of the Design section.
+
+### Next steps
+
+The next step is to continue merging the two Design parts and check that the final report is coherent and within the required word limit. 

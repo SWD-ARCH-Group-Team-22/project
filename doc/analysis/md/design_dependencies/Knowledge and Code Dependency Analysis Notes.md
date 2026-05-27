@@ -78,7 +78,7 @@ Representative pairs:
 | `MapView` – `NodeView` | 68 | 75 | 89 |
 | `MainView` – `NodeView` | 37 | 46 | 80 |
 | `MainView` – `MapView` | 21 | 28 | 55 |
-| `NodeView` – `NodeViewFactory` | - | - | 53 |
+| `NodeView` – `NodeViewFactory` | 10 | 13 | 53 |
 
 This is the strongest result of the analysis. `MapView` and `NodeView` are always among the top pairs, in all three time windows.
 
@@ -109,7 +109,8 @@ Representative pairs:
 | `BlockPanel` – `ScrollableTreePanel` | 34 | 34 | 34 |
 | `MapAwareOutlinePane` – `ScrollableTreePanel` | 33 | 33 | 33 |
 | `OutlinePane` – `ScrollableTreePanel` | 30 | 30 | 30 |
-| `OutlineController` – `ScrollableTreePanel` | 24 | 24 | - |
+| `OutlineController` – `ScrollableTreePanel` | 24 | 24 | not in top 200 |
+| `OutlineViewport` – `ScrollableTreePanel` | 21 | 21 | not in top 200 |
 
 The outline cluster is very visible in the 5-year report, and the values remain the same in the 10-year and full-history reports. This suggests that most of this co-change activity is recent.
 
@@ -130,16 +131,15 @@ Main classes:
 - `freeplane_plugin_script/src/main/java/org/freeplane/plugin/script/proxy/NodeProxy.java`
 - `freeplane_plugin_script/src/main/java/org/freeplane/plugin/script/proxy/MapProxy.java`
 - `freeplane_api/src/main/java/org/freeplane/api/MindMap.java`
-- `freeplane_plugin_script/src/main/java/org/freeplane/plugin/script/proxy/HeadlessMapCreator.java`
 
 Representative pairs:
 
 | Pair | 5 years | 10 years | Full history |
 |---|---:|---:|---:|
-| `Node` – `NodeRO` | 19 | 25 | - |
-| `Node` – `NodeProxy` | 17 | 20 | - |
+| `Node` – `NodeRO` | 19 | 25 | not in top 200 |
+| `Node` – `NodeProxy` | 17 | 20 | not in top 200 |
 | `NodeRO` – `NodeProxy` | 16 | 27 | 27 |
-| `MindMap` – `MapProxy` | - | 10 | - |
+| `MindMap` – `MapProxy` | not in top 200 | 10 | not in top 200 |
 
 This cluster crosses module boundaries. `Node` and `NodeRO` are part of `freeplane_api`, while `NodeProxy` and the other proxy classes belong to `freeplane_plugin_script`.
 
@@ -164,12 +164,12 @@ Representative pairs:
 
 | Pair | 5 years | 10 years | Full history |
 |---|---:|---:|---:|
-| `LatexRenderer` – `MarkdownRenderer` | 17 | 17 | - |
-| `FormulaTextTransformer` – `LatexRenderer` | 14 | 16 | - |
-| `FormulaTextTransformer` – `MarkdownRenderer` | 13 | 13 | - |
-| `MTextController` – `FormulaTextTransformer` | 10 | 10 | - |
-| `MTextController` – `MarkdownRenderer` | 9 | - | - |
-| `MTextController` – `LatexRenderer` | 9 | - | - |
+| `LatexRenderer` – `MarkdownRenderer` | 17 | 17 | not in top 200 |
+| `FormulaTextTransformer` – `LatexRenderer` | 14 | 16 | not in top 200 |
+| `FormulaTextTransformer` – `MarkdownRenderer` | 13 | 13 | not in top 200 |
+| `MTextController` – `FormulaTextTransformer` | 10 | 10 | not in top 200 |
+| `MTextController` – `MarkdownRenderer` | 9 | not in top 200 | not in top 200 |
+| `MTextController` – `LatexRenderer` | 9 | not in top 200 | not in top 200 |
 
 Formula, LaTeX and Markdown are separate plugin areas, but their renderer or transformer classes appear together in the co-change reports.
 

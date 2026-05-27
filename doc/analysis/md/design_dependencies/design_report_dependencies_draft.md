@@ -12,8 +12,14 @@ The main domains are:
 
 1. **Swing map view domain**: `MapView`, `NodeView`, `MainView`, `NodeViewFactory` and layout classes. It is the main graphical view and contains the strongest co-change pairs.
 2. **Outline subsystem domain**: `ScrollableTreePanel`, `BreadcrumbPanel`, `BlockPanel`, `OutlinePane`, `MapAwareOutlinePane`, `OutlineController` and `OutlineViewport`. It shows the same map content as a tree.
-3. **API and scripting domain**: `Node`, `NodeRO`, `MindMap`, `NodeProxy`, `MapProxy` and `Proxy`. This case crosses module boundaries between `freeplane_api` and `freeplane_plugin_script`.
+3. **API and scripting domain**: `Node`, `NodeRO`, `MindMap`, `NodeProxy`, and `MapProxy`. This case crosses module boundaries between `freeplane_api` and `freeplane_plugin_script`.
 4. **Text rendering plugins domain**: `FormulaTextTransformer`, `LatexRenderer`, `MarkdownRenderer` and `MTextController`. They are different plugins, but all work on special text inside nodes.
+
+<p align="center">
+  <img src="../../../deliverables/img/design/cochange_domain_evolution.png" alt="Co-change domain evolution graph" width="700"/>
+</p>
+
+<p align="center"><em>Figure 1: Co-change domain evolution</em></p>
 
 ### Code dependencies
 
