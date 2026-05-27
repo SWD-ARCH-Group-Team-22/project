@@ -97,6 +97,12 @@ The reason for their connection is that they all handle special text inside node
 
 Therefore, the co-change is confirmed as a shared maintenance concern, not as a direct code dependency. The design is mostly good: the plugins remain separated, but changes in the central text mechanism can still affect more than one plugin.
 
+<p align="center">
+  <img src="../../../deliverables/puml/text_rendering_dependencies.svg" alt="Text rendering plugins dependencies" width="700"/>
+</p>
+
+<p align="center"><em>Figure 7: Text rendering plugins dependencies.</em></p>
+
 ### Final observations
 
 Overall, co-change is not always bad design. In the Swing map view and outline domains, knowledge dependencies mostly match code dependencies inside cohesive UI subsystems. In the API and scripting domain, co-change crosses module boundaries, but the dependency is controlled through proxies. In the text rendering plugins domain, co-change does not reveal direct coupling, but a shared maintenance concern. Therefore, Freeplane is generally modular, but some central areas, especially the visual map and the proxy layer, require more knowledge and careful maintenance.
