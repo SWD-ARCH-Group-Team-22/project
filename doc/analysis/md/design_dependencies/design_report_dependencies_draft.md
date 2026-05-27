@@ -4,11 +4,9 @@ We first used Git history to identify possible **knowledge dependencies**. Then,
 
 ### Knowledge dependencies
 
-Knowledge dependencies describe how much knowledge of one part of the system is needed to modify another part. They are not necessarily visible through an `import` or method call: when developers modify one file, they often also need to understand another related file.
+Knowledge dependencies describe how much knowledge of one part of the system is needed to modify another part. To estimate them, we generated co-change reports from Git history, using three time windows: last 5 years, last 10 years and full history. Frequent co-change does not prove a direct code dependency: two files may not import or use each other, but they can still be linked by the same maintenance reason if developers often need to understand both when making a change.
 
-To estimate them, we generated co-change reports from Git history, using three time windows: last 5 years, last 10 years and full history. If two files change together many times, they may be connected from a maintenance point of view.
-
-Starting from these reports, we grouped related pairs into functional domains. This is related to the **Common Closure Principle**: classes that tend to change for the same reason should usually be grouped together. Therefore, co-change is not automatically a problem: it may show good cohesion or a hidden dependency worth checking.
+Starting from these reports, we grouped related pairs into functional domains, based on the feature, responsibility or integration point they seemed to share. This is related to the **Common Closure Principle**: classes that tend to change for the same reason should usually be grouped and managed together. Therefore, co-change is not automatically a problem: it may show good cohesion or a hidden dependency worth checking.
 
 The main domains are:
 
@@ -19,7 +17,7 @@ The main domains are:
 
 ### Code dependencies
 
-Code dependencies are visible in the source code, for example through class usage, object creation, interfaces and package structure. We used them to check the co-change domains in the current implementation.
+Code dependencies are visible in the source code, for example through class usage, object creation, interfaces and package structure. We use them to check the domains identified through co-change.
 
 #### 1. Swing map view domain
 
@@ -31,7 +29,7 @@ The code confirms that the Swing map view domain is not only a historical relati
 
 <p align="center"><em>Figure 1: Swing map view.</em></p>
 
-This explains why these classes often changed together. Changes in selection, folding, style, icons or text rendering can affect more than one level of the visual structure. The dependency is strong, but mostly justified, because these classes share the same responsibility: showing and updating the visual map. This also fits the Common Closure Principle, because the main classes are in the same package area, `org.freeplane.view.swing.map`.
+This explains why these classes often changed together. Changes in selection, folding or style can affect more than one level of the visual structure. The dependency is strong, but mostly justified, because these classes share the same responsibility: showing and updating the visual map. This also fits the Common Closure Principle, because the main classes are in the same package area, `org.freeplane.view.swing.map`.
 
 However, the map view also needs information from styles, filters, text, links, icons, UI listeners and the map model. This creates high fan-out, meaning many outgoing links to other packages. It is understandable, because a visual node contains many elements, but it also increases cognitive load: modifying this area requires understanding several connected classes and subsystems.
 
@@ -55,21 +53,21 @@ We then analysed another visualisation domain: the outline subsystem. While the 
 
 Starting from the co-change report, the main class to check was `ScrollableTreePanel`, because many outline pairs were centred around it. The code confirms this role: it manages the tree-like list shown in the outline, including visible nodes, selection, navigation and scrolling.
 
-`OutlinePane` builds the outline area by creating `BreadcrumbPanel`, `ScrollableTreePanel`, `OutlineController`, the toolbar and the menu. Other classes manage smaller parts of the same view: `BlockPanel` shows visible node groups, `BreadcrumbPanel` shows the current path, and `OutlineViewport` helps with scrolling.
+`OutlinePane` builds the outline area by creating `BreadcrumbPanel`, `ScrollableTreePanel`, `OutlineController`, the toolbar and the menu. Other classes manage smaller parts of the same view: `BlockPanel` shows visible node groups and sends actions back to `ScrollableTreePanel`, `BreadcrumbPanel` shows the current path, and `OutlineViewport` helps with scrolling.
 
 This also fits the Common Closure Principle: the classes that often changed together are grouped in the same package, `org.freeplane.view.swing.map.outline`, and work on the same feature. Therefore, the co-change mainly indicates internal cohesion.
 
 The most interesting point is `MapAwareOutlinePane`. The co-change reports mainly showed internal relations in the outline domain; no direct pair with the Swing map view domain was very evident. However, the code shows that the outline is also connected to the main map view through `MapAwareOutlinePane`. This dependency is expected, because the outline shows the same map and must stay aligned with `MapView`, `NodeView`, `NodeModel` and map/node listeners. Still, it increases cognitive load, because modifying the outline also requires understanding its interaction with the main map view.
 
 <p align="center">
-  <img src="../../../deliverables/puml/swing_map_view_dependencies.svg" alt="Outline sebsystem dependencies" width="700"/>
+  <img src="../../../deliverables/puml/outline_dependencies.svg" alt="Outline subsystem dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 4: Outline sebsystem dependencies.</em></p>
+<p align="center"><em>Figure 4: Outline subsystem dependencies.</em></p>
 
 #### 3. API and scripting domain
 
-The API and scripting domain is different from the UI domains because it connects the public API, the scripting plugin and the internal model.
+The API and scripting domain is different from the UI domains because it connects different parts of Freeplane: the public API, the scripting plugin and the internal model.
 
 <p align="center">
   <img src="../../../deliverables/img/design/API_and_scripting_schema.png" alt="API and scripting" width="700"/>
@@ -89,7 +87,7 @@ This smaller case shows a different kind of dependency. `FormulaTextTransformer`
 
 In the co-change reports, these classes often changed together. However, in the code they do not import or use each other, so this is not direct coupling between plugins.
 
-The reason for their connection is that they all handle special text inside nodes. When Freeplane displays or edits a node, its content may require a specific transformation before being shown. These transformations pass through the same text-handling mechanism, where `MTextController` is relevant.
+The reason for their connection is that they all handle special text inside nodes. When Freeplane displays or edits a node, its content may require a specific transformation before being shown. These transformations pass through the same content-transformer mechanism used by `MTextController`.
 
 Therefore, the co-change is confirmed as a shared maintenance concern, not as a direct code dependency. The design is mostly good: the plugins remain separated, but changes in the central text mechanism can still affect more than one plugin.
 
