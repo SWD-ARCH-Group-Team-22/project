@@ -60,7 +60,7 @@ This also fits the Common Closure Principle: the classes that often changed toge
 The most interesting point is `MapAwareOutlinePane`. The co-change reports mainly showed internal relations in the outline domain; no direct pair with the Swing map view domain was very evident. However, the code shows that the outline is also connected to the main map view through `MapAwareOutlinePane`. This dependency is expected, because the outline shows the same map and must stay aligned with `MapView`, `NodeView`, `NodeModel` and map/node listeners. Still, it increases cognitive load, because modifying the outline also requires understanding its interaction with the main map view.
 
 <p align="center">
-  <img src="../../../deliverables/puml/outline_dependencies.svg" alt="Outline subsystem dependencies" width="700"/>
+  <img src="../../../deliverables/img/design/outline_dependencies.png" alt="Outline subsystem dependencies" width="700"/>
 </p>
 
 <p align="center"><em>Figure 4: Outline subsystem dependencies.</em></p>
@@ -69,11 +69,6 @@ The most interesting point is `MapAwareOutlinePane`. The co-change reports mainl
 
 The API and scripting domain is different from the UI domains because it connects different parts of Freeplane: the public API, the scripting plugin and the internal model.
 
-<p align="center">
-  <img src="../../../deliverables/img/design/API_and_scripting_schema.png" alt="API and scripting" width="700"/>
-</p>
-
-<p align="center"><em>Figure 5: API and scripting access path.</em></p>
 
 Scripts automate actions on mind maps. To support them, Freeplane exposes a public API: `NodeRO` gives read-only access to a node, `Node` adds modification operations, and `MindMap` represents the map available to scripts.
 
@@ -82,10 +77,10 @@ The co-change relation suggested that the public API and the scripting plugin ev
 Therefore, this is not just internal cohesion. It is a real dependency between scripting and the Freeplane core, but the proxy layer keeps it organised. The design is good because the API remains a stable access layer. However, the proxies are still delicate: they protect the internal model, but they must know both the public API and the internal model.
 
 <p align="center">
-  <img src="../../../deliverables/puml/api_scripting_dependencies.svg" alt="API and scripting dependencies" width="700"/>
+  <img src="../../../deliverables/img/design/api_scripting_dependencies.png" alt="API and scripting dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 6: API and scripting dependencies.</em></p>
+<p align="center"><em>Figure 5: API and scripting dependencies.</em></p>
 
 #### 4. Text rendering plugins domain
 
@@ -98,10 +93,10 @@ The reason for their connection is that they all handle special text inside node
 Therefore, the co-change is confirmed as a shared maintenance concern, not as a direct code dependency. The design is mostly good: the plugins remain separated, but changes in the central text mechanism can still affect more than one plugin.
 
 <p align="center">
-  <img src="../../../deliverables/puml/text_rendering_dependencies.svg" alt="Text rendering plugins dependencies" width="700"/>
+  <img src="../../../deliverables/img/design/text_rendering_dependencies.png" alt="Text rendering plugins dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 7: Text rendering plugins dependencies.</em></p>
+<p align="center"><em>Figure 6: Text rendering plugins dependencies.</em></p>
 
 ### Final observations
 
