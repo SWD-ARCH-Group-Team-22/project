@@ -134,27 +134,7 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
   * *Pros:* Stricter type safety (a `LeafNode` cannot have children added to it by definition), less coupling, easier testability.
   * *Cons:* Much more complex codebase. Mind map nodes frequently switch between being leaves and branches as users add or delete children. With separate classes, the object would need to be re-instantiated and replaced in the tree every time this happens, which is highly inefficient.
 
-<div style="display: flex; width: 100%; box-sizing: border-box; align-items: stretch; border: 1px solid #d0d7de; background-color: #ffffff;">
-  
-  <div style="flex: 1 1 50%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 16px; border-right: 1px solid #d0d7de; box-sizing: border-box;">
-    <img src="../../../deliverables/puml/composite_now.svg"
-         alt="Composite pattern in the Freeplane node tree"
-         style="width: 75%; height: auto; max-height: 550px; object-fit: contain; margin: auto;"/>
-    <p style="margin-top: 16px; margin-bottom: 0; text-align: center;">
-      <em>Figure 8: Composite pattern in the Freeplane node tree.</em>
-    </p>
-  </div>
-
-  <div style="flex: 1 1 50%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 16px; box-sizing: border-box;">
-    <img src="../../../deliverables/puml/composite_alternative.svg"
-         alt="Alternative with separate leaf and branch nodes"
-         style="width: 100%; height: auto; max-height: 550px; object-fit: contain;"/>
-    <p style="margin-top: 16px; margin-bottom: 0; text-align: center;">
-      <em>Figure 9: Alternative with separate leaf and branch nodes.</em>
-    </p>
-  </div>
-
-</div>
+![Testo alternativo](../../../deliverables/img/design/composite.png)
 
 ---
 
@@ -178,27 +158,8 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
   * *Pros:* Less overhead and fewer classes.
   * *Cons:* Extremely dangerous. User scripts could break the application state, bypass the undo mechanism or invoke internal methods, leading to instability and difficult-to-debug errors.
 
-<div style="display: flex; width: 100%; box-sizing: border-box; align-items: stretch; border: 1px solid #d0d7de; background-color: #ffffff;">
-  
-  <div style="flex: 1 1 50%; display: flex; flex-direction: column; padding: 16px; border-right: 1px solid #d0d7de; box-sizing: border-box;">
-    <img src="../../../deliverables/puml/proxy_now.svg"
-         alt="Proxy pattern for scripting API protection"
-         style="width: 100%; height: auto; max-height: 550px; object-fit: contain; margin: auto; display: block;"/>
-    <p style="margin-top: 16px; margin-bottom: 0; text-align: center;">
-      <em>Figure 10: Proxy pattern for scripting API protection.</em>
-    </p>
-  </div>
+![Testo alternativo](../../../deliverables/img/design/proxy.png)
 
-  <div style="flex: 1 1 50%; display: flex; flex-direction: column; padding: 16px; box-sizing: border-box;">
-    <img src="../../../deliverables/puml/proxy_alternative.svg"
-         alt="Alternative with direct access to NodeModel"
-         style="width: 45%; height: auto; max-height: 550px; object-fit: contain; margin: auto; display: block;"/>
-    <p style="margin-top: 16px; margin-bottom: 0; text-align: center;">
-      <em>Figure 11: Alternative with direct access to NodeModel.</em>
-    </p>
-  </div>
-
-</div>
 
 ---
 
@@ -218,32 +179,12 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
 
     As the script environment evaluates dependencies, it calls `setNodeContained()` or `addAttribute()`. Once all necessary configuration is provided, the `build()` method is called to instantiate the final `Dependencies` object using this accumulated data.
 * **Problem solved:**
- When evaluating complex scripting functions (like determining node dependencies for formulas), the system needs to precisely configure which node attributes are involved to create a `Dependencies` object. Because this configuration is discovered dynamically as the script is parsed, creating the object in a single step using a large telescoping constructor would be unreadable, while exposing setters on `Dependencies` would make it mutable and unsafe. The Builder pattern solves this by encapsulating the construction logic: `DependenciesBuilder` collects attributes incrementally, and once the configuration is fully gathered, `build()` locks the data into a final, immutable `Dependencies` object that is safe to pass around the execution engine without risk of accidental modification.
+ In Freeplane, `Dependencies` track exactly which node properties a script or formula relies on, allowing the system to trigger recalculations only when those specific properties change. Because this set of dependencies is discovered dynamically as the script is parsed, all required attributes cannot be known upfront. The Builder pattern accommodates this process by incrementally gathering the dependencies during parsing via `DependenciesBuilder`. Once complete, it builds a final, immutable `Dependencies` object, ensuring thread safety and preventing accidental modifications during execution.
 * **Alternative:** Telescoping constructors or a mutable object with setters.
   * *Pros:* Avoids creating an extra Builder class.
   * *Cons:* Telescoping constructors, such as `new Dependencies(true, attrs, ...)`, are unreadable. Setters make the `Dependencies` object mutable, which can lead to bugs if the object is shared across different parts of the system or threads.
 
-<div style="display: flex; width: 100%; box-sizing: border-box; align-items: stretch; border: 1px solid #d0d7de; background-color: #ffffff; min-height: 600px;">
-  
-  <div style="flex: 1 1 50%; display: flex; flex-direction: column; padding: 16px; border-right: 1px solid #d0d7de; box-sizing: border-box;">
-    <img src="../../../deliverables/puml/builder_pattern.svg"
-         alt="Builder pattern for dependency construction"
-         style="width: 85%; height: auto; max-height: 550px; object-fit: contain; margin: auto; display: block;"/>
-    <p style="margin-top: 16px; margin-bottom: 0; text-align: center;">
-      <em>Figure 12: Builder pattern for dependency construction.</em>
-    </p>
-  </div>
-
-  <div style="flex: 1 1 50%; display: flex; flex-direction: column; padding: 16px; box-sizing: border-box;">
-    <img src="../../../deliverables/puml/builder_mutable_alternative.svg"
-         alt="Alternative with mutable dependency object"
-         style="width: 90%; height: auto; max-height: 550px; object-fit: contain; margin: auto; display: block;"/>
-    <p style="margin-top: 16px; margin-bottom: 0; text-align: center;">
-      <em>Figure 13: Alternative with mutable dependency object.</em>
-    </p>
-  </div>
-
-</div>
+![Testo alternativo](../../../deliverables/img/design/builder.png)
 
 ---
 
@@ -265,27 +206,8 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
   * *Pros:* Marginally fewer files.
   * *Cons:* Violates the Open/Closed Principle. Every time a new matching algorithm is added (e.g., Regex matching), the core `StringMatcher` class must be modified, increasing the risk of introducing bugs into existing functionality.
 
-<div style="display: flex; width: 100%; box-sizing: border-box; align-items: stretch; border: 1px solid #d0d7de; background-color: #ffffff; min-height: 480px;">
-  
-  <div style="flex: 1 1 50%; display: flex; flex-direction: column; padding: 16px; border-right: 1px solid #d0d7de; box-sizing: border-box;">
-    <img src="../../../deliverables/puml/strategy_pattern.svg"
-         alt="Strategy pattern for text matching algorithms"
-         style="width: 100%; height: auto; max-height: 450px; object-fit: contain; margin: auto; display: block;"/>
-    <p style="margin-top: 16px; margin-bottom: 0; text-align: center;">
-      <em>Figure 14: Strategy pattern for text matching algorithms.</em>
-    </p>
-  </div>
+![Testo alternativo](../../../deliverables/img/design/strategy.png)
 
-  <div style="flex: 1 1 50%; display: flex; flex-direction: column; padding: 16px; box-sizing: border-box;">
-    <img src="../../../deliverables/puml/strategy_switch_alternative.svg"
-         alt="Alternative with switch-based matching logic"
-         style="width: 65%; height: auto; max-height: 450px; object-fit: contain; margin: auto; display: block;"/>
-    <p style="margin-top: 16px; margin-bottom: 0; text-align: center;">
-      <em>Figure 15: Alternative with switch-based matching logic.</em>
-    </p>
-  </div>
-
-</div>
 
 ---
 
