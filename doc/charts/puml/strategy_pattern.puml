@@ -1,0 +1,28 @@
+@startuml
+title Strategy Pattern: text matching algorithms
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+interface StringMatchingStrategy {
+  + matches(searchTerm : String, searchText : String, matchType) : boolean
+}
+
+class ExactStringMatchingStrategy {
+  + matches(searchTerm : String, searchText : String, matchType) : boolean
+}
+
+class PseudoDamerauLevenshtein {
+  + matches(searchTerm : String, searchText : String, matchType) : boolean
+}
+
+class FilterController {
+  - strategy : StringMatchingStrategy
+}
+
+StringMatchingStrategy <|.. ExactStringMatchingStrategy
+StringMatchingStrategy <|.. PseudoDamerauLevenshtein
+FilterController o-- StringMatchingStrategy : uses
+
+@enduml

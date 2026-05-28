@@ -1,0 +1,30 @@
+@startuml
+title Alternative without Builder: mutable dependency object
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+class Dependencies {
+  - elements : List<Element>
+  - attributeList : List<Integer>
+  + Dependencies(elements : List<Element>, attributeList : List<Integer>, isNodeContained : boolean)
+  + setElements(elements : List<Element>) : void
+  + setAttributeList(attributeList : List<Integer>) : void
+  + setNodeContained(contained : boolean) : void
+}
+
+class ScriptEngine {
+}
+
+ScriptEngine --> Dependencies : creates and mutates
+
+note right of Dependencies
+  Without a Builder, the object would need
+  a large constructor or public setters.
+
+  This can lead to incomplete or unsafe states,
+  especially when the object is shared.
+end note
+
+@enduml
