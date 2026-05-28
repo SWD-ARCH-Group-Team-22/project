@@ -1,0 +1,33 @@
+@startuml
+    interface Node {
+        + isLeaf() : boolean
+
+    }
+
+
+    class LeafNode {
+        + isLeaf() : boolean
+    }
+
+    class BranchNode {
+        - children : List<Node>
+        + getChildCount() : int
+        + getChildren() : List<Node>
+        + insert(child: Node, index: int) : void
+        + isLeaf() : boolean
+    }
+
+    Node <|.. LeafNode
+    Node <|.. BranchNode
+    BranchNode "1" --o "*" Node : children
+
+    note left of LeafNode
+    It manages leaf nodes only. It does not provide
+    methods for adding/deleting children
+    end note
+
+    note right of BranchNode
+    It can manage children. It must reinstantiated
+    from a LeafNode if a children is added. Adds complexity
+    end note
+@enduml
