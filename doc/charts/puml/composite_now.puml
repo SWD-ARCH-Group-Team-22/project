@@ -1,0 +1,11 @@
+@startuml
+    class NodeModel {
+        - children : List<NodeModel>
+        + getChildCount() : int
+        + getChildren() : List<NodeModel>
+        + insert(child: NodeModel, index: int) : void
+        + isLeaf() : boolean
+    }
+
+    NodeModel "1" o-- "*" NodeModel : children
+@enduml

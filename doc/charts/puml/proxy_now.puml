@@ -1,0 +1,30 @@
+@startuml
+    package Freeplane {
+            interface ProxyNode {
+            + getText() : String
+            + setText(value: Object) : void
+        }
+
+        class NodeModel {
+            + getText() : String
+            + setText(text: String) : void
+        }
+
+
+
+        class NodeProxy {
+            - delegate : NodeModel
+            + getText() : String
+            + setText(value: Object) : void
+        }
+    }
+
+
+    class GroovyScript <<Script user-defined, external>> {
+        +getText() : String
+    }
+
+    ProxyNode <|.. NodeProxy
+    NodeProxy --> NodeModel : delegates to
+    GroovyScript --> ProxyNode : calls methods of >
+@enduml
