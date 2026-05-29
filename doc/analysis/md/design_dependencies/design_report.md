@@ -25,7 +25,7 @@ The main domains are:
 4. **Text rendering plugins domain**: `FormulaTextTransformer`, `LatexRenderer`, `MarkdownRenderer` and `MTextController`. They are different plugins, but all work on special text inside nodes.
 
 <p align="center">
-  <img src="../../../deliverables/img/design/cochange_domain_evolution.png" alt="Co-change domain evolution graph" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/outlineView.png" alt="Co-change domain evolution graph" width="700"/>
 </p>
 
 <p align="center"><em>Figure 1: Average co-change intensity of the selected domains across time windows.</em></p>
@@ -39,7 +39,7 @@ Code dependencies are visible in the source code, for example through class usag
 The code confirms that the Swing map view domain is not only a historical relation. `MapView`, `NodeView` and `MainView` form the main visual structure of the map: `MapView` manages the overall graphical view, `NodeView` represents a single node linked to its `NodeModel`, and `MainView` shows the visible content of the node.
 
 <p align="center">
-  <img src="../../../deliverables/img/design/SwingMapView.png" alt="Swing map view" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/SwingMapView.png" alt="Swing map view" width="700"/>
 </p>
 
 <p align="center"><em>Figure 2: Swing view representation of mind maps.</em></p>
