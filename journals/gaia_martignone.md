@@ -172,7 +172,6 @@ I looked at classes such as `ScrollableTreePanel`, `OutlinePane`, `MapAwareOutli
 
 The next steps are to create a diagram for this cluster and add the most relevant observations to the Design report draft.
 
----
 
 ## 17/05/2026  
 ### Outline subsystem in the report draft
@@ -184,6 +183,7 @@ I tried to explain it in a simple way: the outline is another view of the same m
 ### Next steps
 
 The next steps are to create the diagram for the outline cluster and decide whether to add small visual examples to make the difference between the Swing map view and the outline view easier to understand.
+
 
 ## 20/05/2026  
 ### Diagram for the outline cluster
@@ -208,6 +208,7 @@ I wrote the first observations in the dependency analysis document, keeping the 
 
 The next steps are to create the PlantUML diagram for this cluster and then move the most important observations into the Design report draft.
 
+
 ## 26/05/2026  
 ### API/scripting domain in the report draft
 
@@ -231,7 +232,6 @@ The main point is that the related classes often changed together, but they do n
 
 I wrote the first observations in the dependency analysis document, comparing what appeared in the co-change report with what is visible in the code.
 
-
 ### Next steps
 
 The next steps are to create the diagram for this domain and add it to the Design report draft. I still have to add the general domain graph.
@@ -246,4 +246,16 @@ I also created the diagram for this domain. After that, I started reorganizing t
 
 ### Next steps
 
-The next step is to continue merging the two Design parts and check that the final report is coherent and within the required word limit. 
+The next step is to continue merging the two Design parts and check that the final report is coherent and within the required word limit.
+
+
+## 29/05/2026  
+### General domain graph and final organization
+
+Today I completed the general domain graph, showing the main domains and how they evolve over time.
+
+I also worked with my teammate to make the images in the Design report more uniform. After that, we joined our two parts of the Design section into one draft.
+
+### Next steps
+
+The next step is to do a final check of the Design report, reread the parts written by the other teammates for cross-review, and ask the professor whether the graphs are acceptable. We also need to clarify which word-count tool should be used, because we obtained different word counts.
