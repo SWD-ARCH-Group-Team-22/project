@@ -29,7 +29,7 @@ The main domains are:
   <img src="../../../deliverables/img/design/cochange_domain_evolution.png" alt="Co-change domain evolution graph" width="700"/>
 </p>
 
-<p align="center"><em>Figure 1: Co-change domain evolution.</em></p>
+<p align="center"><em>Figure 1: Evolution of average co-change intensity across the selected domains.</em></p>
 
 ### Code Dependencies
 
@@ -43,7 +43,7 @@ The code confirms that the Swing map view domain is not only a historical relati
   <img src="../../../deliverables/img/design/SwingMapView.png" alt="Swing map view" width="700"/>
 </p>
 
-<p align="center"><em>Figure 2: Swing map view.</em></p>
+<p align="center"><em>Figure 2: Main elements of the Swing map view.</em></p>
 
 This explains why these classes often changed together. Changes in selection, folding or style can affect more than one level of the visual structure. The dependency is strong, but mostly justified, because these classes share the same responsibility: showing and updating the visual map. This also fits the Common Closure Principle, because the main classes are located in the same package area, `org.freeplane.view.swing.map`.
 
@@ -55,7 +55,7 @@ The code also shows an important design choice: `NodeViewFactory`. When `MapView
   <img src="../../../deliverables/puml/swing_map_view_dependencies.svg" alt="Swing map view dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 3: Swing map view dependencies.</em></p>
+<p align="center"><em>Figure 3: Code dependencies inside and around the Swing map view.</em></p>
 
 #### 2. Outline Subsystem Domain
 
@@ -65,7 +65,7 @@ The outline subsystem is another visualisation domain. While the Swing map view 
   <img src="../../../deliverables/img/design/outlineView.png" alt="Outline view" width="700"/>
 </p>
 
-<p align="center"><em>Figure 4: Outline view.</em></p>
+<p align="center"><em>Figure 4: Outline view representation of the same mind map.</em></p>
 
 Starting from co-change, the main class to check was `ScrollableTreePanel`, because many outline pairs were centred around it. The code confirms this role: it manages the tree-like list shown in the outline, including visible nodes, selection, navigation and scrolling.
 
@@ -79,7 +79,7 @@ The most interesting point is `MapAwareOutlinePane`. The co-change reports mainl
   <img src="../../../deliverables/img/design/outline_dependencies.png" alt="Outline subsystem dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 5: Outline subsystem dependencies.</em></p>
+<p align="center"><em>Figure 5: Main code dependencies of the outline subsystem.</em></p>
 
 #### 3. API and Scripting Domain
 
@@ -95,7 +95,7 @@ Therefore, this is not just internal cohesion. It is a real dependency between s
   <img src="../../../deliverables/img/design/api_scripting_dependencies.png" alt="API and scripting dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 6: API and scripting dependencies.</em></p>
+<p align="center"><em>Figure 6: Dependency structure between API, scripting and model classes.</em></p>
 
 #### 4. Text Rendering Plugins Domain
 
@@ -111,7 +111,7 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
   <img src="../../../deliverables/img/design/text_rendering_dependencies.png" alt="Text rendering plugins dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 7: Text rendering plugins dependencies.</em></p>
+<p align="center"><em>Figure 7: Shared text transformation mechanism used by rendering plugins.</em></p>
 
 ---
 
@@ -134,26 +134,9 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
   * *Pros:* Stricter type safety (a `LeafNode` cannot have children added to it by definition), less coupling, easier testability.
   * *Cons:* Much more complex codebase. Mind map nodes frequently switch between being leaves and branches as users add or delete children. With separate classes, the object would need to be re-instantiated and replaced in the tree every time this happens, which is highly inefficient.
 
-<table style="width:100%; border-collapse:collapse; table-layout:fixed;">
-  <tr>
-    <td style="width:50%; text-align:center; vertical-align:top; padding:8px;">
-      <img src="../../../deliverables/puml/composite_now.svg"
-           alt="Composite pattern in NodeModel"
-           style="height:220px; max-width:100%; object-fit:contain;"/>
-      <p style="text-align:center; margin-top:8px;">
-        <em>Figure 8: Composite pattern in the Freeplane node tree.</em>
-      </p>
-    </td>
-    <td style="width:50%; text-align:center; vertical-align:top; padding:8px;">
-      <img src="../../../deliverables/puml/composite_alternative.svg"
-           alt="Alternative with separate leaf and branch nodes"
-           style="height:220px; max-width:100%; object-fit:contain;"/>
-      <p style="text-align:center; margin-top:8px;">
-        <em>Figure 9: Alternative with separate leaf and branch nodes.</em>
-      </p>
-    </td>
-  </tr>
-</table>
+![Testo alternativo](../../../deliverables/img/design/composite.png)
+
+---
 
 ### 2. Proxy Pattern
 
@@ -175,26 +158,8 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
   * *Pros:* Less overhead and fewer classes.
   * *Cons:* Extremely dangerous. User scripts could break the application state, bypass the undo mechanism or invoke internal methods, leading to instability and difficult-to-debug errors.
 
-<table style="width:100%; border-collapse:collapse; table-layout:fixed;">
-  <tr>
-    <td style="width:50%; text-align:center; vertical-align:top; padding:8px;">
-      <img src="../../../deliverables/puml/proxy_now.svg"
-           alt="Proxy pattern for scripting API protection"
-           style="height:280px; max-width:100%; object-fit:contain;"/>
-      <p style="text-align:center; margin-top:8px;">
-        <em>Figure 10: Proxy pattern for scripting API protection.</em>
-      </p>
-    </td>
-    <td style="width:50%; text-align:center; vertical-align:top; padding:8px;">
-      <img src="../../../deliverables/puml/proxy_alternative.svg"
-           alt="Alternative with direct access to NodeModel"
-           style="height:280px; max-width:100%; object-fit:contain;"/>
-      <p style="text-align:center; margin-top:8px;">
-        <em>Figure 11: Alternative with direct access to NodeModel.</em>
-      </p>
-    </td>
-  </tr>
-</table>
+![Testo alternativo](../../../deliverables/img/design/proxy.png)
+
 
 ---
 
@@ -214,31 +179,12 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
 
     As the script environment evaluates dependencies, it calls `setNodeContained()` or `addAttribute()`. Once all necessary configuration is provided, the `build()` method is called to instantiate the final `Dependencies` object using this accumulated data.
 * **Problem solved:**
- When evaluating complex scripting functions (like determining node dependencies for formulas), the system needs to precisely configure which node attributes are involved to create a `Dependencies` object. Because this configuration is discovered dynamically as the script is parsed, creating the object in a single step using a large telescoping constructor would be unreadable, while exposing setters on `Dependencies` would make it mutable and unsafe. The Builder pattern solves this by encapsulating the construction logic: `DependenciesBuilder` collects attributes incrementally, and once the configuration is fully gathered, `build()` locks the data into a final, immutable `Dependencies` object that is safe to pass around the execution engine without risk of accidental modification.
+In Freeplane, Dependencies are used to remember which parts of a node are needed by a script or formula. This information is not always known at the beginning, because it is discovered while the script is being analysed. For this reason, creating the object immediately with one big constructor would be unclear. The Builder pattern makes the process simpler: DependenciesBuilder collects the needed information step by step and, at the end, creates the final Dependencies object with build(). This keeps Dependencies stable after creation and avoids accidental changes later.
 * **Alternative:** Telescoping constructors or a mutable object with setters.
   * *Pros:* Avoids creating an extra Builder class.
   * *Cons:* Telescoping constructors, such as `new Dependencies(true, attrs, ...)`, are unreadable. Setters make the `Dependencies` object mutable, which can lead to bugs if the object is shared across different parts of the system or threads.
 
-<table style="width:100%; border-collapse:collapse; table-layout:fixed;">
-  <tr>
-    <td style="width:50%; text-align:center; vertical-align:top; padding:8px;">
-      <img src="../../../deliverables/puml/builder_pattern.svg"
-           alt="Builder pattern for dependency construction"
-           style="height:240px; max-width:100%; object-fit:contain;"/>
-      <p style="text-align:center; margin-top:8px;">
-        <em>Figure 12: Builder pattern for dependency construction.</em>
-      </p>
-    </td>
-    <td style="width:50%; text-align:center; vertical-align:top; padding:8px;">
-      <img src="../../../deliverables/puml/builder_mutable_alternative.svg"
-           alt="Alternative with mutable dependency object"
-           style="height:240px; max-width:100%; object-fit:contain;"/>
-      <p style="text-align:center; margin-top:8px;">
-        <em>Figure 13: Alternative with mutable dependency object.</em>
-      </p>
-    </td>
-  </tr>
-</table>
+![Testo alternativo](../../../deliverables/img/design/builder.png)
 
 ---
 
@@ -260,26 +206,8 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
   * *Pros:* Marginally fewer files.
   * *Cons:* Violates the Open/Closed Principle. Every time a new matching algorithm is added (e.g., Regex matching), the core `StringMatcher` class must be modified, increasing the risk of introducing bugs into existing functionality.
 
-<table style="width:100%; border-collapse:collapse; table-layout:fixed;">
-  <tr>
-    <td style="width:50%; text-align:center; vertical-align:top; padding:8px;">
-      <img src="../../../deliverables/puml/strategy_pattern.svg"
-           alt="Strategy pattern for text matching algorithms"
-           style="height:240px; max-width:100%; object-fit:contain;"/>
-      <p style="text-align:center; margin-top:8px;">
-        <em>Figure 14: Strategy pattern for text matching algorithms.</em>
-      </p>
-    </td>
-    <td style="width:50%; text-align:center; vertical-align:top; padding:8px;">
-      <img src="../../../deliverables/puml/strategy_switch_alternative.svg"
-           alt="Alternative with switch-based matching logic"
-           style="height:240px; max-width:100%; object-fit:contain;"/>
-      <p style="text-align:center; margin-top:8px;">
-        <em>Figure 15: Alternative with switch-based matching logic.</em>
-      </p>
-    </td>
-  </tr>
-</table>
+![Testo alternativo](../../../deliverables/img/design/strategy.png)
+
 
 ---
 
@@ -293,7 +221,6 @@ The API and scripting domain shows another design pressure. Here the dependency 
 
 The text rendering domain confirms that co-change can reveal a maintenance relation even without direct code dependency. The plugins remain separated, but they share a central transformation mechanism, so changes to text handling can affect multiple plugins.
 
-The selected patterns highlight that Freeplane often adopts pragmatic variants rather than strict textbook structures. The Composite pattern in NodeModel is 
-simplified, because using separate leaf and branch classes would be inefficient for highly editable mind maps. Similarly, the Builder pattern keeps dynamic construction readable and safe, the Strategy pattern ensures matching algorithms remain extensible. The Proxy pattern protects the core model while exposing a robust scripting interface. 
+The selected patterns confirm that Freeplane often uses pragmatic variants rather than textbook structures. The Composite pattern in `NodeModel` is simplified, because using separate leaf and branch classes would be less convenient for editable mind maps. The Builder pattern keeps dynamic construction readable and safer. The Strategy pattern separates matching algorithms and supports extensibility. The Proxy pattern protects the core model while exposing a scripting interface.
 
-Overall, Freeplane is well-organized for a large desktop application. Its most complex parts make sense for the features they support. The main risks don't come from bad code, but from a few core areas that require deep system knowledge. Specifically, you need to be very careful when updating the graphical map view, the outline-to-map synchronization, and the scripting proxy layer.
+Overall, Freeplane’s design is generally coherent for a large desktop Overall, Freeplane has a coherent design for a large desktop application. The strongest dependencies are mostly understandable, because they come from classes working on the same feature or from controlled connections between modules. The main risks are not single bad dependencies, but some central areas that are harder to modify without knowing the system well, especially the graphical map view, the synchronisation between outline and map, and the scripting proxy layer.
