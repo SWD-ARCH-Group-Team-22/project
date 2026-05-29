@@ -8,7 +8,6 @@ The first part focuses on dependencies. Since Freeplane is a large system, we fi
 
 The second part focuses on design patterns. We selected four relevant GoF pattern instances found in the system: **Composite**, **Proxy**, **Builder** and **Strategy**. For each one, we identify the involved classes, explain why that structure can be considered an actual pattern, describe the problem it solves in Freeplane and briefly discuss a possible alternative.
 
----
 
 ## Dependency Analysis
 
@@ -29,7 +28,7 @@ The main domains are:
   <img src="../../../deliverables/img/design/cochange_domain_evolution.png" alt="Co-change domain evolution graph" width="700"/>
 </p>
 
-<p align="center"><em>Figure 1: Evolution of average co-change intensity across the selected domains.</em></p>
+<p align="center"><em>Figure 1: Average co-change intensity of the selected domains across time windows.</em></p>
 
 ### Code Dependencies
 
@@ -43,7 +42,7 @@ The code confirms that the Swing map view domain is not only a historical relati
   <img src="../../../deliverables/img/design/SwingMapView.png" alt="Swing map view" width="700"/>
 </p>
 
-<p align="center"><em>Figure 2: Main elements of the Swing map view.</em></p>
+<p align="center"><em>Figure 2: Swing view representation of mind maps.</em></p>
 
 This explains why these classes often changed together. Changes in selection, folding or style can affect more than one level of the visual structure. The dependency is strong, but mostly justified, because these classes share the same responsibility: showing and updating the visual map. This also fits the Common Closure Principle, because the main classes are located in the same package area, `org.freeplane.view.swing.map`.
 
@@ -55,7 +54,7 @@ The code also shows an important design choice: `NodeViewFactory`. When `MapView
   <img src="../../../deliverables/puml/swing_map_view_dependencies.svg" alt="Swing map view dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 3: Code dependencies inside and around the Swing map view.</em></p>
+<p align="center"><em>Figure 3: code dependencies inside and around Swing map view domain.</em></p>
 
 #### 2. Outline Subsystem Domain
 
@@ -65,7 +64,7 @@ The outline subsystem is another visualisation domain. While the Swing map view 
   <img src="../../../deliverables/img/design/outlineView.png" alt="Outline view" width="700"/>
 </p>
 
-<p align="center"><em>Figure 4: Outline view representation of the same mind map.</em></p>
+<p align="center"><em>Figure 4: outline view representation of mind maps.</em></p>
 
 Starting from co-change, the main class to check was `ScrollableTreePanel`, because many outline pairs were centred around it. The code confirms this role: it manages the tree-like list shown in the outline, including visible nodes, selection, navigation and scrolling.
 
@@ -79,7 +78,7 @@ The most interesting point is `MapAwareOutlinePane`. The co-change reports mainl
   <img src="../../../deliverables/img/design/outline_dependencies.png" alt="Outline subsystem dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 5: Main code dependencies of the outline subsystem.</em></p>
+<p align="center"><em>Figure 5: code dependencies inside and around Outline subsystem domain</em></p>
 
 #### 3. API and Scripting Domain
 
@@ -95,7 +94,7 @@ Therefore, this is not just internal cohesion. It is a real dependency between s
   <img src="../../../deliverables/img/design/api_scripting_dependencies.png" alt="API and scripting dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 6: Dependency structure between API, scripting and model classes.</em></p>
+<p align="center"><em>Figure 6: code dependencies inside and around API and Scripting domain.</em></p>
 
 #### 4. Text Rendering Plugins Domain
 
@@ -111,11 +110,10 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
   <img src="../../../deliverables/img/design/text_rendering_dependencies.png" alt="Text rendering plugins dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 7: Shared text transformation mechanism used by rendering plugins.</em></p>
+<p align="center"><em>Figure 7: code dependencies inside and around Text rendering plugins domain.</em></p>
 
----
 
-## Design Pattern Analysis
+## Pattern Analysis
 
 ### 1. Composite Pattern
 
@@ -134,9 +132,7 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
   * *Pros:* Stricter type safety (a `LeafNode` cannot have children added to it by definition), less coupling, easier testability.
   * *Cons:* Much more complex codebase. Mind map nodes frequently switch between being leaves and branches as users add or delete children. With separate classes, the object would need to be re-instantiated and replaced in the tree every time this happens, which is highly inefficient.
 
-![Testo alternativo](../../../deliverables/img/design/composite.png)
-
----
+![Testo alternativo](../../../deliverables/img/design/pattern/composite.png)
 
 ### 2. Proxy Pattern
 
@@ -158,10 +154,7 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
   * *Pros:* Less overhead and fewer classes.
   * *Cons:* Extremely dangerous. User scripts could break the application state, bypass the undo mechanism or invoke internal methods, leading to instability and difficult-to-debug errors.
 
-![Testo alternativo](../../../deliverables/img/design/proxy.png)
-
-
----
+![Testo alternativo](../../../deliverables/img/design/pattern/proxy.png)
 
 ### 3. Builder Pattern
 
@@ -184,9 +177,7 @@ In Freeplane, Dependencies are used to remember which parts of a node are needed
   * *Pros:* Avoids creating an extra Builder class.
   * *Cons:* Telescoping constructors, such as `new Dependencies(true, attrs, ...)`, are unreadable. Setters make the `Dependencies` object mutable, which can lead to bugs if the object is shared across different parts of the system or threads.
 
-![Testo alternativo](../../../deliverables/img/design/builder.png)
-
----
+![Testo alternativo](../../../deliverables/img/design/pattern/builder.png)
 
 ### 4. Strategy Pattern
 
@@ -206,10 +197,8 @@ In Freeplane, Dependencies are used to remember which parts of a node are needed
   * *Pros:* Marginally fewer files.
   * *Cons:* Violates the Open/Closed Principle. Every time a new matching algorithm is added (e.g., Regex matching), the core `StringMatcher` class must be modified, increasing the risk of introducing bugs into existing functionality.
 
-![Testo alternativo](../../../deliverables/img/design/strategy.png)
+![Testo alternativo](../../../deliverables/img/design/pattern/strategy.png)
 
-
----
 
 ## Overall Design Considerations
 
