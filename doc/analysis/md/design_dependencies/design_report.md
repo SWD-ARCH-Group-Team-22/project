@@ -25,7 +25,7 @@ The main domains are:
 4. **Text rendering plugins domain**: `FormulaTextTransformer`, `LatexRenderer`, `MarkdownRenderer` and `MTextController`. They are different plugins, but all work on special text inside nodes.
 
 <p align="center">
-  <img src="../../../deliverables/img/design/dependencies/outlineView.png" alt="Co-change domain evolution graph" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/cochange_domain_evolution.png" alt="Co-change domain evolution graph" width="700"/>
 </p>
 
 <p align="center"><em>Figure 1: Average co-change intensity of the selected domains across time windows.</em></p>
@@ -51,7 +51,7 @@ However, this domain is also one of the most central parts of the system. The ma
 The code also shows an important design choice: `NodeViewFactory`. When `MapView` displays nodes, the program must create visual objects such as `NodeView`, `MainView` and other components. This is a construction dependency, and Freeplane concentrates this creation logic in `NodeViewFactory` instead of spreading it across the map view classes.
 
 <p align="center">
-  <img src="../../../deliverables/puml/swing_map_view_dependencies.svg" alt="Swing map view dependencies" width="700"/>
+  <img src="../../../deliverables/puml/dependencies/swing_map_view_dependencies.svg" alt="Swing map view dependencies" width="700"/>
 </p>
 
 <p align="center"><em>Figure 3: Code dependencies inside and around Swing map view domain.</em></p>
@@ -61,7 +61,7 @@ The code also shows an important design choice: `NodeViewFactory`. When `MapView
 The outline subsystem is another visualisation domain. While the Swing map view shows the mind map graphically, the outline shows the same nodes in a linear tree structure.
 
 <p align="center">
-  <img src="../../../deliverables/img/design/outlineView.png" alt="Outline view" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/outlineView.png" alt="Outline view" width="700"/>
 </p>
 
 <p align="center"><em>Figure 4: Outline view representation of mind maps.</em></p>
@@ -75,7 +75,7 @@ This again fits the Common Closure Principle. The classes that often changed tog
 The most interesting point is `MapAwareOutlinePane`. The co-change reports mainly showed internal relations in the outline domain; no direct pair with the Swing map view domain was very evident. However, the code shows that the outline is connected to the main map view through `MapAwareOutlinePane`. This dependency is expected, because the outline shows the same map and must stay aligned with `MapView`, `NodeView`, `NodeModel` and map/node listeners. Still, it increases cognitive load.
 
 <p align="center">
-  <img src="../../../deliverables/img/design/outline_dependencies.png" alt="Outline subsystem dependencies" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/outline_dependencies.png" alt="Outline subsystem dependencies" width="700"/>
 </p>
 
 <p align="center"><em>Figure 5: Code dependencies inside and around Outline subsystem domain.</em></p>
@@ -91,7 +91,7 @@ The co-change relation suggested that the public API and the scripting plugin ev
 Therefore, this is not just internal cohesion. It is a real dependency between scripting and the Freeplane core, but the proxy layer keeps it organised. The design is good because the API remains a stable access layer. However, the proxies are still delicate: they protect the internal model, but they must know both the public API and the internal model.
 
 <p align="center">
-  <img src="../../../deliverables/img/design/api_scripting_dependencies.png" alt="API and scripting dependencies" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/api_scripting_dependencies.png" alt="API and scripting dependencies" width="700"/>
 </p>
 
 <p align="center"><em>Figure 6: Code dependencies inside and around API and scripting domain.</em></p>
@@ -107,7 +107,7 @@ The reason is that they all handle special text inside nodes. When Freeplane dis
 So, the co-change is confirmed as a shared maintenance concern, not as direct code dependency. The design is mostly good: the plugins remain separated, but changes in the central text mechanism can still affect more than one plugin.
 
 <p align="center">
-  <img src="../../../deliverables/img/design/text_rendering_dependencies.png" alt="Text rendering plugins dependencies" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/text_rendering_dependencies.png" alt="Text rendering plugins dependencies" width="700"/>
 </p>
 
 <p align="center"><em>Figure 7: Code dependencies inside and around Text rendering plugins domain.</em></p>
