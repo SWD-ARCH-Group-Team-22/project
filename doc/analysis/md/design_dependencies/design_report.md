@@ -148,7 +148,7 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
 
 * **Problem solved:**  
   When a user writes a custom Groovy script to interact with a node (e.g., `node.text = "New Title"`), exposing the internal engine directly would be dangerous. The Proxy pattern solves two main problems here:
-    1.  **access control (protection proxy):** The script engine interacts with `NodeProxy` rather than the raw `NodeModel`. The proxy intercepts assignments and routes them through proper controllers (e.g., `MTextController`). This ensures that an undoable action is created in the history and than the UI is notified to re-render, preventing scripts from calling internal methods that could break invariants , and the core model is protected from unmanaged modifications.
+    1.  **access control (protection proxy):** The script engine interacts with `NodeProxy` rather than the raw `NodeModel`. The proxy intercepts assignments and routes them through proper controllers (e.g., `MTextController`). This ensures that an undoable action is created in the history and that the UI is notified to re-render, preventing scripts from calling internal methods that could break invariants, and the core model is protected from unmanaged modifications.
     2.  **API simplification:** It hides the complex internal structure of `NodeModel` and exposes a cleaner, more scripting-friendly API to the user.
 * **Alternative:** Expose `NodeModel` directly to the scripting engine.
   * *Pros:* Less overhead and fewer classes.
@@ -172,7 +172,7 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
 
     As the script environment evaluates dependencies, it calls `setNodeContained()` or `addAttribute()`. Once all necessary configuration is provided, the `build()` method is called to instantiate the final `Dependencies` object using this accumulated data.
 * **Problem solved:**
-In Freeplane, Dependencies are used to remember which parts of a node are needed by a script or formula. This information is not always known at the beginning, because it is discovered while the script is being analysed. For this reason, creating the object immediately with one big constructor would be unclear. The Builder pattern makes the process simpler: DependenciesBuilder collects the needed information step by step and, at the end, creates the final Dependencies object with build(). This keeps Dependencies stable after creation and avoids accidental changes later.
+In Freeplane, `Dependencies` are used to remember which parts of a node are needed by a script or formula. This information is not always known at the beginning, because it is discovered while the script is being analysed. For this reason, creating the object immediately with one big constructor would be unclear. The Builder pattern makes the process simpler: `DependenciesBuilder` collects the needed information step by step and, at the end, creates the final `Dependencies` object with `build()`. This keeps `Dependencies` stable after creation and avoids accidental changes later.
 * **Alternative:** Telescoping constructors or a mutable object with setters.
   * *Pros:* Avoids creating an extra Builder class.
   * *Cons:* Telescoping constructors, such as `new Dependencies(true, attrs, ...)`, are unreadable. Setters make the `Dependencies` object mutable, which can lead to bugs if the object is shared across different parts of the system or threads.
@@ -202,15 +202,13 @@ In Freeplane, Dependencies are used to remember which parts of a node are needed
 
 ## Overall Design Considerations
 
-## Overall Design Considerations
-
 The dependency and pattern analyses show that Freeplane has a mostly coherent design, but also some areas where changes require attention.
 
 In the Swing map view domain and Outline subsystem domain, co-change mainly reflects feature cohesion. The classes change together because they work on the same UI responsibility: displaying the map either graphically or as an outline. This is not a bad dependency by itself. The main point is that the graphical map view is very central: it connects to styles, text, icons, links, listeners and the model, so changing it requires knowledge of several related parts.
 
 The API and scripting domain shows another design pressure. Here the dependency crosses module boundaries because scripts need access to the map model. Freeplane handles this through proxies, which are also one of the patterns identified in the report. The Proxy pattern is therefore not only a formal pattern instance, but a practical solution to a real dependency problem: it exposes scripting features without exposing the internal model directly.
 
-The text rendering domain confirms that co-change can reveal a maintenance relation even without direct code dependency. The plugins remain separated, but they share a central transformation mechanism, so changes to text handling can affect multiple plugins
+The Text rendering plugins domain confirms that co-change can reveal a maintenance relation even without direct code dependency. The plugins remain separated, but they share a central transformation mechanism, so changes to text handling can affect multiple plugins.
 
 The selected patterns confirm that Freeplane often uses pragmatic variants rather than textbook structures. The Composite pattern in `NodeModel` is simplified, because using separate leaf and branch classes would be less convenient for editable mind maps. The Builder pattern keeps dynamic construction readable and safer. The Strategy pattern separates matching algorithms and supports extensibility. The Proxy pattern protects the core model while exposing a scripting interface.
 
