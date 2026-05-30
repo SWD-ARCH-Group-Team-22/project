@@ -441,52 +441,19 @@ The Component Model offers the deepest view of Freeplane's internal structure, d
 
 The diagram reveals a layered hierarchy that governs how the system bootstraps and how data flows between components.
 
-**Framework Plugin.**
-The Freeplane Framework Plugin sits at the top of the dependency tree. It initializes the OSGi runtime environment and loads the API plugin, making its instances globally available to every downstream bundle. It acts as the entry point through which the entire component graph is wired together.
+**Framework Plugin.** The Framework Plugin sits at the top of the dependency tree. It initializes the OSGi runtime, loads the API plugin, making its instances globally available to every downstream bundle, and wires the entire component graph together.
 
-**Freeplane Core.**
-Directly below the framework resides the Freeplane Core, the central component that owns the inner business logic: map models, node structures, mode controllers, and event dispatching. The Core loads the API and delegates specialist work downward — script execution, markdown and LaTeX rendering, SVG export, and error reporting — to the appropriate plugins via standard Java method calls.
+**Freeplane Core.** Directly below, the Core owns the inner business logic — map models, node structures, mode controllers, event dispatching — and delegates work (scripting, rendering, SVG export, error reporting) to downstream plugins. It also interacts with several external systems. The examples are: Opening URLs in the **Web Browser**, redirecting to the **Email Tool**, and exporting tasks to **TaskJuggler**. The MVC triad lives here: `MapModel` and `NodeModel` define the domain entities, while `MapController` and `ModeController` orchestrate user actions. However, controllers like `MapController` aggregate some concerns (I/O setup, action registration, navigation, folding) in a single class, pointing to **SRP** pressure. The same pattern recurs in `FilterController` and `ModeController`. The pervasive use of `Controller.getCurrentController()` — a concrete singleton — and similar patterns in `MapWriter` also indicate a **DIP** concern, coupling components to concrete implementations rather than abstractions.
 
-This is where the MVC triad lives: `MapModel` and `NodeModel` define the domain entities, while `MapController` and `ModeController` orchestrate user actions and propagate model changes to the UI.
+**API and Lateral Plugins.** The API exposes core features for user-defined Groovy scripts. Alongside it sit four lateral plugins: AI, OpenMaps, CodeExplorer, and Bug Report. Notably, three of them also call _upward_ into the Core to register UI elements, creating bidirectional dependencies managed at runtime through OSGi. The AI plugin in turn relies on **LLM Software Tools** for prompt/response exchanges. In this layer, `NodeLevelConditionController.createASelectableCondition()` uses `if`-chains to select condition types — an **OCP** concern — while the `filter.condition` subpackage applies a Strategy/Decorator pattern that is fully OCP-compliant, showing inconsistent application of the principle.
 
-However, as discussed in Section 4, this orchestration layer suffers from significant design flaws. Controllers such as `MapController` are _God Objects_ that aggregate I/O setup, action registration, navigation, folding, and event orchestration in a single class — a systemic **Single Responsibility Principle (SRP)** violation.
+**Script Engine and Dependent Plugins.** The Plugin Script component manages Groovy and resolves dependencies via Apache Ivy. Formula, Markdown, LaTeX, and JSyntaxPane all build on it. JSyntaxPane additionally cross-cuts Markdown and LaTeX by providing graphical text-rendering features to both. At this level, `SingleCopySource` extends `NodeModel` but throws `RuntimeException` for inherited methods, raising a **LSP** concern. `IMapSelection` bundles many responsibilities into a single interface (**ISP** concern), while `INodeChangeListener` offers a clean, minimal counterexample.
 
+**SVG Plugin.** Handles image rendering via Apache Batik and PDF transcoding via Apache FOP.
 
-The same pattern recurs in `FilterController` (1,179 lines) and `ModeController` (491 lines, 10+ distinct responsibilities).
+**Cross-Cutting: Debug Helper.** The Debug Helper injects debug environment variables into every other component, touching all layers without belonging to any single one.
 
-Furthermore, the pervasive use of `Controller.getCurrentController()` — a concrete global singleton called hundreds of times across the `features` layer — constitutes the most widespread **Dependency Inversion Principle (DIP)** violation in the codebase.
-
-`MapWriter` similarly instantiates concrete dependencies rather than receiving abstractions.
-
-These patterns couple nearly every component to concrete implementations rather than abstractions.
-
-**API and Lateral Plugins.**
-The Freeplane API provides an encapsulation layer that exposes core features for user-defined Groovy scripts, shielding script authors from internal implementation details. Sitting alongside the API are four lateral plugins: the AI plugin (LLM integration via LangChain4j), OpenMaps (geographical visualization via JMapViewer), CodeExplorer (architectural analysis via ArchUnit and JGraphT), and the Bug Report module.
-
-An important architectural observation emerges here: while the Core pushes data downward to these plugins, three of them — AI, OpenMaps, and CodeExplorer — also call _upward_ into the Core to register UI elements and manipulate nodes. This bidirectional dependency is managed at runtime through the OSGi service layer, but it reveals tension in the component hierarchy.
-
-Notably, `NodeLevelConditionController.createASelectableCondition()` uses `if`-chains to select condition types — adding a new condition requires modifying existing code, which violates the **Open/Closed Principle (OCP)**.
-
-
-In contrast, the `filter.condition` subpackage demonstrates OCP _compliance_ through a Strategy/Decorator pattern (`ASelectableCondition`, `DecoratedCondition`), showing that developers have applied the principle inconsistently.
-
-**Script Engine.**
-The Plugin Script component manages the Groovy scripting engine and resolves script dependencies via Apache Ivy. It serves as the execution substrate for the script-dependent plugins described below.
-
-**Script-Dependent Plugins.**
-Formula, Markdown, LaTeX, and JSyntaxPane all require the scripting infrastructure. Formula sends expressions to the script engine for evaluation; Markdown and LaTeX delegate to external rendering libraries (Markdj and JLatexMath respectively); JSyntaxPane enhances text readability and cross-cuts across Script, Markdown, and LaTeX components.
-
-A **Liskov Substitution Principle (LSP)** concern surfaces at this level: `SingleCopySource` extends `NodeModel` but throws `RuntimeException` for inherited methods, breaking the substitutability contract.
-
-Similarly, `IMapSelection` bundles selection, navigation, scrolling, filtering, and visibility into a single fat interface — an **Interface Segregation Principle (ISP)** violation — whereas `INodeChangeListener`, with its single `nodeChanged` method, represents a clean, minimal counterexample.
-
-**SVG Plugin.**
-The SVG component handles non-raster image rendering via Apache Batik and PDF transcoding via Apache FOP.
-
-**Cross-Cutting: Debug Helper.**
-The Debug Helper plugin stands apart from the main hierarchy: it injects debug environment variables into every other component, from the Framework down to OpenMaps. This cross-cutting nature means it touches all layers without belonging to any single one.
-
-The SOLID violations catalogued above are not isolated incidents confined to `org.freeplane.features.map`. They are **systemic architectural patterns** that repeat across the entire Core, reinforcing the assessment from Section 4 that business logic, application logic, and UI concerns are insufficiently separated throughout the codebase.
+These SOLID concerns are not confined to `org.freeplane.features.map` — they recur across the Core, reinforcing the assessment from Section 4 that business logic, application logic, and UI concerns are insufficiently separated.
 
 
 ## Architectural Characteristics and Conclusions
