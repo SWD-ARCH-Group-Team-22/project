@@ -455,6 +455,8 @@ The diagram reveals a layered hierarchy that governs how the system bootstraps a
 
 These SOLID concerns are not confined to `org.freeplane.features.map` — they recur across the Core, reinforcing the assessment from Section 4 that business logic, application logic, and UI concerns are insufficiently separated.
 
+These SOLID issues also surface at the component level through the **Component Principles**. The Core mixes unrelated classes, so changes in one area ripple into others — breaking the **Common Closure Principle** (CCP). Interfaces like `IMapSelection` force plugins to depend on unused code, violating the **Common Reuse Principle** (CRP). Bidirectional plugin–Core dependencies create cycles against the **Acyclic Dependencies Principle** (ADP), and the Core's concrete, heavily-depended-upon nature clashes with the **Stable Abstractions Principle** (SAP). Adding abstraction interfaces — the same DIP fix — would address both class-level and component-level concerns together.
+
 
 ## Architectural Characteristics and Conclusions
 
