@@ -26,3 +26,5 @@ Design pattern document review
 
 ### 21/05/2026 - 26/05/2026
 Architecture report document review and refatoring: my work has involved shortening paragraphs, restructuring the report to make it more coherent and correcting C4 diagrams. I have also restrucutred the GitHub Actions flow to make converting pipelines available for all branches in the repository. Pipeline activities was monitored
+### 26/05/2026 - 08/05/2026
+Meetings with the group to refine the overal work. Design document review, and finalization of C4 diagrams. Final review of the Architecture Report.
