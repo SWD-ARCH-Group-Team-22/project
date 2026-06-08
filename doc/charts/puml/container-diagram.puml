@@ -1,32 +1,33 @@
-@startuml
-!include <C4/C4_Container.puml>
-title Freeplane Container Diagram
+    @startuml
+    !include <C4/C4_Container.puml>
+    title Freeplane Container Diagram
 
-LAYOUT_WITH_LEGEND()
-LAYOUT_TOP_DOWN()
+    LAYOUT_WITH_LEGEND()
+    LAYOUT_TOP_DOWN()
 
-Person(user, "User\n[Person]", "Uses Freeplane to create and manage mind maps")
+    Person(user, "User\n[Person]", "Uses Freeplane to create and manage mind maps")
 
-System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
-System_Ext(email, "Email Tool", "Email composition and delivery service")
-browser -[hidden]down-> email
+    System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
+    System_Ext(email, "Email Tool", "Email composition and delivery service")
+    browser -[hidden]down-> email
 
-System_Boundary(app, "Freeplane Desktop Application") {
-    Container(freeplane, "Freeplane Application", "Java Desktop Application", "Provides mind map editing, visualization, plugin management, scripting, and export functionalities")
-    ContainerDb(file_system, "Local File System", "XML / .mm Files", "Stores mind maps, settings, images, and application resources")
-}
+    System_Boundary(app, "Freeplane Desktop Application") {
+        Container(freeplane, "Freeplane Application", "Java Desktop Application", "Provides mind map editing, visualization, plugin management, scripting, and export functionalities")
 
-System_Ext(ai, "AI/LLM Services", "External AI and language model services")
-System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
-ai -[hidden]down-> taskjuggler
+    }
+    ContainerDb_Ext(file_system, "Local File System", "XML / .mm Files", "Stores mind maps, settings, images, and application resources")
 
-Rel_D(user, freeplane, "Creates and manages mind maps", "GUI Interaction")
-Rel_D(freeplane, file_system, "Reads and writes mind map data", "XML File I/O")
+    System_Ext(ai, "AI/LLM Services", "External AI and language model services")
+    System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
+    ai -[hidden]down-> taskjuggler
 
-Rel_L(freeplane, browser, "Delegates URL opening", "OS Call")
-Rel_L(freeplane, email, "Delegates email composition", "OS Call")
+    Rel_D(user, freeplane, "Creates and manages mind maps", "GUI Interaction")
+    Rel_D(freeplane, file_system, "Reads and writes mind map data", "XML File I/O")
 
-Rel_R(freeplane, taskjuggler, "Exports task structures", "File Export")
-BiRel_R(freeplane, ai, "Sends prompts / receives responses", "HTTPS/API")
+    Rel_L(freeplane, browser, "Delegates URL opening", "OS Call")
+    Rel_L(freeplane, email, "Delegates email composition", "OS Call")
 
-@enduml
+    Rel_R(freeplane, taskjuggler, "Exports task structures", "File Export")
+    BiRel_R(freeplane, ai, "Sends prompts / receives responses", "HTTPS/API")
+
+    @enduml

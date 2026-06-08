@@ -10,44 +10,38 @@ Freeplane was born as a fork of the well-known Freemind software. The official d
 
 ```plantuml
     @startuml
-    !include <C4/C4_Context.puml>
+    !include <C4/C4_Context.puml>  
+    title Freeplane Software Context Diagram
 
-    title Freeplane - System Context Diagram (Level 1)
+    Person(beginner, "User\n[Person]", "Accesses Freeplane to manage mindmaps")
 
-    LAYOUT_TOP_DOWN()
+    System(freeplane, "Freeplane\n[Software System]", "Open-source mind map design software")
 
-    Person(user, "User", "Uses Freeplane to create and manage mind maps, and automate tasks")
-
-    System(freeplane, "Freeplane", "Mind mapping and knowledge management software system")
-
-    ' Sistemi Esterni (Fonte di verità per la nomenclatura)
-    System_Ext(filesystem, "Local File System", "Stores mind maps (.mm), scripts, and configuration files")
     System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
     System_Ext(llm, "LLM Software Tools", "Provides external AI and language model services")
-    System_Ext(email, "Email Tool", "Provides email composition and delivery services")
+    System_Ext(smtp, "Email Tool", "Provides email composition and delivery services")
     System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
+    System_Ext(file_system, "Local File System", "XML / .mm Files - Stores mind maps, settings, images, and application resources")
 
-    ' Relazioni
-    Rel_D(user, freeplane, "Manages mind maps and scripts")
+    Rel_D(beginner, freeplane, "Manage mindmaps, sometimes it can automate it")
+        
+    Rel_R(freeplane, smtp, "Delegates email composition")
+    Rel_D(freeplane, file_system, "Reads and writes mind map data")
+    Rel(freeplane, browser, "Delegates URL opening")
+    Rel(freeplane, taskjuggler, "Exports task structures")
+    BiRel(freeplane, llm, "Sends prompts / receives responses")
 
-    Rel_D(freeplane, filesystem, "Reads from and writes to", "File I/O")
-    Rel_D(freeplane, browser, "Opens external links in")
-    Rel_D(freeplane, llm, "Sends prompts and retrieves responses", "API")
-    Rel_D(freeplane, email, "Redirects to")
-    Rel_D(freeplane, taskjuggler, "Exports tasks to")
+
+    LAYOUT_WITH_LEGEND()
+
     @enduml
-
 ```
 
-Although being represented as a single person, users can be distinguished in two groups: basic users, that exploit the software for basic mindmapping tools, and advanced, computer literate users that can write custom scripts to enhance Freeplane features. These groups have been merged in a single Actor since they share the same GUI and potentially all basic users can also use advanced features.
+Although represented as a single actor, users can be distinguished in two groups: basic users, who use Freeplane for standard mind mapping, and advanced users, who write custom Groovy scripts to extend its features. Freeplane also supports a GUI-less execution mode accessible from the terminal, which advanced users may exploit. Nevertheless, these groups have been merged into a single Actor since they all share the same system entry point — the distinction is behavioral, not structural, and therefore not relevant at the architectural level.
 
-The persistence layer is managed internally by the software: users can define their preferred path and the software interacts with the Operating System to save it with the desired format.
-
-Two types of interaction with external systems can be identified:
-
+The first type of external interaction is direct data persistence: the persistence layer is delegated to the Operating System via standard file I/O. Two more types of interaction with external systems can be identified:
 - Task delegation: the system depends on external tools that are responsible for handling operations outside its own scope. The relationships with the Browser or with the Email tool fall into this category — clicking a URL or clicking an email address triggers actions that Freeplane delegates entirely to the appropriate external system.
-- Data delegation: the dependency involves an active exchange of information. The integration with TaskJuggler requires Freeplane to transform and adapt the content of a mind map into a structured set of tasks before transferring it to the external system. This is a unidirectional relationship  
-The interaction with LLM systems also falls into this category, but the relationship is bidirectional: sending a prompt transfers data to the LLM API, which in turn sends information back through its response.  
+- Data delegation: the dependency involves an active exchange of information. The integration with TaskJuggler requires Freeplane to transform and adapt the content of a mind map into a structured set of tasks before transferring it to the external system. This is a unidirectional relationship. The interaction with LLM systems also falls into this category, but the relationship is bidirectional: sending a prompt transfers data to the LLM API, which in turn sends information back through its response.  
 
 The tension between different kinds of dependencies reveals that the software has grown over the years to support different features to meet requirements that can be very different among users.
 
@@ -57,32 +51,38 @@ The Container Model aims at showing how the software is built, from a lower, mor
 
 
 ```plantuml
-   @startuml
-        !include <C4/C4_Container.puml>
+    @startuml
+    !include <C4/C4_Container.puml>
+    title Freeplane Container Diagram
 
-        title Freeplane - Container Diagram (Level 2)
+    LAYOUT_WITH_LEGEND()
+    LAYOUT_TOP_DOWN()
 
-        LAYOUT_TOP_DOWN()
+    Person(user, "User\n[Person]", "Uses Freeplane to create and manage mind maps")
 
-        Person(user, "User", "Uses Freeplane to create and manage mind maps, and automate tasks")
+    System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
+    System_Ext(email, "Email Tool", "Provides email composition and delivery services")
+    browser -[hidden]down-> email
 
-        System_Boundary(freeplane_system, "Freeplane") {
-            Container(desktop_app, "Freeplane Desktop Application", "Java, OSGi", "Rich client desktop application providing the full mind mapping workstation and scripting engine.")
-        }
+    System_Boundary(app, "Freeplane Desktop Application") {
+        Container(freeplane, "Freeplane Application", "Java Desktop Application", "Provides mind map editing, visualization, plugin management, scripting, and export functionalities")
+    }
 
-        System_Ext(filesystem, "Local File System", "Stores mind maps (.mm), scripts, and configuration files")
-        System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
-        System_Ext(llm, "LLM Software Tools", "Provides external AI and language model services")
-        System_Ext(email, "Email Tool", "Provides email composition and delivery services")
-        System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
+    ContainerDb_Ext(file_system, "Local File System", "XML / .mm Files", "Stores mind maps, settings, images, and application resources")
 
-        Rel_D(user, desktop_app, "Uses")
+    System_Ext(llm, "LLM Software Tools", "Provides external AI and language model services")
+    System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
+    llm -[hidden]down-> taskjuggler
 
-        Rel_D(desktop_app, filesystem, "Reads maps and configs, writes data", "File I/O")
-        Rel_D(desktop_app, browser, "Opens external links in")
-        Rel_D(desktop_app, llm, "Sends prompts and retrieves responses", "API")
-        Rel_D(desktop_app, email, "Redirects to")
-        Rel_D(desktop_app, taskjuggler, "Exports tasks to")
+    Rel_D(user, freeplane, "Manage mindmaps, sometimes it can automate it", "GUI Interaction")
+    Rel_D(freeplane, file_system, "Reads and writes mind map data", "XML File I/O")
+
+    Rel_L(freeplane, browser, "Delegates URL opening", "OS Call")
+    Rel_L(freeplane, email, "Delegates email composition", "OS Call")
+
+    Rel_R(freeplane, taskjuggler, "Exports task structures", "File Export")
+    BiRel_R(freeplane, llm, "Sends prompts / receives responses", "HTTPS/API")
+
     @enduml
 ```
 
@@ -94,7 +94,7 @@ These considerations have led the analysis to consider the software as composed 
 The persistence layer is delegated to the Operating System. Freeplane stores information related to the single mind-map in a proprietary file format, that is the `.mm`. This is an XML-derived format that fits the definition of mindmaps as nested blocks of nodes. Users can independently decide which area of their File System save data to. The software leverages standard Java API to retrieve data from files. This choice avoids the overhead of an external database, simplifying the persistence model at the cost of limited query capabilities and concurrent access.
 
 
-### Mapping to Clean Architecture: Theory vs. Reality
+#### Mapping to Clean Architecture
 This section evaluates Freeplane's compliance with Clean Architecture principles by analyzing its core package, org.freeplane.features.map.
 Repository mining reveals this package is highly unstable due to tight coupling with UI components. Specifically, almost 43% of its commits involve co-changes with the frontend—peaking at 61% for subpackages like `org.freeplane.features.map.filemode` and `org.freeplane.features.map.clipboard`.
 
@@ -168,8 +168,6 @@ Code analysis reveals that most classes in the package have dependencies on the 
 
     MMapController -[#2ECC71,thickness=2]up-> IMapViewChangeListener : <<complies>>
     MMapController -[#E74C3C,thickness=2]up-> GraphicEnvironment : <<violates>>
-
-
 
 
     note right of UIFeatures
@@ -320,113 +318,112 @@ The Component Model offers the deepest view of Freeplane's internal structure, d
 
 ```plantuml
     @startuml 
-        !include <C4/C4_Component.puml>
+    !include <C4/C4_Component.puml>
 
-        title Freeplane - Component Diagram (Level 3 - Structural Dependencies)
+    title Freeplane - Component Diagram (Level 3 - Structural Dependencies)
 
-        LAYOUT_TOP_DOWN()
-        LAYOUT_WITH_LEGEND()
+    LAYOUT_TOP_DOWN()
+    LAYOUT_WITH_LEGEND()
 
-        skinparam wrapWidth 200
-        skinparam maxMessageSize 200
+    skinparam wrapWidth 200
+    skinparam maxMessageSize 200
 
-        Person(user, "User", "Uses Freeplane to create and manage mind maps, and automate tasks")
+    Person(user, "User\n[Person]", "Uses Freeplane to create and manage mind maps, and automate tasks")
 
-        Container_Boundary(desktop_app_boundary, "Freeplane Desktop Application") {
+    Container_Boundary(desktop_app_boundary, "Freeplane Desktop Application") {
 
-            Component(framework, "Freeplane Framework Plugin", "Java Application", "Backbone of the software application (OSGi Launcher)")
-            Component(freeplane_core, "Freeplane Core", "Java Application", "Central core of the system, owns the inner business logic")
-            Component(api, "Freeplane API", "Java Application", "Provides encapsulation for basic Freeplane features to be implemented by user-defined scripts")
-            
-            Component(ai, "Freeplane AI", "Java Application", "Plugin that enables communication between user and LLM tools within the software workstation")
-            Component(openmaps, "Freeplane OpenMaps Plugin", "Java Application", "Geographical data and visualization support")
-            Component(bug, "Freeplane Bug Report", "Java Application", "Bug report system")
-            Component(codeexplorer, "Freeplane CodeExplorer Plugin", "Java Application", "Provides advanced code analysis features as a distinct application mode")
+        Component(framework, "Freeplane Framework Plugin", "Java Application", "Backbone of the software application (OSGi Launcher)")
+        Component(freeplane_core, "Freeplane Core", "Java Application", "Central core of the system, owns the inner business logic")
+        Component(api, "Freeplane API", "Java Application", "Provides encapsulation for basic Freeplane features to be implemented by user-defined scripts")
+        
+        Component(ai, "Freeplane AI", "Java Application", "Plugin that enables communication between user and LLM tools within the software workstation")
+        Component(openmaps, "Freeplane OpenMaps Plugin", "Java Application", "Geographical data and visualization support")
+        Component(bug, "Freeplane Bug Report", "Java Application", "Bug report system")
+        Component(codeexplorer, "Freeplane CodeExplorer Plugin", "Java Application", "Provides advanced code analysis features as a distinct application mode")
 
-            Component(script, "Freeplane Plugin Script", "Java Application", "Manages the Groovy scripting engine")
+        Component(script, "Freeplane Plugin Script", "Java Application", "Manages the Groovy scripting engine")
 
-            Component(formula, "Freeplane Plugin Formula", "Java Application", "Handles user-defined formulas, rendered via Groovy Script")
-            Component(markdown, "Freeplane Markdown Plugin", "Java Application", "Support for markdown format")
-            Component(latex, "Freeplane LaTeX Plugin", "Java Application", "Provides support for LaTeX within the workstation")
-            Component(syntax, "Freeplane JSyntaxPane Plugin", "Java Application", "Provides UI components for enhanced text readability")
+        Component(formula, "Freeplane Plugin Formula", "Java Application", "Handles user-defined formulas, rendered via Groovy Script")
+        Component(markdown, "Freeplane Markdown Plugin", "Java Application", "Support for markdown format")
+        Component(latex, "Freeplane LaTeX Plugin", "Java Application", "Provides support for LaTeX within the workstation")
+        Component(syntax, "Freeplane JSyntaxPane Plugin", "Java Application", "Provides UI components for enhanced text readability")
 
-            Component(svg, "Freeplane SVG Plugin", "Java Application", "Graphic support for non-raster images")
-            
-            Component(debughelper, "Freeplane Plugin Debughelper", "Java Application", "Sets the debugging environment up")
-        }
+        Component(svg, "Freeplane SVG Plugin", "Java Application", "Graphic support for non-raster images")
+        
+        Component(debughelper, "Freeplane Plugin Debughelper", "Java Application", "Sets the debugging environment up")
+    }
 
-        ' === External Systems ===
-        System_Ext(filesystem, "Local File System", "Stores mind maps (.mm), scripts, and configuration files")
-        System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
-        System_Ext(llm, "LLM Software Tools", "Provides external AI and language model services")
-        System_Ext(email, "Email Tool", "Provides email composition and delivery services")
-        System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
+    ' === External Systems ===
+    ContainerDb_Ext(filesystem, "Local File System", "XML / .mm Files", "Stores mind maps, settings, images, and application resources")
+    System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
+    System_Ext(llm, "LLM Software Tools", "Provides external AI and language model services")
+    System_Ext(email, "Email Tool", "Provides email composition and delivery services")
+    System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
 
-        Rel_D(user, freeplane_core, "Manage mindmaps, sometimes it can automate it")
+    Rel_D(user, freeplane_core, "Manage mindmaps, sometimes it can automate it")
 
-        ' === Core dependencies ===
-        Rel_D(framework, api, "Loads to make its instances globally available", "OSGi")
-        Rel_D(freeplane_core, api, "Depends on and implements API", "Java Method Call")
+    ' === Core dependencies ===
+    Rel_D(framework, api, "Loads to make its instances globally available", "OSGi")
+    Rel_D(freeplane_core, api, "Depends on and implements API", "Java Method Call")
 
-        ' === Plugins to Core dependencies (Inversion of Control) ===
-        Rel_U(script, freeplane_core, "Registers script execution engine", "Java/OSGi")
-        Rel_U(markdown, freeplane_core, "Registers markdown rendering support", "Java/OSGi")
-        Rel_U(latex, freeplane_core, "Registers LaTeX rendering support", "Java/OSGi")
-        Rel_U(svg, freeplane_core, "Registers SVG rendering and exporting", "Java/OSGi")
-        Rel_U(bug, freeplane_core, "Registers bug reporting tools", "Java/OSGi")
+    ' === Plugins to Core dependencies (Inversion of Control) ===
+    Rel_U(script, freeplane_core, "Registers script execution engine", "Java/OSGi")
+    Rel_U(markdown, freeplane_core, "Registers markdown rendering support", "Java/OSGi")
+    Rel_U(latex, freeplane_core, "Registers LaTeX rendering support", "Java/OSGi")
+    Rel_U(svg, freeplane_core, "Registers SVG rendering and exporting", "Java/OSGi")
+    Rel_U(bug, freeplane_core, "Registers bug reporting tools", "Java/OSGi")
 
-        Rel_U(ai, freeplane_core, "Registers in the UI and manipulates nodes", "Java/OSGi")
-        Rel_U(openmaps, freeplane_core, "Registers in the UI and manipulates nodes for geographical data", "Java/OSGi")
-        Rel_U(codeexplorer, freeplane_core, "Registers a new application mode within the core", "Java/OSGi")
+    Rel_U(ai, freeplane_core, "Registers in the UI and manipulates nodes", "Java/OSGi")
+    Rel_U(openmaps, freeplane_core, "Registers in the UI and manipulates nodes for geographical data", "Java/OSGi")
+    Rel_U(codeexplorer, freeplane_core, "Registers a new application mode within the core", "Java/OSGi")
 
-        ' === Inter-Plugin Dependencies ===
-        Rel_L(formula, script, "Depends on to execute formulas", "Java Method Call")
-        Rel_L(ai, markdown, "Depends on to render LLM responses", "Java Method Call")
+    ' === Inter-Plugin Dependencies ===
+    Rel_L(formula, script, "Depends on to execute formulas", "Java Method Call")
+    Rel_L(ai, markdown, "Depends on to render LLM responses", "Java Method Call")
 
-        ' === Syntax Pane Dependencies ===
-        Rel(script, syntax, "Uses UI components for text editing", "Java Method Call")
-        Rel(markdown, syntax, "Uses UI components for text editing", "Java Method Call")
-        Rel(latex, syntax, "Uses UI components for text editing", "Java Method Call")
-        Rel(formula, syntax, "Uses UI components for text editing", "Java Method Call")
+    ' === Syntax Pane Dependencies ===
+    Rel(script, syntax, "Uses UI components for text editing", "Java Method Call")
+    Rel(markdown, syntax, "Uses UI components for text editing", "Java Method Call")
+    Rel(latex, syntax, "Uses UI components for text editing", "Java Method Call")
+    Rel(formula, syntax, "Uses UI components for text editing", "Java Method Call")
 
-        ' === External Relations ===
-        Rel_D(freeplane_core, filesystem, "Reads and writes mind maps and settings", "File I/O")
-        Rel_D(script, filesystem, "Loads user-defined scripts", "File I/O")
-        Rel_D(freeplane_core, email, "Redirects to")
-        Rel_D(ai, llm, "Sends prompts and retrieves responses", "API")
-        Rel_D(freeplane_core, browser, "Opens external links in")
-        Rel_D(freeplane_core, taskjuggler, "Exports tasks to")
+    ' === External Relations ===
+    Rel_D(freeplane_core, filesystem, "Reads and writes mind map data", "XML File I/O")
+    Rel_D(script, filesystem, "Loads user-defined scripts", "XML File I/O")
+    Rel_D(freeplane_core, email, "Delegates email composition", "OS Call")
+    BiRel(ai, llm, "Sends prompts / receives responses", "HTTPS/API")
+    Rel_D(freeplane_core, browser, "Delegates URL opening", "OS Call")
+    Rel_D(freeplane_core, taskjuggler, "Exports task structures", "File Export")
 
-        ' === Debug Helper ===
-        Rel(debughelper, framework, "Injects debug environment variables", "Java Method Call")
-        Rel(debughelper, freeplane_core, "Injects debug environment variables", "Java Method Call")
-        Rel(debughelper, api, "Injects debug environment variables", "Java Method Call")
-        Rel(debughelper, ai, "Injects debug environment variables", "Java Method Call")
-        Rel(debughelper, script, "Injects debug environment variables", "Java Method Call")
-        Rel(debughelper, formula, "Injects debug environment variables", "Java Method Call")
-        Rel(debughelper, syntax, "Injects debug environment variables", "Java Method Call")
-        Rel(debughelper, markdown, "Injects debug environment variables", "Java Method Call")
-        Rel(debughelper, svg, "Injects debug environment variables", "Java Method Call")
-        Rel(debughelper, latex, "Injects debug environment variables", "Java Method Call")
-        Rel(debughelper, openmaps, "Injects debug environment variables", "Java Method Call")
+    ' === Debug Helper ===
+    Rel(debughelper, framework, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, freeplane_core, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, api, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, ai, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, script, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, formula, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, syntax, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, markdown, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, svg, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, latex, "Injects debug environment variables", "Java Method Call")
+    Rel(debughelper, openmaps, "Injects debug environment variables", "Java Method Call")
 
-        ' === Layout hints ===
-        Lay_D(framework, freeplane_core)
-        Lay_D(freeplane_core, api)
-        Lay_D(api, script)
-        Lay_D(script, svg)
-        Lay_D(svg, debughelper)
-        Lay_R(api, ai)
-        Lay_R(api, codeexplorer)
-        Lay_R(api, openmaps)
-        Lay_R(api, bug)
-        Lay_R(script, formula)
-        Lay_R(script, markdown)
-        Lay_R(script, latex)
-        Lay_R(script, syntax)
-        @enduml
-
+    ' === Layout hints ===
+    Lay_D(framework, freeplane_core)
+    Lay_D(freeplane_core, api)
+    Lay_D(api, script)
+    Lay_D(script, svg)
+    Lay_D(svg, debughelper)
+    Lay_R(api, ai)
+    Lay_R(api, codeexplorer)
+    Lay_R(api, openmaps)
+    Lay_R(api, bug)
+    Lay_R(script, formula)
+    Lay_R(script, markdown)
+    Lay_R(script, latex)
+    Lay_R(script, syntax)
     @enduml
+
 ```
 
 The diagram reveals a layered hierarchy that governs how the system bootstraps and how data flows between components.
@@ -444,8 +441,6 @@ The diagram reveals a layered hierarchy that governs how the system bootstraps a
 **Cross-Cutting: Debug Helper.** The Debug Helper injects debug environment variables into every other component, touching all layers without belonging to any single one.
 
 These SOLID concerns are not confined to `org.freeplane.features.map` — they recur across the Core, reinforcing the assessment from Section 4 that business logic, application logic, and UI concerns are insufficiently separated.
-
-These SOLID issues also surface at the component level through the **Component Principles**. The Core mixes unrelated classes, so changes in one area ripple into others — breaking the **Common Closure Principle** (CCP). Interfaces like `IMapSelection` force plugins to depend on unused code, violating the **Common Reuse Principle** (CRP). Bidirectional plugin–Core dependencies create cycles against the **Acyclic Dependencies Principle** (ADP), and the Core's concrete, heavily-depended-upon nature clashes with the **Stable Abstractions Principle** (SAP). Adding abstraction interfaces — the same DIP fix — would address both class-level and component-level concerns together.
 
 
 ## Architectural Characteristics and Conclusions
