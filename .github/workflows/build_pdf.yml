@@ -58,7 +58,13 @@ jobs:
         run: |
           shopt -s nullglob globstar
           
-          for file in deliverables/md_reports/**/*.md; do
+          for file in doc/deliverables/md_reports/**/*.md; do
+                      # CORREZIONE: Salta i file che finiscono con svg.md (es. qualcosa_svg.md)
+                      if [[ "$file" == *"svg.md" ]]; then
+                        echo "Skipping $file (SVG markdown file)..."
+                        continue
+                      fi
+                      
                       name=$(basename "$file" .md)
                       echo "Converting $file to doc/deliverables/${name}.pdf..."
                       
