@@ -105,7 +105,7 @@
 
 **Drafting Diagrams and Finalizing the Design Report**
 
-* Compiled all the identification findings for the selected patterns (Singleton, Factory, Template Method, Composite, Proxy, Builder, Strategy, Observer, Command).
+* Compiled all the identification findings for the selected patterns (Composite, Proxy, Builder and Strategy).
 * Authored the `design_pattern_analysis.md` section for our team's Design report.
-* Created PlantUML class diagrams to map the relationships between key classes (`NodeModel`, `NodeProxy`, `DependenciesBuilder`, `UndoManager`, etc.).
+* Created PlantUML class diagrams to map the relationships between key classes (`NodeModel`, `NodeProxy`, `DependenciesBuilder`, etc.).
 * Included comparative PlantUML diagrams showing *alternative architectures* (like Telescoping Constructors or hardcoded Switch statements) to prove why the identified GoF patterns were the optimal design choices for Freeplane.
