@@ -58,15 +58,15 @@ jobs:
         run: |
           shopt -s nullglob globstar
           
-          for file in doc/analysis/md/**/*.md; do
-            name=$(basename "$file" .md)
-            echo "Converting $file to doc/deliverables/${name}.pdf..."
-            
-            # Utilizzo del filtro PlantUML e impostazione dei margini larghi tramite il pacchetto geometry di LaTeX
-            pandoc --filter pandoc-plantuml \
-                   -V geometry:margin=2cm \
-                   "$file" -o "doc/deliverables/${name}.pdf"
-          done
+          for file in deliverables/md_reports/**/*.md; do
+                      name=$(basename "$file" .md)
+                      echo "Converting $file to doc/deliverables/${name}.pdf..."
+                      
+                      pandoc --filter pandoc-plantuml \
+                            -V geometry:margin=2cm \
+                            "$file" -o "doc/deliverables/${name}.pdf"
+                    done
+
 
       - name: Commit and push generated PDFs
         run: |
