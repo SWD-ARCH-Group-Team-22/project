@@ -8,34 +8,7 @@ Architecturally, it is an imperfect micro-kernel monolith based on the OSGi fram
 
 Freeplane was born as a fork of the well-known Freemind software. The official documentation reports that the decision was taken to improve software's design and to speed up its development and maintenance cycles. 
 
-```plantuml
-    @startuml
-    !include <C4/C4_Context.puml>  
-    title Freeplane Software Context Diagram
-
-    Person(beginner, "User\n[Person]", "Accesses Freeplane to manage mindmaps")
-
-    System(freeplane, "Freeplane\n[Software System]", "Open-source mind map design software")
-
-    System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
-    System_Ext(llm, "LLM Software Tools", "Provides external AI and language model services")
-    System_Ext(smtp, "Email Tool", "Provides email composition and delivery services")
-    System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
-    System_Ext(file_system, "Local File System", "XML / .mm Files - Stores mind maps, settings, images, and application resources")
-
-    Rel_D(beginner, freeplane, "Manage mindmaps, sometimes it can automate it")
-        
-    Rel_R(freeplane, smtp, "Delegates email composition")
-    Rel_D(freeplane, file_system, "Reads and writes mind map data")
-    Rel(freeplane, browser, "Delegates URL opening")
-    Rel(freeplane, taskjuggler, "Exports task structures")
-    BiRel(freeplane, llm, "Sends prompts / receives responses")
-
-
-    LAYOUT_WITH_LEGEND()
-
-    @enduml
-```
+![C4 Context Diagram](../../deliverables/puml/context-diagram.svg)
 
 Although represented as a single actor, users can be distinguished in two groups: basic users, who use Freeplane for standard mind mapping, and advanced users, who write custom Groovy scripts to extend its features. Freeplane also supports a GUI-less execution mode accessible from the terminal, which advanced users may exploit. Nevertheless, these groups have been merged into a single Actor since they all share the same system entry point — the distinction is behavioral, not structural, and therefore not relevant at the architectural level.
 
