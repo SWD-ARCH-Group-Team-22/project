@@ -1,0 +1,31 @@
+@startuml
+title Alternative without Strategy: switch-based matching logic
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+enum MatchType {
+  EXACT
+  SUBSTRING
+  APPROXIMATE
+  REGEX
+}
+
+class FilterController {
+  - matchType : MatchType
+  + matches(searchTerm : String, searchText : String) : boolean
+}
+
+FilterController --> MatchType : uses
+
+note right of FilterController
+  The matches() method would contain
+  a large switch(matchType) statement.
+
+  Adding a new matching algorithm would
+  require modifying this core class,
+  violating the Open/Closed Principle.
+end note
+
+@enduml

@@ -1,32 +1,120 @@
-# Journal
-## Author: Luca Robustelli
+# Individual Journal
+
+**Author:** Luca Robustelli
+**Project:** Freeplane Software Architecture & Design Analysis
+**Primary Role:** Design Pattern Identification & Analysis
+
+### 09/04/2026 - 17/04/2026
+
+**Project setup, team organization, and role assignment**
+
+* At the beginning of the project, our team (Fra, Elif, Gaia, Eren, and I) chose Freeplane as the target system for our architectural analysis.
+* We read the project requirements to understand the deliverables: System Overview report, Design report, Software Architecture report, and individual journals.
+* During our planning sessions, we divided the workload and established our Git workflow, creating separate branches for the main project sections (`overview`, `software architecture`, and `design`).
+* I was officially assigned the **Design Pattern Identification** task for the Design report. To manage my specific contributions without conflicting with others working on the design section, I created a personal branch to conduct my pattern hunting and analysis before the final merge.
 
 ### 18/04/2026
-**In-depth analysis of the Launcher module in `freeplane_framework`**
-*   Started a detailed study of the `Launcher.java` class located in the repository: `../freeplane/freeplane_framework/`.
-*   Identified the implementation of the **Singleton Pattern** using `AtomicBoolean` for thread-safe state management. This mechanism prevents catastrophic crashes caused by double-starting the OSGi framework (Knopflerfish).
-*   Analyzed the advantages of using `compareAndSet(false, true)` over traditional `synchronized` blocks to ensure lock-free performance and zero contention during the initialization phase.
+
+**Initial System Exploration and Framework Analysis**
+
+* Started exploring the Freeplane documentation and codebase structure to plan my pattern identification strategy.
+* My goal is to find, document, and analyze how GoF patterns are practically applied to solve architectural problems in a large-scale open-source project.
+* Began my search in the framework module (`../freeplane/freeplane_framework/`), specifically focusing on `Launcher.java`.
+* **Pattern Identified:** Found a **Singleton Pattern** using `AtomicBoolean` for thread-safe state management. This mechanism prevents catastrophic crashes caused by double-starting the OSGi framework (Knopflerfish). Evaluated the advantages of `compareAndSet(false, true)` over standard `synchronized` blocks for lock-free initialization.
 
 ### 19/04/2026
-**Creational Patterns: Builder and Factory**
-*   Examined the **Builder Pattern** (Fluent Interface) implementation within the `Launcher` class.
-    *   Methods like `disableSecurityManager()` and `userDirectory(File)` return `this`, allowing for readable and flexible configuration chaining.
-    *   This approach avoids "Constructor Telescoping," making the setup of approximately 15 different configuration aspects manageable.
-*   Analyzed the **Factory Pattern** through static methods `create()` and `createForInstallation(File)`.
-    *   These methods centralize the logic for deducing the installation directory, whether the application is running standalone or embedded.
+
+**Identifying Creational Patterns: Builder and Factory**
+
+* Continued the analysis of the `Launcher` class, looking for object creation strategies.
+* **Pattern Identified:** Examined the **Builder Pattern** (Fluent Interface). Methods like `disableSecurityManager()` and `userDirectory(File)` return `this`, enabling readable configuration chaining and effectively preventing the "Constructor Telescoping" anti-pattern for its ~15 configuration aspects.
+* **Pattern Identified:** Spotted the **Factory Pattern** in the static methods `create()` and `createForInstallation(File)`, which centralize the instantiation logic based on the runtime environment (standalone vs. embedded).
 
 ### 20/04/2026
-**Structural Patterns: Facade and Adapter**
-*   Mapped the **Facade Pattern** roles. The `Launcher` acts as a simplified interface to the highly complex OSGi subsystem (bundles, services, and classloader isolation).
-    *   Clients can use `launchWithUI(args)` without needing to understand the underlying Knopflerfish `Main` class or `BundleContext` logic.
-*   Studied the **Adapter Pattern** used for the `SecurityManager`.
-    *   Implemented via an anonymous class to adapt the `checkConnect` behavior, specifically handling cases where the `pContext` might be null to prevent `NullPointerExceptions`.
+
+**Identifying Structural Patterns: Facade and Adapter**
+
+* **Pattern Identified:** Mapped out the **Facade Pattern** within the framework initialization. The `Launcher` acts as a simplified facade over the complex OSGi subsystem, allowing clients to call `launchWithUI(args)` without interacting with the internal `BundleContext`.
+* **Pattern Identified:** Found an **Adapter Pattern** implemented via an anonymous class for the `SecurityManager`. It adapts the `checkConnect` behavior to safely handle null `pContext` references, preventing `NullPointerExceptions`.
 
 ### 21/04/2026 - 22/04/2026
-**Behavioral Patterns: Template Method and Strategy**
-*   Identified the **Template Method Pattern** in `launchWithoutUICheck(String[] args)`.
-    *   This method defines a rigid execution skeleton: `setDefines()` -> `setSecurityManager()` -> `setArgProperties()` -> `startFramework()`.
-    *   This ensures the critical startup sequence is always respected, preventing initialization bugs.
-*   Analyzed the implicit **Strategy Pattern** for different execution modes.
-    *   The framework offers two distinct strategies: `launchHeadless()` for server-side map processing and `launchWithUI()` for full desktop interaction.
-*   Completed the technical documentation of the module, highlighting how these patterns interact to provide a robust plugin framework.
+
+**Identifying Behavioral Patterns and Repository Co-changes**
+
+* While reviewing the co-change reports generated by the team to spot tightly coupled files, I concluded my framework analysis.
+* **Pattern Identified:** Documented the **Template Method Pattern** in `launchWithoutUICheck(String[] args)`. It defines a strict initialization skeleton (`setDefines()` -> `setSecurityManager()` -> `setArgProperties()` -> `startFramework()`).
+* **Pattern Identified:** Noted an implicit **Strategy Pattern** handling the execution modes (`launchHeadless()` vs. `launchWithUI()`).
+
+### 28/04/2026 - 30/04/2026
+
+**Shifting Focus: Hunting Patterns in the Core Domain**
+
+* Having extracted enough framework-level patterns, I shifted my pattern identification efforts to the core business logic in the `freeplane` main module.
+* Used grep and IDE search tools targeting pattern-specific naming conventions (`*Strategy`, `*Builder`, `*Proxy`) to locate key architectural components.
+* Refined my objective: select and deeply analyze the most impactful GoF patterns governing the application's runtime and domain logic.
+
+### 04/05/2026 - 06/05/2026
+
+**Pattern Extraction: The Strategy Pattern in Filtering**
+
+* Focused my search on the `org.freeplane.features.filter` package.
+* **Pattern Identified:** Discovered `StringMatchingStrategy.java`.
+* Analyzed its implementation to see how Freeplane seamlessly switches between search algorithms (Exact match, Regex, Levenshtein distance). Documented how this Strategy implementation prevents massive `switch/if-else` statements inside the `FilterController`.
+
+### 07/05/2026 - 09/05/2026
+
+**Pattern Extraction: The Composite Pattern for Mind Maps**
+
+* Investigated the core data structure: `NodeModel.java` in `org.freeplane.features.map`. Since mind maps are inherently tree structures, I specifically looked for a Composite implementation.
+* **Pattern Identified:** Found a collapsed, highly optimized **Composite Pattern**.
+* Documented the architectural trade-off: Freeplane omits the abstract `Component` interface (separating `Leaf` and `Branch`) to treat every node as a potential branch. This design decision heavily optimizes performance during dynamic UI interactions.
+
+### 11/05/2026 - 13/05/2026
+
+**Pattern Extraction: The Proxy Pattern in the Scripting API**
+
+* Explored the `freeplane_plugin_script` module to understand the boundary between the internal domain and external Groovy scripts.
+* **Pattern Identified:** Discovered `NodeProxy.java`, an excellent example of a Protection/Simplification **Proxy Pattern**.
+* Analyzed how it intercepts and forwards script calls to the real `NodeModel` via internal controllers, ensuring that system constraints (like UI refresh events and Undo mechanisms) are safely respected.
+
+### 14/05/2026 - 15/05/2026
+
+**Pattern Extraction: The Builder Pattern in Dependency Tracking**
+
+* Investigated the formula recalculation engine to identify how dependencies are managed.
+* **Pattern Identified:** Located `DependenciesBuilder.java` (used by `DependencyLookupProxy`), confirming another solid use of the **Builder Pattern**.
+* Documented how the engine incrementally builds dependency state via `addAttribute()` during parsing, finally invoking `build()` to return an immutable `Dependencies` object.
+
+### 16/05/2026
+
+**Pattern Extraction: The Observer Pattern for UI Synchronization**
+
+* To cover the Model-View separation, I searched for event-driven patterns.
+* **Pattern Identified:** Found the **Observer Pattern** implemented through interfaces like `MapChangeListener` and `NodeSelectionListener`.
+* Documented how the `NodeModel` (Subject) broadcasts state changes to the UI controllers/views (Observers), ensuring strict decoupling.
+
+### 17/05/2026
+
+**Pattern Extraction: The Command Pattern for Action Encapsulation**
+
+* Investigated the Undo/Redo system, a crucial feature for the editor.
+* **Pattern Identified:** Found the **Command Pattern** backing the action framework (`UndoableCommand` and `IActor` interfaces).
+* Analyzed how user actions are encapsulated as concrete command objects and pushed to a history stack, allowing the `UndoManager` to reverse states independently of the UI.
+
+### 18/05/2026 - 19/05/2026
+
+**Drafting Diagrams and Finalizing the Design Report**
+
+* Compiled all the identification findings for the selected patterns (Composite, Proxy, Builder and Strategy).
+* Authored the `design_pattern_analysis.md` section for our team's Design report.
+* Created PlantUML class diagrams to map the relationships between key classes (`NodeModel`, `NodeProxy`, `DependenciesBuilder`, etc.).
+* Included comparative PlantUML diagrams showing *alternative architectures* (like Telescoping Constructors or hardcoded Switch statements) to prove why the identified GoF patterns were the optimal design choices for Freeplane.
+
+### 01/06/2026 - 03/06/2026
+
+**Peer Review and Final Team Sync**
+
+* Submitted my report to Francesco and the initial PlantUML diagrams for peer review.
+* Francesco reviewed my section, providing targeted feedback and advising me on specific modifications to improve the clarity of the pattern descriptions and the visual layout of the diagrams.
+* Applied Francesco's suggestions to refine the syntax and styling of the class and sequence diagrams.
+* Conducted a final comprehensive check together with the whole team to ensure absolute consistency across the Design and Software Architecture reports before the final submission.

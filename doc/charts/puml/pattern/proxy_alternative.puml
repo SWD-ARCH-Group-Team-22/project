@@ -1,0 +1,14 @@
+@startuml
+    package Freeplane {
+        class NodeModel {
+            + getText() : String
+            + setText(text: String) : void
+        }
+    }
+    class GroovyScript <<Script user-defined, external>> {
+        +getText() : String
+    }
+
+
+    GroovyScript --> NodeModel : calls methods of >
+@enduml

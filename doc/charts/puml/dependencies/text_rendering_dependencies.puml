@@ -1,0 +1,73 @@
+@startuml
+title Text rendering plugins domain - code dependencies
+
+left to right direction
+set namespaceSeparator none
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 145
+skinparam ranksep 90
+skinparam ArrowFontSize 11
+skinparam NoteFontSize 11
+skinparam LegendFontSize 11
+
+hide empty members
+
+class "Node content to display or edit\nnode text, details, notes" as NodeTextContent
+
+package "org.freeplane" as Freeplane {
+
+  package "central text mechanism" as TextMechanism {
+    class TextController
+    class MTextController
+    interface IContentTransformer
+
+    MTextController --|> TextController : extends
+    TextController --> IContentTransformer : stores and\napplies transformers
+  }
+
+  package "formula plugin" as FormulaPkg {
+    class FormulaTextTransformer
+  }
+
+  package "LaTeX plugin" as LatexPkg {
+    class LatexRenderer
+  }
+
+  package "Markdown plugin" as MarkdownPkg {
+    class MarkdownRenderer
+  }
+
+  TextMechanism -[hidden]right- FormulaPkg
+  FormulaPkg -[hidden]right- LatexPkg
+  LatexPkg -[hidden]right- MarkdownPkg
+}
+
+NodeTextContent -[hidden]left- TextMechanism
+
+' Node text enters the central mechanism
+NodeTextContent -[#gray,dashed]-> MTextController : text is edited\nor displayed here
+
+' Plugin transformers implement the common transformation interface
+FormulaTextTransformer ..|> IContentTransformer : handles\nformulas
+LatexRenderer ..|> IContentTransformer : handles\nLaTeX
+MarkdownRenderer ..|> IContentTransformer : handles\nMarkdown
+
+note bottom of TextMechanism
+The common mechanism explains the co-change:
+changes in how node text is transformed or edited
+can affect more than one plugin.
+end note
+
+legend bottom right
+  <b>Line styles</b>
+  Solid black line: main structural dependency
+  Hollow triangle arrow: inheritance / extension
+  Dashed hollow triangle arrow: implementation of the transformer interface
+  Dashed gray line: indirect dependency through shared text handling
+endlegend
+
+@enduml
