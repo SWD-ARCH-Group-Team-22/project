@@ -1,4 +1,3 @@
-
 # Individual Journal
 
 **Author:** Luca Robustelli
