@@ -28,7 +28,7 @@ The main domains are:
   <img src="../../../deliverables/img/design/dependencies/cochange_domain_evolution.png" alt="Co-change domain evolution graph" width="700"/>
 </p>
 
-<p align="center"><em>Figure 1: Average co-change intensity of the selected domains across time windows.</em></p>
+<p align="center"><em>Figure 1: Average co-change intensity of the selected domains across three Git history windows.</em></p>
 
 ### Code Dependencies
 
@@ -39,46 +39,58 @@ Code dependencies are visible in the source code, for example through class usag
 The code confirms that the Swing map view domain is not only a historical relation. `MapView`, `NodeView` and `MainView` form the main visual structure of the map: `MapView` manages the overall graphical view, `NodeView` represents a single node linked to its `NodeModel`, and `MainView` shows the visible content of the node.
 
 <p align="center">
-  <img src="../../../deliverables/img/design/dependencies/SwingMapView.png" alt="Swing map view" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/SwingMapView.png" alt="Swing map view interface" width="700"/>
 </p>
 
-<p align="center"><em>Figure 2: Swing view representation of mind maps.</em></p>
+<p align="center"><em>Figure 2: Swing map view representation of a mind map in Freeplane.</em></p>
 
 This explains why these classes often changed together. Changes in selection, folding or style can affect more than one level of the visual structure. The dependency is strong, but mostly justified, because these classes share the same responsibility: showing and updating the visual map. This also fits the Common Closure Principle, because the main classes are located in the same package area, `org.freeplane.view.swing.map`.
+
+<p align="center">
+  <img src="../../../deliverables/img/design/dependencies/map_view_schema.png" alt="Swing map view conceptual schema" width="700"/>
+</p>
+
+<p align="center"><em>Figure 3: Conceptual view of the main Swing map view elements and their surrounding dependencies.</em></p>
 
 However, this domain is also one of the most central parts of the system. The map view needs information from styles, filters, text, links, icons, UI listeners and the map model. This creates high fan-out, meaning many outgoing links to other packages. It is understandable, because a visual node contains many elements, but it also increases cognitive load: modifying this area requires understanding several connected classes and subsystems.
 
 The code also shows an important design choice: `NodeViewFactory`. When `MapView` displays nodes, the program must create visual objects such as `NodeView`, `MainView` and other components. This is a construction dependency, and Freeplane concentrates this creation logic in `NodeViewFactory` instead of spreading it across the map view classes.
 
 <p align="center">
-  <img src="../../../deliverables/puml/dependencies/swing_map_view_dependencies.svg" alt="Swing map view dependencies" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/map_view_dependencies.png" alt="Swing map view code dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 3: Code dependencies inside and around Swing map view domain.</em></p>
+<p align="center"><em>Figure 4: Code dependencies inside and around the Swing map view domain.</em></p>
 
 #### 2. Outline subsystem domain
 
 The outline subsystem is another visualisation domain. While the Swing map view shows the mind map graphically, the outline shows the same nodes in a linear tree structure.
 
 <p align="center">
-  <img src="../../../deliverables/img/design/dependencies/outlineView.png" alt="Outline view" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/outlineView.png" alt="Outline view interface" width="700"/>
 </p>
 
-<p align="center"><em>Figure 4: Outline view representation of mind maps.</em></p>
+<p align="center"><em>Figure 5: Outline view representation of a mind map in Freeplane.</em></p>
 
 Starting from co-change, the main class to check was `ScrollableTreePanel`, because many outline pairs were centred around it. The code confirms this role: it manages the tree-like list shown in the outline, including visible nodes, selection, navigation and scrolling.
 
 `OutlinePane` builds the outline area by creating `BreadcrumbPanel`, `ScrollableTreePanel`, `OutlineController`, the toolbar and the menu. Other classes manage smaller parts of the same view: `BlockPanel` shows visible node groups and sends actions back to `ScrollableTreePanel`, `BreadcrumbPanel` shows the current path, and `OutlineViewport` helps with scrolling.
+
+<p align="center">
+  <img src="../../../deliverables/img/design/dependencies/Outline_view_schema.png" alt="Outline subsystem conceptual schema" width="700"/>
+</p>
+
+<p align="center"><em>Figure 6: Conceptual schema of the outline subsystem and its synchronisation with the Swing map view.</em></p>
 
 This again fits the Common Closure Principle. The classes that often changed together are grouped in `org.freeplane.view.swing.map.outline` and work on the same feature. In this case, co-change mainly indicates internal cohesion.
 
 The most interesting point is `MapAwareOutlinePane`. The co-change reports mainly showed internal relations in the outline domain; no direct pair with the Swing map view domain was very evident. However, the code shows that the outline is connected to the main map view through `MapAwareOutlinePane`. This dependency is expected, because the outline shows the same map and must stay aligned with `MapView`, `NodeView`, `NodeModel` and map/node listeners. Still, it increases cognitive load.
 
 <p align="center">
-  <img src="../../../deliverables/img/design/dependencies/outline_dependencies.png" alt="Outline subsystem dependencies" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/outline_dependencies.png" alt="Outline subsystem code dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 5: Code dependencies inside and around Outline subsystem domain.</em></p>
+<p align="center"><em>Figure 7: Code dependencies inside and around the outline subsystem domain.</em></p>
 
 #### 3. API and scripting domain
 
@@ -86,19 +98,31 @@ The API and scripting domain is different from the UI domains because it connect
 
 Scripts automate actions on mind maps. To support them, Freeplane exposes a public API: `NodeRO` gives read-only access to a node, `Node` adds modification operations, and `MindMap` represents the map available to scripts.
 
+<p align="center">
+  <img src="../../../deliverables/img/design/dependencies/API_and_scripting_schema.png" alt="API and scripting conceptual schema" width="700"/>
+</p>
+
+<p align="center"><em>Figure 8: Conceptual schema of the API and scripting domain, from user scripts to the internal model through proxies.</em></p>
+
 The co-change relation suggested that the public API and the scripting plugin evolve together. The code confirms this relation, but in a controlled way. Scripts do not access the internal model directly; they pass through proxy classes. `NodeProxy` exposes the node API while internally working with `NodeModel`; similarly, `MapProxy` exposes `MindMap` while working with `MapModel`.
 
 Therefore, this is not just internal cohesion. It is a real dependency between scripting and the Freeplane core, but the proxy layer keeps it organised. The design is good because the API remains a stable access layer. However, the proxies are still delicate: they protect the internal model, but they must know both the public API and the internal model.
 
 <p align="center">
-  <img src="../../../deliverables/img/design/dependencies/api_scripting_dependencies.png" alt="API and scripting dependencies" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/api_scripting_dependencies.png" alt="API and scripting code dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 6: Code dependencies inside and around API and scripting domain.</em></p>
+<p align="center"><em>Figure 9: Code dependencies inside and around the API and scripting domain.</em></p>
 
 #### 4. Text rendering plugins domain
 
 This smaller case shows a different kind of dependency. `FormulaTextTransformer`, `LatexRenderer` and `MarkdownRenderer` belong to three different plugins: formulas, LaTeX and Markdown.
+
+<p align="center">
+  <img src="../../../deliverables/img/design/dependencies/text_rendering_schema.png" alt="Text rendering flow schema" width="700"/>
+</p>
+
+<p align="center"><em>Figure 10: Text rendering flow from node content to rendered output through the shared text transformation mechanism.</em></p>
 
 In the co-change reports, these classes often changed together. However, in the code they do not directly import or use each other. Therefore, this is not direct coupling between plugins.
 
@@ -107,11 +131,10 @@ The reason is that they all handle special text inside nodes. When Freeplane dis
 So, the co-change is confirmed as a shared maintenance concern, not as direct code dependency. The design is mostly good: the plugins remain separated, but changes in the central text mechanism can still affect more than one plugin.
 
 <p align="center">
-  <img src="../../../deliverables/img/design/dependencies/text_rendering_dependencies.png" alt="Text rendering plugins dependencies" width="700"/>
+  <img src="../../../deliverables/img/design/dependencies/text_rendering_dependencies.png" alt="Text rendering plugins code dependencies" width="700"/>
 </p>
 
-<p align="center"><em>Figure 7: Code dependencies inside and around Text rendering plugins domain.</em></p>
-
+<p align="center"><em>Figure 11: Code dependencies inside and around the text rendering plugins domain.</em></p>
 
 ## Pattern Analysis
 
@@ -172,7 +195,7 @@ So, the co-change is confirmed as a shared maintenance concern, not as direct co
 
     As the script environment evaluates dependencies, it calls `setNodeContained()` or `addAttribute()`. Once all necessary configuration is provided, the `build()` method is called to instantiate the final `Dependencies` object using this accumulated data.
 * **Problem solved:**
-In Freeplane, `Dependencies` are used to remember which parts of a node are needed by a script or formula. This information is not always known at the beginning, because it is discovered while the script is being analysed. For this reason, creating the object immediately with one big constructor would be unclear. The Builder pattern makes the process simpler: `DependenciesBuilder` collects the needed information step by step and, at the end, creates the final `Dependencies` object with `build()`. This keeps `Dependencies` stable after creation and avoids accidental changes later.
+  In Freeplane, `Dependencies` are used to remember which parts of a node are needed by a script or formula. This information is not always known at the beginning, because it is discovered while the script is being analysed. For this reason, creating the object immediately with one big constructor would be unclear. The Builder pattern makes the process simpler: `DependenciesBuilder` collects the needed information step by step and, at the end, creates the final `Dependencies` object with `build()`. This keeps `Dependencies` stable after creation and avoids accidental changes later.
 * **Alternative:** Telescoping constructors or a mutable object with setters.
   * *Pros:* Avoids creating an extra Builder class.
   * *Cons:* Telescoping constructors, such as `new Dependencies(true, attrs, ...)`, are unreadable. Setters make the `Dependencies` object mutable, which can lead to bugs if the object is shared across different parts of the system or threads.
@@ -208,7 +231,7 @@ In the Swing map view domain and Outline subsystem domain, co-change mainly refl
 
 The API and scripting domain shows another design pressure. Here the dependency crosses module boundaries because scripts need access to the map model. Freeplane handles this through proxies, which are also one of the patterns identified in the report. The Proxy pattern is therefore not only a formal pattern instance, but a practical solution to a real dependency problem: it exposes scripting features without exposing the internal model directly.
 
-The Text rendering plugins domain confirms that co-change can reveal a maintenance relation even without direct code dependency. The plugins remain separated, but they share a central transformation mechanism, so changes to text handling can affect multiple plugins.
+The text rendering plugins domain confirms that co-change can reveal a maintenance relation even without direct code dependency. The plugins remain separated, but they share a central transformation mechanism, so changes to text handling can affect multiple plugins.
 
 The selected patterns confirm that Freeplane often uses pragmatic variants rather than textbook structures. The Composite pattern in `NodeModel` is simplified, because using separate leaf and branch classes would be less convenient for editable mind maps. The Builder pattern keeps dynamic construction readable and safer. The Strategy pattern separates matching algorithms and supports extensibility. The Proxy pattern protects the core model while exposing a scripting interface.
 
