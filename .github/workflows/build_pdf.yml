@@ -58,27 +58,33 @@ jobs:
         run: |
           shopt -s nullglob globstar
           
+          # Salva il percorso assoluto della root del repository
+          REPO_ROOT="$PWD"
+          
           for file in doc/deliverables/md_reports/**/*.md; do
-            # CORREZIONE: Salta i file che finiscono con svg.md (es. qualcosa_svg.md)
             if [[ "$file" == *"svg.md" ]]; then
               echo "Skipping $file (SVG markdown file)..."
               continue
             fi
             
+            # Estrae il nome del file e la cartella in cui si trova
             name=$(basename "$file" .md)
-            
-            # NOVITÀ: Ricava la cartella del file .md corrente per risolvere i percorsi relativi dei PNG
             file_dir=$(dirname "$file")
             
             echo "Converting $file to doc/deliverables/${name}.pdf..."
             
-            # NOVITÀ: Aggiunto --resource-path=".:$file_dir" 
+            # 1. ENTRA nella cartella specifica del file markdown
+            cd "$file_dir"
+            
+            # 2. Esegue pandoc dal punto di vista corretto per i percorsi ../../../
+            # L'output viene salvato usando il percorso assoluto salvato all'inizio
             pandoc --filter pandoc-plantuml \
-                  --resource-path=".:$file_dir" \
                   -V geometry:margin=2cm \
-                  "$file" -o "doc/deliverables/${name}.pdf"
+                  "${name}.md" -o "$REPO_ROOT/doc/deliverables/${name}.pdf"
+                  
+            # 3. TORNA alla radice del repository per il prossimo ciclo
+            cd "$REPO_ROOT"
           done
-
       - name: Commit and push generated PDFs
         run: |
           git config user.name "github-actions[bot]"
