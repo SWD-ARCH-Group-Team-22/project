@@ -18,7 +18,6 @@ The first type of external interaction is direct data persistence: the persisten
 
 The tension between different kinds of dependencies reveals that the software has grown over the years to support different features to meet requirements that can be very different among users.
 
-<div style="page-break-after: always;"></div>
 ## Decomposition and Runtime: C4 Container Model 
 
 The Container Model aims at showing how the software is built, from a lower, more detailed standpoint. 
@@ -43,9 +42,9 @@ There are other crucial violations of the Clean Architecture pattern: there is n
 
 
 
-![Dependency Violation](../../deliverables/puml/clean_arch_violation.svg){width=50%}
+![Dependency Violation](../../deliverables/puml/clean_arch_violation.svg)
 
-![Dependency Possible Refactoring](../../deliverables/puml/clean_arch_solution.svg){width = 50%}
+![Dependency Possible Refactoring](../../deliverables/puml/clean_arch_solution.svg)
 
 Compliance with the principles from the Clean Architecture pattern can be found in the _persistence layer_: classes such as `MapReader` and `MapWriter` are at the outer layer of the architecture, and there are no dependency violations. They perform operations to save or read data from the mindmap directly in the `.mm` file. 
 The `org.freeplane.features.filter` package suffers from the same set of problems: its `FilterController` has the same mixed approach at User Interface import dependencies, and it mixes business logic, application logic, and frontend concerns in the same class.. That's why architectural flaws from `org.freeplane.features.map` package can be fairly extended to the whole software structure.
