@@ -5,7 +5,7 @@ on:
     branches:
       - '**'  
     paths:
-      - "doc/analysis/md/**/*.md"
+      - "doc/deliverables/md_reports/**/*.md"
       - ".github/workflows/build-pdf.yml"
   workflow_dispatch:
 
@@ -21,9 +21,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install System Dependencies (Pandoc, LaTeX, Graphviz, Java)
+      - name: Install System Dependencies (Pandoc, LaTeX, Graphviz, Java, SVG Support)
         run: |
           sudo apt-get update
+          # Aggiunto inkscape per garantire la massima compatibilità di conversione SVG -> PDF in Pandoc
           sudo apt-get install -y --no-install-recommends \
             pandoc \
             texlive-latex-base \
@@ -32,6 +33,7 @@ jobs:
             texlive-latex-extra \
             lmodern \
             librsvg2-bin \
+            inkscape \
             graphviz \
             default-jre
 
@@ -56,22 +58,40 @@ jobs:
         run: |
           shopt -s nullglob globstar
           
-          for file in doc/analysis/md/**/*.md; do
-            name=$(basename "$file" .md)
-            echo "Converting $file to doc/deliverables/${name}.pdf..."
-            
-            # Utilizzo del filtro per PlantUML
-            pandoc --filter pandoc-plantuml "$file" -o "doc/deliverables/${name}.pdf"
-          done
+          for file in doc/deliverables/md_reports/**/*.md; do
+                      # CORREZIONE: Salta i file che finiscono con svg.md (es. qualcosa_svg.md)
+                      if [[ "$file" == *"svg.md" ]]; then
+                        echo "Skipping $file (SVG markdown file)..."
+                        continue
+                      fi
+                      
+                      name=$(basename "$file" .md)
+                      echo "Converting $file to doc/deliverables/${name}.pdf..."
+                      
+                      pandoc --filter pandoc-plantuml \
+                            -V geometry:margin=2cm \
+                            "$file" -o "doc/deliverables/${name}.pdf"
+                    done
 
-      - name: Commit generated PDFs
+
+      - name: Commit and push generated PDFs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
           git add doc/deliverables/*.pdf || true
-          git diff --cached --quiet || git commit -m "chore: update generated PDFs"
-          git push
+          
+          # Procedi solo se ci sono effettivamente dei cambiamenti
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update generated PDFs"
+            
+            # Fetch e pull senza rebase (merge) per integrare eventuali push di altre pipeline
+            git pull --no-rebase origin ${{ github.ref_name }}
+            
+            git push
+          else
+            echo "No changes to commit."
+          fi
 
       - name: Upload PDFs
         uses: actions/upload-artifact@v4
