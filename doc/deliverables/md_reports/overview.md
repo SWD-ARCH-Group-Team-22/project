@@ -88,8 +88,6 @@ Windows Resource File|1|1|0|2
 --------|--------|--------|--------|--------
 SUM:|3242|37520|39196|361543
 
-![Programming Language Distribution](/img/bar_chart.png)
-![Pie Chart](/img\pie_chart.png)
 
 The technology stack clearly shows that Freeplane is a Java-based software. More than two thirds of the code is written in Java. The high number of lines of code in `.properties` files shows the internationalization of the software: files with this extension are used for multi-language support. 
 
