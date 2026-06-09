@@ -5,7 +5,7 @@ on:
     branches:
       - '**'  
     paths:
-      - "doc/analysis/md/**/*.md"
+      - "doc/deliverables/md_reports/**/*.md"
       - ".github/workflows/build-pdf.yml"
   workflow_dispatch:
 
