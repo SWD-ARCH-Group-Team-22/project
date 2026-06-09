@@ -109,3 +109,10 @@
 * Authored the `design_pattern_analysis.md` section for our team's Design report.
 * Created PlantUML class diagrams to map the relationships between key classes (`NodeModel`, `NodeProxy`, `DependenciesBuilder`, etc.).
 * Included comparative PlantUML diagrams showing *alternative architectures* (like Telescoping Constructors or hardcoded Switch statements) to prove why the identified GoF patterns were the optimal design choices for Freeplane.
+
+### 01/06/2026 - 03/06/2026
+
+**Final Review and Refinement of PlantUML Diagrams**
+
+* Conducted a comprehensive final review of all the generated PlantUML diagrams with the team to ensure absolute consistency across the Design and Software Architecture reports.
+* Refined the syntax, layout, and styling of both class and sequence diagrams, verifying that all GoF pattern participants (e.g., the Subject/Observer roles or the specific Command invokers) are flawlessly mapped and easily readable for the final submission.
