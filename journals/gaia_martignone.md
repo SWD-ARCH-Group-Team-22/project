@@ -259,3 +259,25 @@ I also worked with my teammate to make the images in the Design report more unif
 ### Next steps
 
 The next step is to do a final check of the Design report, reread the parts written by the other teammates for cross-review, and ask the professor whether the graphs are acceptable. We also need to clarify which word-count tool should be used, because we obtained different word counts.
+
+## 29/05/2026 - 09/06/2026
+
+### Final merge and report organization
+
+During this period, I met with the group to explain to each other the parts we had done and to check whether everything was coherent.
+
+We also discussed how merge the whole project and how to organize the final material.
+
+I fixed the images and tested the word-count tool provided by the professor. After that, we merged the different parts of the project.
+
+### Next steps
+
+The next step is to check the whole merge carefully.
+
+## 10/06/2026
+
+### Final check of the main branch
+
+I checked the final merge on the main branch.
+
+I reviewed the structure of the project, the report files, the images and the links, to make sure that the final version was ready for submission.
