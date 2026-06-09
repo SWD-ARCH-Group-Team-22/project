@@ -1,6 +1,3 @@
-Ecco una versione revisionata del tuo diario. L'ho riscritta per far risaltare chiaramente che il tuo ruolo principale all'interno del team è stato proprio l'identificazione e l'analisi dei design pattern. Ho anche integrato i nomi dei tuoi compagni di gruppo nella fase di organizzazione iniziale per rendere il report più realistico e fedele al contesto del vostro progetto.
-
----
 
 # Individual Journal
 
