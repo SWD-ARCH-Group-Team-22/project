@@ -1,0 +1,26 @@
+@startuml
+    !include <C4/C4_Context.puml>  
+    title Freeplane Software Context Diagram
+
+    Person(beginner, "User\n[Person]", "Accesses Freeplane to manage mindmaps")
+
+    System(freeplane, "Freeplane\n[Software System]", "Open-source mind map design software")
+
+    System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
+    System_Ext(llm, "LLM Software Tools", "Provides external AI and language model services")
+    System_Ext(smtp, "Email Tool", "Provides email composition and delivery services")
+    System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
+    System_Ext(file_system, "Local File System", "XML / .mm Files - Stores mind maps, settings, images, and application resources")
+
+    Rel_D(beginner, freeplane, "Manage mindmaps, sometimes it can automate it")
+        
+    Rel_R(freeplane, smtp, "Delegates email composition")
+    Rel_D(freeplane, file_system, "Reads and writes mind map data")
+    Rel(freeplane, browser, "Delegates URL opening")
+    Rel(freeplane, taskjuggler, "Exports task structures")
+    BiRel(freeplane, llm, "Sends prompts / receives responses")
+
+
+    LAYOUT_WITH_LEGEND()
+
+    @enduml

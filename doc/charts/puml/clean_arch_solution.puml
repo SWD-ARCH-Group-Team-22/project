@@ -1,0 +1,35 @@
+@startuml
+
+title Class Diagram: Dependency Violation - Possible refactor solution
+
+package "Node" as node <<org.freeplane.features.map>> {
+    class MapModel{
+        + getCurrentModeController()
+    }
+
+    class MapController {
+        + getCurrentController()
+    }
+
+}
+
+
+package "Mode" as mode <<org.freeplane.features.mode>>{
+
+    class Controller {
+        + ConcreteAdapter()
+    }  
+
+    interface IController {
+        + exposedAdapter()
+    }
+
+  
+}
+
+MapModel --> IController : depends on
+MapController --> IController : depends on
+IController -[hidden]down-> Controller
+Controller --> IController : implements
+
+@enduml

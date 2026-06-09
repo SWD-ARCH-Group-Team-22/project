@@ -1,0 +1,33 @@
+ @startuml
+    !include <C4/C4_Container.puml>
+    title Freeplane Container Diagram
+
+    LAYOUT_WITH_LEGEND()
+    LAYOUT_TOP_DOWN()
+
+    Person(user, "User\n[Person]", "Uses Freeplane to create and manage mind maps")
+
+    System_Ext(browser, "Web Browser", "Displays web pages and external hyperlinks")
+    System_Ext(email, "Email Tool", "Provides email composition and delivery services")
+    browser -[hidden]down-> email
+
+    System_Boundary(app, "Freeplane Desktop Application") {
+        Container(freeplane, "Freeplane Application", "Java Desktop Application", "Provides mind map editing, visualization, plugin management, scripting, and export functionalities")
+    }
+
+    ContainerDb_Ext(file_system, "Local File System", "XML / .mm Files", "Stores mind maps, settings, images, and application resources")
+
+    System_Ext(llm, "LLM Software Tools", "Provides external AI and language model services")
+    System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
+    llm -[hidden]down-> taskjuggler
+
+    Rel_D(user, freeplane, "Manage mindmaps, sometimes it can automate it", "GUI Interaction")
+    Rel_D(freeplane, file_system, "Reads and writes mind map data", "XML File I/O")
+
+    Rel_L(freeplane, browser, "Delegates URL opening", "OS Call")
+    Rel_L(freeplane, email, "Delegates email composition", "OS Call")
+
+    Rel_R(freeplane, taskjuggler, "Exports task structures", "File Export")
+    BiRel_R(freeplane, llm, "Sends prompts / receives responses", "HTTPS/API")
+
+    @enduml

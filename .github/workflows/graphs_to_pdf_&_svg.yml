@@ -1,4 +1,4 @@
-name: Diagrams Conversion 
+name: Diagrams Conversion
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java for PlantUML
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -44,28 +44,33 @@ jobs:
           mkdir -p doc/deliverables/C4
           npx --yes likec4@latest codegen plantuml doc/charts/C4 -o doc/deliverables/C4
 
-      - name: Generate SVG via PlantUML
+      - name: Generate SVGs via PlantUML
         run: |
           mkdir -p doc/deliverables/puml
-          
-          # 1. Generate SVG from standard PlantUML diagrams
-          find doc/charts/puml -name "*.puml" -print -exec java -jar plantuml.jar -tsvg {} -o "$GITHUB_WORKSPACE/doc/deliverables/puml" \;
-          
-          # 2. Generate SVG from LikeC4-generated PlantUML files
-          find doc/deliverables/C4 -name "*.puml" -print -exec java -jar plantuml.jar -tsvg {} \;
 
-      - name: Convert SVGs to PDF and Cleanup intermediate files
+          # Diagrammi PlantUML tradizionali
+          find doc/charts/puml -name "*.puml" | while read f; do
+            echo "Processing $f..."
+            java -jar plantuml.jar -tsvg "$f" -o "$(pwd)/doc/deliverables/puml"
+          done
+
+          # Diagrammi C4 generati da LikeC4
+          find doc/deliverables/C4 -name "*.puml" | while read f; do
+            echo "Processing $f..."
+            java -jar plantuml.jar -tsvg "$f" -o "$(pwd)/doc/deliverables/C4"
+          done
+
+      - name: Convert SVGs to PDF
         run: |
-          shopt -s globstar
-          shopt -s nullglob
-          
-          # Convert all SVG files to PDF
+          shopt -s globstar nullglob
           for f in doc/deliverables/**/*.svg; do
             echo "Converting $f to PDF..."
             rsvg-convert -f pdf -o "${f%.svg}.pdf" "$f"
           done
-          
-          # Remove temporary LikeC4-generated PlantUML files
+
+      - name: Cleanup intermediate files
+        run: |
+          shopt -s globstar nullglob
           for f in doc/deliverables/C4/**/*.puml; do
             rm "$f"
           done
