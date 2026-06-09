@@ -70,7 +70,6 @@
 
     ' === External Relations ===
     Rel_D(freeplane_core, filesystem, "Reads and writes mind map data", "XML File I/O")
-    Rel_D(script, filesystem, "Loads user-defined scripts", "XML File I/O")
     Rel_D(freeplane_core, email, "Delegates email composition", "OS Call")
     BiRel(ai, llm, "Sends prompts / receives responses", "HTTPS/API")
     Rel_D(freeplane_core, browser, "Delegates URL opening", "OS Call")
