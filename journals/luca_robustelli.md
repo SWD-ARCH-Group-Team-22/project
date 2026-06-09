@@ -112,7 +112,9 @@
 
 ### 01/06/2026 - 03/06/2026
 
-**Final Review and Refinement of PlantUML Diagrams**
+**Peer Review and Final Team Sync**
 
-* Conducted a comprehensive final review of all the generated PlantUML diagrams with the team to ensure absolute consistency across the Design and Software Architecture reports.
-* Refined the syntax, layout, and styling of both class and sequence diagrams, verifying that all GoF pattern participants (e.g., the Subject/Observer roles or the specific Command invokers) are flawlessly mapped and easily readable for the final submission.
+* Submitted my report to Francesco and the initial PlantUML diagrams for peer review.
+* Francesco reviewed my section, providing targeted feedback and advising me on specific modifications to improve the clarity of the pattern descriptions and the visual layout of the diagrams.
+* Applied Francesco's suggestions to refine the syntax and styling of the class and sequence diagrams.
+* Conducted a final comprehensive check together with the whole team to ensure absolute consistency across the Design and Software Architecture reports before the final submission.
