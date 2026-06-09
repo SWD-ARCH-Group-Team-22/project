@@ -2,6 +2,8 @@
 This repository contains the whole project for the Software Design and Architecture Polito course in the academic year 2025-2026.  
 The final goal is to produce a complete and understandable analysis of both design and architecture of the Freeplane software, an open-source tool for students and teachers  
 
+## Deliverables
+All deliverables have been put at `\doc\deliverables`. A pdf version was automatically generated to include all data from the `.md` files, whereas `.md` documents can be found in the `md_report` directory. The architecture report has been included in two versions: they are the same document, they differ in the way diagrams are put within the document. `architecture_report.md` is written with embed plantuml script code, and it requires a dedicated extension in Visual Studio Code to show diagrams properly in the preview section. `architecture_report_with_svg.md` file includes diagrams as svg images. 
 ## Repository Structure
 A strict structure has been defined to make everyone's life easier; please comply with that while working in the project.
 - `journals`: here put your weekly journal, following the guidelines (if you wish)
