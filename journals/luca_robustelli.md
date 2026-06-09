@@ -8,7 +8,7 @@
 
 **Project setup, team organization, and role assignment**
 
-* At the beginning of the project, our team (Fra, Elif, Gaia, Eren, Leonardo, and I) chose Freeplane as the target system for our architectural analysis.
+* At the beginning of the project, our team (Fra, Elif, Gaia, Eren, and I) chose Freeplane as the target system for our architectural analysis.
 * We read the project requirements to understand the deliverables: System Overview report, Design report, Software Architecture report, and individual journals.
 * During our planning sessions, we divided the workload and established our Git workflow, creating separate branches for the main project sections (`overview`, `software architecture`, and `design`).
 * I was officially assigned the **Design Pattern Identification** task for the Design report. To manage my specific contributions without conflicting with others working on the design section, I created a personal branch to conduct my pattern hunting and analysis before the final merge.
