@@ -59,20 +59,25 @@ jobs:
           shopt -s nullglob globstar
           
           for file in doc/deliverables/md_reports/**/*.md; do
-                      # CORREZIONE: Salta i file che finiscono con svg.md (es. qualcosa_svg.md)
-                      if [[ "$file" == *"svg.md" ]]; then
-                        echo "Skipping $file (SVG markdown file)..."
-                        continue
-                      fi
-                      
-                      name=$(basename "$file" .md)
-                      echo "Converting $file to doc/deliverables/${name}.pdf..."
-                      
-                      pandoc --filter pandoc-plantuml \
-                            -V geometry:margin=2cm \
-                            "$file" -o "doc/deliverables/${name}.pdf"
-                    done
-
+            # CORREZIONE: Salta i file che finiscono con svg.md (es. qualcosa_svg.md)
+            if [[ "$file" == *"svg.md" ]]; then
+              echo "Skipping $file (SVG markdown file)..."
+              continue
+            fi
+            
+            name=$(basename "$file" .md)
+            
+            # NOVITÀ: Ricava la cartella del file .md corrente per risolvere i percorsi relativi dei PNG
+            file_dir=$(dirname "$file")
+            
+            echo "Converting $file to doc/deliverables/${name}.pdf..."
+            
+            # NOVITÀ: Aggiunto --resource-path=".:$file_dir" 
+            pandoc --filter pandoc-plantuml \
+                  --resource-path=".:$file_dir" \
+                  -V geometry:margin=2cm \
+                  "$file" -o "doc/deliverables/${name}.pdf"
+          done
 
       - name: Commit and push generated PDFs
         run: |
