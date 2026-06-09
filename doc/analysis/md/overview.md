@@ -19,7 +19,7 @@ End users create, edit, and manage mind maps for personal, academic, or professi
 - Advanced users, generally more familiar with technical features, use more powerful functionalities such as scripting, add-ons, export options, and customization mechanisms.
 
 **Plugin, script, and add-on developers:**  
-These stakeholders extend the system by developing plugins, scripts, or add-ons. Freeplane explicitly supports extensibility: plugin development follows specific conventions, plugin modules are included in the Gradle configuration, and individual plugins can declare their own dependencies. This makes extensibility an important part of the system structure.
+These stakeholders extend the system by developing plugins, scripts, or add-ons. Freeplane explicitly supports extensibility: plugin development follows specific conventions, plugin modules are included in the Gradle configuration, and individual plugins can declare their own dependencies. The official documentation states that the software was built to match the Extension Object pattern by Erich Gamma; this makes extensibility an important part of the system structure.
 
 **Core maintainers and contributors:**  
 Core maintainers are responsible for evolving the system, reviewing contributions, fixing bugs, and preserving the quality and stability of the project. External contributors can also support the project by reporting bugs, proposing improvements, improving documentation, translating content, or contributing code.
@@ -28,7 +28,7 @@ Core maintainers are responsible for evolving the system, reviewing contribution
 
 ### General functioning and data management
 
-Freeplane is a cross-platform desktop application mainly implemented in Java. It provides a graphical user interface based on Java Swing and uses OSGi to organize the system into modular parts. It runs on different operating systems, as long as a current version of Java is available. It can be installed normally, but it can also be run from removable storage, which increases its portability.
+Freeplane is a cross-platform desktop application implemented in Java. It provides a graphical user interface based on Java Swing and uses OSGi to organize the system into modular parts. It runs on different operating systems, as long as a current version of Java is available. It can be installed normally, but it can also be run from removable storage, which increases its portability. It can be run in headless mode (without a GUI) for very advanced features, but this is a niche use case.
 
 The application allows users to build hierarchical mind maps composed of interconnected nodes. Through the user interface, users can structure ideas, format nodes, add links and images, manage attributes, use formulas, and organize information in a flexible way, all within a unified interface that hides the underlying complexity of the system.
 
@@ -40,7 +40,7 @@ From a general point of view, Freeplane can be described as a single desktop app
 
 The repository reflects this organization: besides the main modules, it contains several plugin subprojects, for example for scripting, formulas, LaTeX, Markdown, SVG, OpenMaps, AI, code exploration, syntax support, and bug reporting. The official plugin development documentation also shows that new plugins follow the `freeplane_plugin_*` naming convention, must be included in `settings.gradle`, and can declare their own dependencies and OSGi imports. This aspect will also be useful in the following analyses, because it helps observe how the system separates the core from extensible functionalities.
 
-Freeplane also provides scripting support for advanced customization and automation. This allows users to extend the behavior of the application without directly modifying the core code. Scripting tools work with Groovy and JavaScript, while also supporting  other scripting languages in specific versions for specific purposes. This mechanism is useful for advanced users and add-on developers, because it allows them to automate operations and adapt the system to their specific needs.
+Freeplane also provides scripting support for advanced customization and automation. This allows users to extend the behavior of the application without directly modifying the core code. Scripting tools work mainly with Groovy, while also supporting  other scripting languages in specific versions for specific purposes. This mechanism is useful for advanced users and add-on developers, because it allows them to automate operations and adapt the system to their specific needs.
 
 The application interacts directly with the operating system for file management, rendering, access to local resources, and export operations. It supports exporting maps to several formats, such as PDF, images, XML, XHTML/HTML, and office-related formats. 
 
