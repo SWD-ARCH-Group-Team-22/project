@@ -356,7 +356,7 @@ The Component Model offers the deepest view of Freeplane's internal structure, d
     System_Ext(email, "Email Tool", "Provides email composition and delivery services")
     System_Ext(taskjuggler, "TaskJuggler", "Project and task management application")
 
-    Rel_D(user, freeplane_core, "Manage mindmaps, sometimes it can automate it")
+    Rel_D(user, freeplane_core, "Manage mindmaps, sometimes it can automate it", "GUI Interaction")
 
     ' === Core dependencies ===
     Rel_D(framework, api, "Loads to make its instances globally available", "OSGi")
